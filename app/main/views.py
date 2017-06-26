@@ -4,4 +4,6 @@ from . import main
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    return redirect(url_for('auth.login'))
+    # return redirect(url_for('auth.login'))
+    return render_template('index.html')
+

@@ -6,12 +6,9 @@
 {% block styles %}
 {{super()}}
     <link rel="stylesheet" href="{{url_for('static', filename='guest_index.css')}}">
-    <style>
-        body {
-            background: #d2d6de;
-        }
-    </style>
 {% endblock %}
+
+{% block body_attribs %} class="hold-transition login-page"{% endblock %}
 
 {% block content %}
     <div class="login-box">
