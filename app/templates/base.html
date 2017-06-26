@@ -6,6 +6,22 @@
 {{ super() }}
 {% endblock %}
 
+{% block styles %}
+{{super()}}
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='AdminLTE.css') }}">
+    <!-- iCheck -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='components/iCheck/skins/square/blue.css') }}">
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+{% endblock %}
+
 {% block content %}
 <div class="container">
 
@@ -16,4 +32,6 @@
 {% block scripts %}
 {{ super() }}
 {{ moment.include_moment() }}
+    <!-- iCheck -->
+    <script src="{{ url_for('static', filename='components/iCheck/icheck.min.js') }}"></script>
 {% endblock %}

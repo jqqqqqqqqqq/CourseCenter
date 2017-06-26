@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}登陆{% endblock %}
+
+{% block styles %}
+{{super()}}
+    <link rel="stylesheet" href="{{url_for('static', filename='guest_index.css')}}">
+    <style>
+        body {
+            background: #d2d6de;
+        }
+    </style>
+{% endblock %}
+
+
+{% block content %}
+    <div class="login-box">
+        <div class="login-logo">
+            <a href="../../index2.html"><b>Course</b>Center</a>
+        </div>
+        <!-- /.login-logo -->
+        <div class="login-box-body">
+            <p class="login-box-msg">赶紧登陆吧爷爷</p>
+
+            <form action="../../index2.html" method="post">
+                <div class="row">
+                    <div class="col-xs-4">
+                        <div class="radio icheck">
+                            <label>
+                                <input type="radio" name="identity"> 教务
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-xs-4">
+                        <div class="radio icheck">
+                            <label>
+                                <input type="radio" name="identity"> 教师
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-xs-4">
+                        <div class="radio icheck">
+                            <label>
+                                <input type="radio" name="identity" checked> 学生
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group has-feedback">
+                    <input type="email" class="form-control" placeholder="用户名">
+                    <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
+                </div>
+                <div class="form-group has-feedback">
+                    <input type="password" class="form-control" placeholder="密码">
+                    <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+                </div>
+                <div class="row">
+                    <div class="col-xs-8">
+                        <div class="checkbox icheck">
+                            <label>
+                                <input type="checkbox"> 记住我
+                            </label>
+                        </div>
+                    </div>
+                    <!-- /.col -->
+                    <div class="col-xs-4">
+                        <button type="submit" class="btn btn-primary btn-block btn-flat">登陆</button>
+                    </div>
+                    <!-- /.col -->
+                </div>
+            </form>
+
+        </div>
+        <!-- /.login-box-body -->
+    </div>
+    <!-- /.login-box -->
+{% endblock %}
+
+
+{% block scripts %}
+{{super()}}
+        <script>
+        $(function () {
+            $('input').iCheck({
+                checkboxClass: 'icheckbox_square-blue',
+                radioClass: 'iradio_square-blue',
+                increaseArea: '20%' // optional
+            });
+        });
+    </script>
+{% endblock %}
