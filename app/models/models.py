@@ -22,8 +22,6 @@ class DeanInfo(UserMixin, db.Model):
     def __repr__(self):
         return '<DeanInfo %r>' % self.id
 
-# 缺回调函数
-
 
 class Semester(db.Model):
     __tablename__ = 'semesters'
@@ -42,6 +40,17 @@ class Student(db.Model):
     password_hash = db.Column(db.String(128))
     name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
     role = db.Column(db.Integer)
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return '<Student %r>' % self.id
@@ -151,8 +160,27 @@ class Teacher(db.Model):
     password_hash = db.Column(db.String(128))
     teacher_info = db.Column(db.Text)
 
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
     def __repr__(self):
         return '<Teacher %r>' % self.id
 
 
-
+@login_manager.user_loader
+def load_user(user_id):
+    temp = DeanInfo.query.get(int(user_id))
+    if temp:
+        return temp
+    temp = Teacher.query.get(int(user_id))
+    if temp:
+        return temp
+    return Student.query.get(int(user_id))
