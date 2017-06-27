@@ -22,6 +22,16 @@ class DeanInfo(UserMixin, db.Model):
     def check_id(self):
         return self.id
 
+    @staticmethod
+    def init_dean():
+        """野兽先辈管理员说"""
+        dean = DeanInfo.query.first()
+        if dean is None:
+            dean = DeanInfo(id=810)
+            dean.password = '114514'
+            db.session.add(dean)
+            db.session.commit()
+
     def __repr__(self):
         return '<DeanInfo %r>' % self.id
 
