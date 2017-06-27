@@ -97,4 +97,3 @@ ENV/
 .gitignore
 .idea/
 .bowerrc
-tests/
