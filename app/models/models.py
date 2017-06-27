@@ -83,7 +83,7 @@ class Homework(db.Model):
     __tablename__ = 'homework'
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
-    base_requirement = db.Column(db.text)
+    base_requirement = db.Column(db.Text)
     begin_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
     weight = db.Column(db.Integer)
@@ -98,9 +98,9 @@ class Submission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     homework_id = db.Column(db.Integer, db.ForeignKey('homework.id'), primary_key=True)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), primary_key=True)
-    text_content = db.Column(db.text)
+    text_content = db.Column(db.Text)
     score = db.Column(db.Integer)
-    comments = db.Column(db.text)
+    comments = db.Column(db.Text)
     submit_attempts = db.Column(db.Integer)
 
     def __repr__(self):
@@ -111,7 +111,7 @@ class Attachment(db.Model):
     __tablename__ = 'attachments'
     id = db.Column(db.Integer, primary_key=True)
     submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'), primary_key=True)
-    guid = db.Column(db.text)
+    guid = db.Column(db.Text)
     status = db.Column(db.Boolean)
 
     def __repr__(self):
