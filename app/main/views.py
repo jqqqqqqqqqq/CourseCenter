@@ -3,8 +3,13 @@ from . import main
 from .forms import AddSemesterForm
 from .. import db
 from ..models.models import Semester
-import time
+import os, time
 from datetime import date
+from werkzeug.utils import secure_filename
+from flask import request
+from .. import config
+
+ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -32,6 +37,22 @@ def manage_semester():
         return redirect(url_for('main.manage_semester'))
     semester_list = Semester.query.all()
     return render_template('manage_semester.html', form=form, semesters=semester_list)
+
+# 可能会使用的上传文件函数
+# def allowed_file(filename):
+#     return '.' in filename and \
+#            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+#
+#
+# @main.route('/upload_file', methods=['GET', 'POST'])
+# def upload_file():
+#     if request.method == 'POST':
+#         file = request.files['file']
+#         if file and allowed_file(file.filename):
+#             filename = secure_filename(file.filename)
+#             file.save(os.path.join(config['UPLOAD_FOLDER'], filename))
+#             return redirect(url_for('uploaded_file',
+#                                     filename=filename))
 
 
 @main.route('/manage-course')
