@@ -15,13 +15,6 @@ def index():
 
 @main.route('/manage-semester', methods=['GET', 'POST'])
 def manage_semester():
-    semester_list = Semester.query.all()
-    semesters = []
-    # for semester in semester_list:
-    #     semesters.append({'id': semester.id,
-    #                       'base_info': semester.base_info,
-    #                       # 'time': semester.begin_time.strftime("%m/%d/%Y") + '-' + semester.end_time.strftime("%m/%d/%Y")})
-    #                       'begin_time': semester.begin_time, 'end_time': semester.end_time})
     form = AddSemesterForm()
     if form.validate_on_submit():
         begin_time, end_time = form.time.data.split('-')
@@ -32,7 +25,9 @@ def manage_semester():
         db.session.add(Semester(id=form.id.data, base_info=form.base_info.data,
                                 begin_time=begin_time, end_time=end_time))
         db.session.commit()
-        flash('添加成功！')
+        flash('添加成功！', 'success')
+        return redirect(url_for('main.manage_semester'))
+    semester_list = Semester.query.all()
     return render_template('manage_semester.html', form=form, semesters=semester_list)
 
 
