@@ -22,6 +22,9 @@ def manage_semester():
         begin_time = date(int(year), int(month), int(day))
         month, day, year = end_time.split('/')
         end_time = date(int(year), int(month), int(day))
+        if Semester.query.filter_by(id=form.id.data).first():
+            flash('添加了重复的学期…', 'danger')
+            return redirect(url_for('main.manage_semester'))
         db.session.add(Semester(id=form.id.data, base_info=form.base_info.data,
                                 begin_time=begin_time, end_time=end_time))
         db.session.commit()
