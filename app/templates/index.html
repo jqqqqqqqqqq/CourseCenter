@@ -1,11 +1,13 @@
 {% extends "base_main.html" %}
 
+{% block title %}{{ super() }} - 主页{% endblock %}
+
 {% block content_header %}
     <h1>主页<small>这是主页</small></h1>
 {% endblock %}
 
 {% block breadcrumb %}
-    <li><a href="#"><i class="fa fa-dashboard"></i> 主页</a></li>
+    <li class="active"><a href="#"><i class="fa fa-dashboard"></i> 主页</a></li>
 {% endblock %}
 
 {% block content_main %}
