@@ -19,6 +19,9 @@ class DeanInfo(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def check_id(self):
+        return self.id
+
     def __repr__(self):
         return '<DeanInfo %r>' % self.id
 
@@ -34,7 +37,7 @@ class Semester(db.Model):
         return '<Semester %r>' % self.id
 
 
-class Student(db.Model):
+class Student(UserMixin, db.Model):
     __tablename__ = 'students'
     id = db.Column(db.Integer, primary_key=True)
     password_hash = db.Column(db.String(128))
@@ -154,7 +157,7 @@ class TeacherTeam(db.Model):
         return '<TeacherTeam %r>' % self.id
 
 
-class Teacher(db.Model):
+class Teacher(UserMixin, db.Model):
     __tablename__ = 'teachers'
     id = db.Column(db.Integer, primary_key=True)
     password_hash = db.Column(db.String(128))

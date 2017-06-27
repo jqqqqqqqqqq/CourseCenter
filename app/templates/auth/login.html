@@ -20,7 +20,7 @@
             <p class="login-box-msg">赶紧登陆吧爷爷</p>
             <form method="post">
                 {{ form.hidden_tag() }}
-                {{ wtf.form_errors(form, hiddens="only") }}
+                {{ wtf.form_errors(form) }}
                 <div class="row">
                     {% for radio in form.identity %}
                         <div class="col-xs-4">
