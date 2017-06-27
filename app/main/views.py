@@ -12,3 +12,6 @@ def index():
 def manage_semester():
     return render_template('manage_semester.html')
 
+@main.route('/manage-course')
+def manage_course():
+    return render_template('manage_course.html')
