@@ -127,6 +127,7 @@ def manage_course():
         course.credit = int(form.credit.data)
         course.teamsize = int(form.teamsize.data)
         db.session.commit()
+        flash('编辑成功！', 'success')
         return redirect(request.args.get('next') or url_for('main.manage_course'))
     form.course_info.data = course.course_info
     form.place.data = course.place
