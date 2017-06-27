@@ -13,7 +13,7 @@ def index():
     return render_template('index.html')
 
 
-@main.route('/manage-semester')
+@main.route('/manage-semester', methods=['GET', 'POST'])
 def manage_semester():
     form = EditSemesterForm()
     id = int(form.id.data)
