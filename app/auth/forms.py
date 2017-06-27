@@ -9,13 +9,15 @@ class LoginForm(FlaskForm):
     identity = RadioField('类型', choices=[('0', '教务'), ('1', '教师'), ('2', '学生')], default='2', validators=[DataRequired()])
     remember_me = BooleanField('记住我',default=False)
 
-class Semester_Info_Form(FlaskForm):
+
+class SemesterForm(FlaskForm):
     id = IntegerField('学期ID', validators=[DataRequired()])
     base_info = TextAreaField('学期基本信息',validators=[])
     begin_time = DateField('开始周', validators=[DataRequired()])
     end_time = DateField('结束周', validators=[DataRequired()])
 
-class Course_Info_Form(FlaskForm):
+
+class CourseForm(FlaskForm):
     id = IntegerField('课程ID', validators=[DataRequired()])
     teacherTeam_id = IntegerField('教师团队ID', validators=[DataRequired()])
     semester_id = IntegerField('学期ID', validators=[DataRequired()])
