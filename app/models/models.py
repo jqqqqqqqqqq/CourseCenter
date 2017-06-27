@@ -19,6 +19,9 @@ class DeanInfo(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def check_id(self):
+        return self.id
+
     def __repr__(self):
         return '<DeanInfo %r>' % self.id
 
