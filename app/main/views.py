@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, request
+from flask import render_template, redirect, url_for, request, session
 from . import main
 from .forms import AddSemesterForm
 from .. import db
@@ -78,12 +78,20 @@ def teacher_teammanagement():
 def set_course_info():
     form = CourseForm()
     course = models.Course.query.filter_by(id=this_term).first()
+    session['course_id'] = course.id
+    if form.validate_on_submit():
+        print(form.course_info.data)
+        # _course = models.Course()
+        course.course_info = form.course_info.data
+        course.place = form.place.data
+        course.outline = form.outline.data
+        course.credit = int(form.credit.data)
+        course.teamsize = int(form.teamsize.data)
+        db.session.commit()
+        return redirect(request.args.get('next') or url_for('main.set_course_info'))
     form.course_info.data = course.course_info
     form.place.data = course.place
     form.outline.data = course.outline
     form.credit.data = course.credit
     form.teamsize.data = course.teamsize
-    if form.validate_on_submit():
-        print(form.course_info.data)
-        return redirect(request.args.get('next') or url_for('main.set_course_info'))
     return render_template('set_course_info.html', form=form)

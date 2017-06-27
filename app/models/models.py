@@ -145,6 +145,11 @@ class Course(db.Model):
     def __repr__(self):
         return '<Course %r>' % self.id
 
+    def update_course(self, course):
+
+        db.session.add(course)
+        db.session.commit()
+
 
 class CourseTime(db.Model):
     __tablename__ = 'course_time'
