@@ -3,7 +3,8 @@ from . import main
 from .forms import AddSemesterForm
 from .. import db
 from ..models.models import Semester
-import datetime
+import time
+from datetime import date
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -21,7 +22,17 @@ def manage_semester():
                     'base_info': semester.base_info,
                     'time': semester.begin_time.strftime("%m/%d/%Y") + '-' + semester.end_time.strftime("%m/%d/%Y")})
     form = AddSemesterForm()
-    return render_template('manage_semester.html', res=res)
+    if form.validate_on_submit():
+        begin_time, end_time = form.time.data.split('-')
+        month, day, year = begin_time.split('/')
+        begin_time = date(int(year), int(month), int(day))
+        month, day, year = end_time.split('/')
+        end_time = date(int(year), int(month), int(day))
+        db.session.add(Semester(id=int(form.id.data), base_info=form.base_info.data,
+                                begin_time=begin_time, end_time=end_time))
+        db.session.commit()
+        return redirect(url_for("main.manage_semester"))
+    return render_template('manage_semester.html', form=form, res=res)
 
 
 @main.route('/manage-course')
