@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for
+from flask import render_template, redirect, url_for, flash
 from . import main
 from .forms import AddSemesterForm
 from .. import db
@@ -16,11 +16,12 @@ def index():
 @main.route('/manage-semester', methods=['GET', 'POST'])
 def manage_semester():
     semester_list = Semester.query.all()
-    res = []
-    for semester in semester_list:
-        res.append({'id': semester.id,
-                    'base_info': semester.base_info,
-                    'time': semester.begin_time.strftime("%m/%d/%Y") + '-' + semester.end_time.strftime("%m/%d/%Y")})
+    semesters = []
+    # for semester in semester_list:
+    #     semesters.append({'id': semester.id,
+    #                       'base_info': semester.base_info,
+    #                       # 'time': semester.begin_time.strftime("%m/%d/%Y") + '-' + semester.end_time.strftime("%m/%d/%Y")})
+    #                       'begin_time': semester.begin_time, 'end_time': semester.end_time})
     form = AddSemesterForm()
     if form.validate_on_submit():
         begin_time, end_time = form.time.data.split('-')
@@ -28,11 +29,11 @@ def manage_semester():
         begin_time = date(int(year), int(month), int(day))
         month, day, year = end_time.split('/')
         end_time = date(int(year), int(month), int(day))
-        db.session.add(Semester(id=int(form.id.data), base_info=form.base_info.data,
+        db.session.add(Semester(id=form.id.data, base_info=form.base_info.data,
                                 begin_time=begin_time, end_time=end_time))
         db.session.commit()
-        return redirect(url_for("main.manage_semester"))
-    return render_template('manage_semester.html', form=form, res=res)
+        flash('添加成功！')
+    return render_template('manage_semester.html', form=form, semesters=semester_list)
 
 
 @main.route('/manage-course')
