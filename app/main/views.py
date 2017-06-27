@@ -8,7 +8,7 @@ from datetime import date
 from .forms import CourseForm
 from app.models import models
 
-this_term = 1
+this_term = 1  # TODO: add semester selection
 from werkzeug.utils import secure_filename
 from flask import request
 from .. import config
@@ -58,10 +58,6 @@ def manage_semester():
 #             return redirect(url_for('uploaded_file',
 #                                     filename=filename))
 
-
-@main.route('/manage-course')
-def manage_course():
-    return render_template('manage_course.html')
 
 
 @main.route('/index-teacher', methods=['GET', 'POST'])
@@ -115,3 +111,26 @@ def set_course_info():
     form.credit.data = course.credit
     form.teamsize.data = course.teamsize
     return render_template('set_course_info.html', form=form)
+
+
+@main.route('/manage-course', methods=['GET', 'POST'])
+def manage_course():
+    form = CourseForm()
+    course = models.Course.query.filter_by(id=this_term).first()
+    session['course_id'] = course.id
+    if form.validate_on_submit():
+        print(form.course_info.data)
+        # _course = models.Course()
+        course.course_info = form.course_info.data
+        course.place = form.place.data
+        course.outline = form.outline.data
+        course.credit = int(form.credit.data)
+        course.teamsize = int(form.teamsize.data)
+        db.session.commit()
+        return redirect(request.args.get('next') or url_for('main.manage_course'))
+    form.course_info.data = course.course_info
+    form.place.data = course.place
+    form.outline.data = course.outline
+    form.credit.data = course.credit
+    form.teamsize.data = course.teamsize
+    return render_template('manage_course.html', form=form)

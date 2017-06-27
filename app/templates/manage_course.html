@@ -1,4 +1,5 @@
 {% extends "base_main.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 
 {% block title %}{{ super() }} - 课程管理{% endblock %}
 
@@ -87,7 +88,22 @@
                 </div>
             </div>
             <div class="box-body">
-                这里应该只有上传
+                <form method="post">
+                <div class="set-course">
+                    {{ wtf.form_field(form.course_info) }}
+                    {{ wtf.form_field(form.place) }}
+                    {{ wtf.form_field(form.outline) }}
+                    {{ wtf.form_field(form.credit) }}
+                    {{ wtf.form_field(form.teamsize) }}
+                </div>
+                <div>
+                    {{ form.hidden_tag() }}
+                    {{ wtf.form_errors(form) }}
+                </div>
+                <div class="course-submit">
+                    <button type="submit" class="btn btn-primary btn-block btn-flat">提交</button>
+                </div>
+            </form>
             </div>
         </div>
     </article>
