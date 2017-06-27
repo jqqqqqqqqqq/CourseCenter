@@ -121,7 +121,7 @@ desired effect
 {#                </ul>#}
 {#                <!-- /.sidebar-menu -->#}
                 <ul class="sidebar-menu">
-                    <li><a href="#"><i class="fa fa-calendar"></i> <span>学期管理</span></a></li>
+                    <li><a href="{{ url_for('main.manage_semester') }}"><i class="fa fa-calendar"></i> <span>学期管理</span></a></li>
                     <li><a href="#"><i class="fa fa-book"></i> <span>课程管理</span></a></li>
                 </ul>
             </section>
@@ -140,7 +140,7 @@ desired effect
                 {% endblock %}
                 <ol class="breadcrumb">
                     {% block breadcrumb %}
-                        <li><a href="#"><i class="fa fa-dashboard"></i> Level</a></li>
+                        <li><a href="/"><i class="fa fa-dashboard"></i> Level</a></li>
                         <li class="active">Here</li>
                     {% endblock %}
                 </ol>
