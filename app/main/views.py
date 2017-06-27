@@ -35,3 +35,34 @@ def manage_semester():
 @main.route('/manage-course')
 def manage_course():
     return render_template('manage_course.html')
+
+
+@main.route('/index-teacher', methods=['GET', 'POST'])
+def index_teacher():
+    return render_template('auth_teacher/index_teacher.html')
+
+
+@main.route('/index-teacher/teacher-course', methods=['GET', 'POST'])
+def teacher_course():
+    return render_template('auth_teacher/teacher_course.html')
+
+
+@main.route('/index-teacher/teacher-resource', methods=['GET', 'POST'])
+def teacher_resource():
+    return render_template('auth_teacher/teacher_resource.html')
+
+
+@main.route('/index-teacher/teacher-homework', methods=['GET', 'POST'])
+def teacher_homework():
+    return render_template('auth_teacher/teacher_homework.html')
+
+
+@main.route('/index-teacher/teacher-communicate', methods=['GET', 'POST'])
+def teacher_communicate():
+    return render_template('auth_teacher/teacher_communicate.html')
+
+
+@main.route('/index-teacher/teacher-teammanagement', methods=['GET', 'POST'])
+def teacher_teammanagement():
+    return render_template('auth_teacher/teacher_teammanagement.html')
+
