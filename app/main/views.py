@@ -1,10 +1,14 @@
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request, session
 from . import main
 from .forms import AddSemesterForm
 from .. import db
 from ..models.models import Semester
 import os, time
 from datetime import date
+from .forms import CourseForm
+from app.models import models
+
+this_term = 1
 from werkzeug.utils import secure_filename
 from flask import request
 from .. import config
@@ -89,3 +93,25 @@ def teacher_communicate():
 def teacher_teammanagement():
     return render_template('auth_teacher/teacher_teammanagement.html')
 
+
+@main.route('/set-course-info', methods=['GET', 'POST'])
+def set_course_info():
+    form = CourseForm()
+    course = models.Course.query.filter_by(id=this_term).first()
+    session['course_id'] = course.id
+    if form.validate_on_submit():
+        print(form.course_info.data)
+        # _course = models.Course()
+        course.course_info = form.course_info.data
+        course.place = form.place.data
+        course.outline = form.outline.data
+        course.credit = int(form.credit.data)
+        course.teamsize = int(form.teamsize.data)
+        db.session.commit()
+        return redirect(request.args.get('next') or url_for('main.set_course_info'))
+    form.course_info.data = course.course_info
+    form.place.data = course.place
+    form.outline.data = course.outline
+    form.credit.data = course.credit
+    form.teamsize.data = course.teamsize
+    return render_template('set_course_info.html', form=form)
