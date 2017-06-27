@@ -1,0 +1,26 @@
+{% extends "base_main.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - 课程管理{% endblock %}
+
+{% block content_header %}
+    <h1>课程信息<small>课程展示信息设置</small></h1>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="#"><i class="fa fa-dashboard"></i> 主页</a></li>
+    <li class="active">Here</li>
+{% endblock %}
+
+{% block content_main %}
+    <div class="set-course">
+        {{ wtf.form_field(form.course_info) }}
+        {{ wtf.form_field(form.place) }}
+        {{ wtf.form_field(form.outline) }}
+        {{ wtf.form_field(form.credit) }}
+        {{ wtf.form_field(form.teamsize) }}
+    </div>
+    <div class="course-submit">
+        <button type="submit" class="btn btn-primary btn-block btn-flat">提交</button>
+    </div>
+{% endblock %}
