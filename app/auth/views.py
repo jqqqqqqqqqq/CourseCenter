@@ -7,10 +7,6 @@ from ..models.models import DeanInfo, Student, Teacher
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    '''
-    redirect中url_for部分返回默认主页部分现在还没有
-    :return:
-    '''
     form = LoginForm()
     if form.validate_on_submit():
         if form.identity.data == '0':
