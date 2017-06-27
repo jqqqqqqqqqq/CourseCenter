@@ -12,9 +12,9 @@ class SemesterForm(FlaskForm):
 
 
 class CourseForm(FlaskForm):
-    id = IntegerField('课程ID', validators=[DataRequired()])
-    teacherTeam_id = IntegerField('教师团队ID', validators=[DataRequired()])
-    semester_id = IntegerField('学期ID', validators=[DataRequired()])
+    # id = IntegerField('课程ID', validators=[DataRequired()])
+    # teacherTeam_id = IntegerField('教师团队ID', validators=[DataRequired()])
+    # semester_id = IntegerField('学期ID', validators=[DataRequired()])
     course_info = TextAreaField('课程基本信息', validators=[])
     place = StringField('地点', validators=[Length(0, 50)])
     outline = TextAreaField('课程大纲', validators=[])
