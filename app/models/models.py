@@ -33,6 +33,7 @@ class Semester(db.Model):
     begin_time = db.Column(db.Date)
     end_time = db.Column(db.Date)
 
+
     def __repr__(self):
         return '<Semester %r>' % self.id
 
