@@ -18,6 +18,15 @@
         <!-- /.login-logo -->
         <div class="login-box-body">
             <p class="login-box-msg">赶紧登陆吧爷爷</p>
+            {% with messages = get_flashed_messages() %}
+                {% for message in messages %}
+                    <div class="alert alert-danger alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                        <h4><i class="icon fa fa-ban"></i> 爷爷！</h4>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
             <form method="post">
                 {{ form.hidden_tag() }}
                 {{ wtf.form_errors(form) }}

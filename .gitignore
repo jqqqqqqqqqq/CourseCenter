@@ -94,6 +94,8 @@ ENV/
 # Rope project settings
 .ropeproject
 
-.gitignore
 .idea/
 .bowerrc
+
+data-dev.sqlite
+data-test.sqlite
