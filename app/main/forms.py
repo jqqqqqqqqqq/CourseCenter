@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SelectField, DateField, SubmitField, IntegerField, \
     FileField
@@ -47,3 +48,14 @@ class HomeworkForm(FlaskForm):
     text = TextAreaField('作业')
     homework_up = FileField(validators=[
         FileAllowed(homework_ups, u'只接受txt和doc(docx)文件!')])
+
+
+class AcceptTeam(FlaskForm):
+    id = IntegerField(validators=[InputRequired()])
+    # button = SubmitField('通过')
+
+
+class RejectTeam(FlaskForm):
+    id = IntegerField(validators=[InputRequired()])
+    # button = SubmitField('拒绝')
+    reason = TextAreaField('拒绝理由', validators=[InputRequired()])
