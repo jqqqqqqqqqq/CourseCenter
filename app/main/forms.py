@@ -9,6 +9,7 @@ from flask_uploads import UploadSet
 
 ups = UploadSet('files', extensions=('xls', 'xlsx'))
 
+
 class SemesterForm(FlaskForm):
     id = IntegerField('学期ID', validators=[DataRequired()])
     base_info = TextAreaField('学期基本信息', validators=[])

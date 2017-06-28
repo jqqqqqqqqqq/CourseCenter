@@ -3,11 +3,12 @@ from . import main
 from .forms import AddSemesterForm
 from .. import db
 from ..models.models import Semester
-import os, time
+import os
 from datetime import date
 from .forms import CourseForm, UploadForm
 from app.models import models
-from ..models.models import Student, Teacher
+from ..models.models import Student, Teacher, SCRelationship, Course
+from flask_login import current_user
 
 this_term = 1  # TODO: add semester selection
 from werkzeug.utils import secure_filename
@@ -97,6 +98,15 @@ def upload_file():
     else:
         file_url = None
     return render_template('upload.html', form=form, file_url=file_url)
+
+
+# @main.route('/display-course', method=['GET', 'POST'])    # 学生查看课程 已完成无前端
+# def display_course():
+#     course_id_list = SCRelationship.query.filter_by(student_id=current_user.id)
+#     course_list = []
+#     for course_id in course_id_list:
+#         course_list.append(Course.query.filter_by(id=course_id))
+#     return render_template('display-course.html', course_list=course_list)
 
 
 @main.route('/index-teacher', methods=['GET', 'POST'])
