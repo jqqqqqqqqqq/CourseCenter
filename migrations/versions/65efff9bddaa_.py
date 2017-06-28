@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 6ba12249f1c9
+Revision ID: 65efff9bddaa
 Revises: 
-Create Date: 2017-06-28 10:25:52.680635
+Create Date: 2017-06-28 16:51:07.319807
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '6ba12249f1c9'
+revision = '65efff9bddaa'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -39,6 +39,7 @@ def upgrade():
     )
     op.create_table('teachers',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=128), nullable=True),
     sa.Column('password_hash', sa.String(length=128), nullable=True),
     sa.Column('teacher_info', sa.Text(), nullable=True),
     sa.PrimaryKeyConstraint('id')
@@ -59,6 +60,7 @@ def upgrade():
     sa.Column('outline', sa.Text(), nullable=True),
     sa.Column('credit', sa.Integer(), nullable=True),
     sa.Column('teamsize', sa.Integer(), nullable=True),
+    sa.Column('status', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['semester_id'], ['semesters.id'], ),
     sa.ForeignKeyConstraint(['teacherTeam_id'], ['teacher_teams.id'], ),
     sa.PrimaryKeyConstraint('id')
