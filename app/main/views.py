@@ -3,14 +3,14 @@ from . import main
 from .forms import AddSemesterForm
 from .. import db
 from ..models.models import Semester
-import os, time
+import os
 from datetime import date
 from .forms import CourseForm, UploadForm
 from app.models import models
-from ..models.models import Student, Teacher, SCRelationship, TCRelationship
+from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course
+from flask_login import current_user
 
 this_term = 1  # TODO: add semester selection
-from werkzeug.utils import secure_filename
 from flask import request
 from .. import config, ups
 import openpyxl
