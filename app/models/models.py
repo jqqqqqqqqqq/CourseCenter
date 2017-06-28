@@ -47,6 +47,16 @@ class Semester(db.Model):
         return '<Semester %r>' % self.id
 
 
+class SCRelationship(db.Model):     # 学生课程之间的关系 (多对多)
+    __tablename__ = 'SCRelationship'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+
+    def __repr__(self):
+        return '<SCRelationship %r>' % self.id
+
+
 class Student(UserMixin, db.Model):
     __tablename__ = 'students'
     id = db.Column(db.Integer, primary_key=True)
