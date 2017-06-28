@@ -220,8 +220,8 @@ class Teacher(UserMixin, db.Model):
         """野兽先辈老师说"""
         teacher = Teacher.query.first()
         if teacher is None:
-            teacher = Teacher(id=666)
-            teacher.password = '666'
+            teacher = Teacher(id=777)
+            teacher.password = '777'
             db.session.add(teacher)
             db.session.commit()
 
