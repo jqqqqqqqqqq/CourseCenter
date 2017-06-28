@@ -9,7 +9,11 @@ from flask_uploads import UploadSet, configure_uploads, patch_request_class
 bootstrap = Bootstrap()
 moment = Moment()
 db = SQLAlchemy()
+
 login_manager = LoginManager()
+login_manager.session_protection = 'basic'
+login_manager.login_view = 'auth.login'
+
 ups = UploadSet('files', extensions=('xls', 'xlsx'))
 
 
