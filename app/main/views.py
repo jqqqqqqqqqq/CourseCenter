@@ -7,7 +7,7 @@ import os, time
 from datetime import date
 from .forms import CourseForm, UploadForm
 from app.models import models
-from ..models.models import Student, Teacher
+from ..models.models import Student, Teacher, SCRelationship, TCRelationship
 
 this_term = 1  # TODO: add semester selection
 from werkzeug.utils import secure_filename
@@ -134,8 +134,6 @@ def manage_course():
     semester_list = Semester.query.all()
     form = CourseForm()
     form.semester.choices = [(a.id, str(a.id / 100) + '学年第' + str(a.id % 100) + '学期') for a in semester_list]
-    # course = models.Course.query.filter_by(id=this_term).first()
-    # session['course_id'] = course.id
     if 'action' in request.args:
         if request.args['action'] == 'delete':
             _course = models.Course.query.filter_by(id=int(request.args['id'])).first()
@@ -157,8 +155,8 @@ def manage_course():
             return redirect(request.args.get('next') or url_for('main.manage_course'))
 
     if form.validate_on_submit():
-        print(form.course_info.data)
-        # _course = models.Course()
+
+        # course的基本信息
         course = models.Course()
         course.name = form.name.data
         course.course_info = form.course_info.data
@@ -168,15 +166,68 @@ def manage_course():
         course.teamsize = int(form.teamsize.data)
         course.semester_id = form.semester.data
         course.status = True
+
         db.session.add(course)
         db.session.commit()
+
+        # 上传文件处理
+        filename = ups.save(form.stuff_info.data)
+        file_path = os.path.join(basedir, 'uploads', filename)
+        student_info, teacher_info = read_file(file_path=file_path)
+
+        # 添加学生
+        for i in student_info:
+            student = Student.query.filter_by(id=i.get('id')).first()
+            if student is None:
+                student = Student()
+            student.id = int(i.get('id'))
+            student.name = i.get('name')
+            student.password = str(i.get('password'))
+            db.session.add(student)
+
+            # 添加学生课程关系
+            screl = SCRelationship.query.filter_by(student_id=student.id, course_id=course.id).first()
+            if screl is None:
+                screl = SCRelationship(student_id=student.id, course_id=course.id)
+            db.session.add(screl)
+
+        # 添加教师
+        for i in teacher_info:
+            teacher = Teacher.query.filter_by(id=i.get('id')).first()
+            if teacher is None:
+                teacher = Teacher()
+            teacher.id = int(i.get('id'))
+            teacher.name = i.get('name')
+            teacher.teacher_info = i.get('teacher_info')
+            teacher.password = str(i.get('password'))
+            db.session.add(teacher)
+
+            # 添加老师课程关系
+            tcrel= TCRelationship.query.filter_by(teacher_id=teacher.id, course_id=course.id).first()
+            if tcrel is None:
+                tcrel = TCRelationship(teacher_id=teacher.id, course_id=course.id)
+            db.session.add(tcrel)
+
+        db.session.commit()
+        os.remove(file_path)
+
         flash('添加成功！', 'success')
         return redirect(request.args.get('next') or url_for('main.manage_course'))
-    # form.course_info.data = course.course_info
-    # form.place.data = course.place
-    # form.outline.data = course.outline
-    # form.credit.data = course.credit
-    # form.teamsize.data = course.teamsize
 
     course_list = models.Course.query.all()  # 显示课程
-    return render_template('manage/course.html', form=form, courses=course_list, semesters=semester_list)
+    stuff_list = {}
+    for course in course_list:
+        sclist = SCRelationship.query.filter_by(course_id=course.id).all()
+        student_list = []
+        for screl in sclist:
+            student_list.extend(Student.query.filter_by(id=screl.student_id).all())
+        tclist = TCRelationship.query.filter_by(course_id=course.id).all()
+        teacher_list = []
+        for tcrel in tclist:
+            teacher_list.extend(Teacher.query.filter_by(id=tcrel.teacher_id).all())
+        stuff_list[course.id] = {
+            'student_list': student_list,
+            'teacher_list': teacher_list
+        }
+
+    return render_template('manage/course.html', form=form, courses=course_list, semesters=semester_list, stuff=stuff_list)

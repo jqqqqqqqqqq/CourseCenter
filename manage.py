@@ -3,7 +3,8 @@ import os
 from app import create_app, db
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand, upgrade
-from app.models.models import Student, Teacher, DeanInfo, Semester, Team, TeamMember, Homework ,Submission, Attachment, Course, CourseTime, TeacherTeam
+from app.models.models import Student, Teacher, DeanInfo, \
+    Semester, Team, TeamMember, Homework ,Submission, Attachment, Course, CourseTime, SCRelationship, TCRelationship
 #from flask_uploads import UploadSet, configure_uploads, patch_request_class
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')

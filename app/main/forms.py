@@ -1,13 +1,12 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, BooleanField, SelectField, DateField, SubmitField, IntegerField
-from wtforms.validators import DataRequired, Length
+from wtforms import StringField, TextAreaField, SelectField, DateField, SubmitField, IntegerField, \
+    FileField
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms import RadioField
 from wtforms.validators import DataRequired, Length, InputRequired
-# from ..models.models import Semester
 from flask_uploads import UploadSet
 
 ups = UploadSet('files', extensions=('xls', 'xlsx'))
+
 
 class SemesterForm(FlaskForm):
     id = IntegerField('学期ID', validators=[DataRequired()])
@@ -25,6 +24,9 @@ class CourseForm(FlaskForm):
     outline = TextAreaField('课程大纲', validators=[InputRequired()])
     credit = IntegerField('学分', validators=[DataRequired()])
     teamsize = IntegerField('课程人数', validators=[DataRequired()])
+    stuff_info = FileField('学生老师信息', validators=[
+            FileAllowed(ups, u'只接受xls(或xlsx)文件!'),
+            FileRequired(u'文件未选择!')])
 
 
 class AddSemesterForm(FlaskForm):
