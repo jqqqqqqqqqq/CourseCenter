@@ -109,6 +109,75 @@ def teacher_course():
     return render_template('auth_teacher/teacher_course.html')
 
 
+@main.route('/index-teacher/teacher-course_info', methods=['GET', 'POST'])
+def teacher_course_info():
+    semester_list = Semester.query.all()
+    form = CourseForm()
+    # form.semester.choices = [(a.id, str(a.id / 100) + '学年第' + str(a.id % 100) + '学期') for a in semester_list]
+    # course = models.Course.query.filter_by(id=this_term).first()
+    # session['course_id'] = course.id
+    if 'action' in request.args:
+        if request.args['action'] == 'edit':
+            course = models.Course.query.filter_by(id=int(request.args['id'])).first()
+            if not course:
+                flash('找不到该课程', 'danger')
+                return redirect(request.args.get('next') or url_for('main.teacher_course_info'))
+            elif course.status is False:
+                flash('课程已结束', 'too late')
+                return redirect(request.args.get('next') or url_for('main.teacher_course_info'))
+            course.course_info = form.course_info.data
+            course.outline = form.outline.data
+            db.session.commit()
+            flash('修改成功！', 'success')
+            return redirect(request.args.get('next') or url_for('main.teacher_course_info'))
+
+    #     if request.args['action'] == 'delete':
+    #         _course = models.Course.query.filter_by(id=int(request.args['id'])).first()
+    #         if not _course:
+    #             flash('找不到该课程', 'danger')
+    #             return redirect(request.args.get('next') or url_for('main.manage_course'))
+    #         db.session.delete(_course)
+    #         db.session.commit()
+    #         flash('删除成功', 'success')
+    #         return redirect(request.args.get('next') or url_for('main.manage_course'))
+    #     elif request.args['action'] == 'end':
+    #         _course = models.Course.query.filter_by(id=int(request.args['id'])).first()
+    #         if not _course:
+    #             flash('找不到该课程', 'danger')
+    #             return redirect(request.args.get('next') or url_for('main.manage_course'))
+    #         _course.status = False
+    #         db.session.commit()
+    #         flash('结束成功', 'success')
+    #         return redirect(request.args.get('next') or url_for('main.manage_course'))
+    #
+    # if form.validate_on_submit():
+    #     if course.status is False
+    #         flash('课程已结束', 'too late')
+    #         return redirect(request.args.get('next') or url_for('main.teacher_course_info'))
+    #     print(form.course_info.data)
+    #     # _course = models.Course()
+    #     # course = models.Course()
+    #     # course.name = form.name.data
+    #     course.course_info = form.course_info.data
+    #     # course.place = form.place.data
+    #     course.outline = form.outline.data
+    #     # course.credit = int(form.credit.data)
+    #     # course.teamsize = int(form.teamsize.data)
+    #     # course.semester_id = form.semester.data
+    #     # course.status = True
+    #     # db.session.add(course)
+    #     db.session.commit()
+    #     flash('修改成功！', 'success')
+    #     return redirect(request.args.get('next') or url_for('main.'))
+    # # form.course_info.data = course.course_info
+    # # form.place.data = course.place
+    # # form.outline.data = course.outline
+    # # form.credit.data = course.credit
+    # # form.teamsize.data = course.teamsize
+    course_list = models.Course.query.all()  # 显示课程
+    return render_template('auth_teacher/teacher_course_info.html', form=form, courses=course_list, semesters=semester_list)    #负责人：李玮晨 状态：未测试
+
+
 @main.route('/index-teacher/teacher-resource', methods=['GET', 'POST'])
 def teacher_resource():
     return render_template('auth_teacher/teacher_resource.html')
