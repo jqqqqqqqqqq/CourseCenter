@@ -90,27 +90,27 @@ def teacher_teammanagement():
     return render_template('auth_teacher/teacher_teammanagement.html')
 
 
-@main.route('/set-course-info', methods=['GET', 'POST'])
-def set_course_info():
-    form = CourseForm()
-    course = models.Course.query.filter_by(id=this_term).first()
-    session['course_id'] = course.id
-    if form.validate_on_submit():
-        print(form.course_info.data)
-        # _course = models.Course()
-        course.course_info = form.course_info.data
-        course.place = form.place.data
-        course.outline = form.outline.data
-        course.credit = int(form.credit.data)
-        course.teamsize = int(form.teamsize.data)
-        db.session.commit()
-        return redirect(request.args.get('next') or url_for('main.set_course_info'))
-    form.course_info.data = course.course_info
-    form.place.data = course.place
-    form.outline.data = course.outline
-    form.credit.data = course.credit
-    form.teamsize.data = course.teamsize
-    return render_template('set_course_info.html', form=form)
+# @main.route('/set-course-info', methods=['GET', 'POST'])
+# def set_course_info():
+#     form = CourseForm()
+#     course = models.Course.query.filter_by(id=this_term).first()
+#     session['course_id'] = course.id
+#     if form.validate_on_submit():
+#         print(form.course_info.data)
+#         # _course = models.Course()
+#         course.course_info = form.course_info.data
+#         course.place = form.place.data
+#         course.outline = form.outline.data
+#         course.credit = int(form.credit.data)
+#         course.teamsize = int(form.teamsize.data)
+#         db.session.commit()
+#         return redirect(request.args.get('next') or url_for('main.set_course_info'))
+#     form.course_info.data = course.course_info
+#     form.place.data = course.place
+#     form.outline.data = course.outline
+#     form.credit.data = course.credit
+#     form.teamsize.data = course.teamsize
+#     return render_template('set_course_info.html', form=form)
 
 
 @main.route('/manage/course', methods=['GET', 'POST'])
@@ -135,3 +135,14 @@ def manage_course():
     form.credit.data = course.credit
     form.teamsize.data = course.teamsize
     return render_template('manage/course.html', form=form)
+
+
+@main.route('/teacher', methods=['GET', 'POST'])
+def teacher_index():
+    # TODO: 这个是要被合并到主index里的 登陆做完之后应该通过获取用户组来判断进入那个index
+    return render_template('teacher/index.html')
+
+
+@main.route('/teacher/course', methods=['GET', 'POST'])
+def set_course_info():
+    return render_template('teacher/course.html')
