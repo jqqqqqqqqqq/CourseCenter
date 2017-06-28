@@ -8,7 +8,7 @@ from datetime import date
 from .forms import CourseForm, UploadForm
 from app.models import models
 from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 this_term = 1  # TODO: add semester selection
 from flask import request
@@ -17,6 +17,12 @@ import openpyxl
 from config import basedir
 
 ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
+
+
+@main.before_request
+@login_required
+def before_request():
+    pass
 
 
 @main.route('/', methods=['GET', 'POST'])
