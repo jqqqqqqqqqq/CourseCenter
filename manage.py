@@ -24,6 +24,8 @@ def deploy():
     """部署数据库"""
     upgrade()
     DeanInfo.init_dean()
+    Teacher.init_teacher()
+    Student.init_student()
 
 if __name__ == '__main__':
     manager.run()
