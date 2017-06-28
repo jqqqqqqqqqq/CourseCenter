@@ -120,6 +120,26 @@ def manage_course():
     form.semester.choices = [(a.id, str(a.id / 100) + '学年第' + str(a.id % 100) + '学期') for a in semester_list]
     # course = models.Course.query.filter_by(id=this_term).first()
     # session['course_id'] = course.id
+    if 'action' in request.args:
+        if request.args['action'] == 'delete':
+            _course = models.Course.query.filter_by(id=int(request.args['id'])).first()
+            if not _course:
+                flash('找不到该课程', 'danger')
+                return redirect(request.args.get('next') or url_for('main.manage_course'))
+            db.session.delete(_course)
+            db.session.commit()
+            flash('删除成功', 'success')
+            return redirect(request.args.get('next') or url_for('main.manage_course'))
+        elif request.args['action'] == 'end':
+            _course = models.Course.query.filter_by(id=int(request.args['id'])).first()
+            if not _course:
+                flash('找不到该课程', 'danger')
+                return redirect(request.args.get('next') or url_for('main.manage_course'))
+            _course.status = False
+            db.session.commit()
+            flash('结束成功', 'success')
+            return redirect(request.args.get('next') or url_for('main.manage_course'))
+
     if form.validate_on_submit():
         print(form.course_info.data)
         # _course = models.Course()

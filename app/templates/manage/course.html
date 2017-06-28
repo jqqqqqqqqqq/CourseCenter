@@ -82,6 +82,10 @@
                     <h3 class="box-title">
                          课程名称：{{course.name | safe}}
                     </h3>
+                    <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-sm btn-primary" data-widget="collapse"><i
+                            class="fa fa-plus"></i></button>
+                    </div>
                 </div>
                 <!-- /.box-header -->
                 <div class="box-body">
@@ -104,6 +108,10 @@
                 </div>
                 <div class="box-body">
                     小组人数：{{ course.teamsize | int }}
+                </div>
+                <div class="box-body">
+                    <button class="btn btn-primary btn-block btn-flat" onclick="location.href='{{url_for("main.manage_course")}}?action=delete&id={{course.id}}'">删除</button>
+                    <button class="btn btn-primary btn-block btn-flat" onclick="location.href='{{url_for("main.manage_course")}}?action=end&id={{course.id}}'">结束学期</button>
                 </div>
 
                 <!-- /.box-body -->
