@@ -13,7 +13,7 @@ from werkzeug.utils import secure_filename
 from flask import request
 from .. import config
 
-ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
+ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -58,12 +58,25 @@ def manage_semester():
 #             return redirect(url_for('uploaded_file',
 #                                     filename=filename))
 
-
+ # 实验版本，未完成↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
 @main.route('/index-teacher', methods=['GET', 'POST'])
 def index_teacher():
     return render_template('auth_teacher/index_teacher.html')
 
+@main.route('/index-teacher/teacher-coures_info', methods=['GET', 'POST'])
+def teacher_course_info():
+    form = CourseForm()
+    course = models.Course.query.filter_by(id=this_term).first()
+    if form.validate_on_submit():
+        course.course_info = form.course_info.data
+        course.outline = form.outline.data
+        return redirect(request.args.get('next') or url_for('main.'))
+    form.outline.data = course.outline
+    form.course_info = course.course_info
+    return render_template('auth_teacher/teacher_course_info.html', form=form)
+
+# 实验版本，未完成↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 @main.route('/index-teacher/teacher-course', methods=['GET', 'POST'])
 def teacher_course():
