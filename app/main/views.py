@@ -22,7 +22,7 @@ def index():
     return render_template('index.html')
 
 
-@main.route('/manage-semester', methods=['GET', 'POST'])
+@main.route('/manage/semester', methods=['GET', 'POST'])
 def manage_semester():
     form = AddSemesterForm()
     if form.validate_on_submit():
@@ -40,7 +40,7 @@ def manage_semester():
         flash('添加成功！', 'success')
         return redirect(url_for('main.manage_semester'))
     semester_list = Semester.query.all()
-    return render_template('manage_semester.html', form=form, semesters=semester_list)
+    return render_template('manage/semester.html', form=form, semesters=semester_list)
 
 # 可能会使用的上传文件函数
 # def allowed_file(filename):
@@ -113,7 +113,7 @@ def set_course_info():
     return render_template('set_course_info.html', form=form)
 
 
-@main.route('/manage-course', methods=['GET', 'POST'])
+@main.route('/manage/course', methods=['GET', 'POST'])
 def manage_course():
     form = CourseForm()
     # course = models.Course.query.filter_by(id=this_term).first()
