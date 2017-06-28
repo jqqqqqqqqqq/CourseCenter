@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_user
+from flask_login import login_user, logout_user, login_required
 from .forms import LoginForm
 from . import auth
 from ..models.models import DeanInfo, Student, Teacher
@@ -27,3 +27,10 @@ def login():
         flash('用户名或账户错误')
 
     return render_template('auth/login.html', form=form)
+
+
+@auth.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('auth.login'))
