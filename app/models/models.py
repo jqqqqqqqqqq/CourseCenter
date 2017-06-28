@@ -73,7 +73,7 @@ class Team(db.Model):
     __tablename__ = 'teams'
     id = db.Column(db.Integer, primary_key=True)
     team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
-    status = db.Column(db.Integer)
+    status = db.Column(db.Integer)  # 0: pending 1: accepted 2: rejected
     reject_reason = db.Column(db.Text)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
 
