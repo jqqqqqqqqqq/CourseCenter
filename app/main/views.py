@@ -146,3 +146,10 @@ def teacher_index():
 @main.route('/teacher/course', methods=['GET', 'POST'])
 def set_course_info():
     return render_template('teacher/course.html')
+
+
+@main.route('/teacher/resource', methods=['GET', 'POST'])
+def resource():
+    return render_template('teacher/resource.html')
+
+

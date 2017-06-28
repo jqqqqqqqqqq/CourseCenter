@@ -1,0 +1,90 @@
+{% extends "base_main.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - 课程资源管理{% endblock %}
+
+{% block content_header %}
+    <h1>课程资源管理</h1>
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        .file-control {
+            margin: 10px;
+        }
+    </style>
+{% endblock %}
+
+
+{% block breadcrumb %}
+    <li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
+    <li class="active">课程信息</li>
+{% endblock %}
+
+{% block content_main %}
+    <article>
+        <div class="box box-primary course-box" data-href="#">
+            <div class="box-header with-border">
+                <h3 class="box-title">
+                    /
+                </h3>
+            </div>
+            <div class="box-body no-padding">
+                <div class="file-control">
+                    <div class="btn-group">
+                        <button class="btn btn-default btn-sm">
+                            <i class="fa fa-upload"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm">
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
+                    <botton type="botton" class="btn btn-default btn-sm">
+                        <i class="fa fa-folder-o"></i>
+                    </botton>
+                </div>
+                <div class="table-responsive file-list">
+                    <table class="table table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th width="40"><input type="checkbox"></th>
+                                <th width="30"></th>
+                                <th>文件名</th>
+                                <th width="10%">大小</th>
+                                <th width="20%">修改日期</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><i class="fa fa-file"></i></td>
+                                <td><a href="#">这里有一个，文件</a></td>
+                                <td>10000000TB</td>
+                                <td>一个世纪以前</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><i class="fa fa-folder"></i></td>
+                                <td><a href="#">这里有一个，文件夹</a></td>
+                                <td>100000000000PB</td>
+                                <td>白垩纪</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- /.box-primary -->
+    </article>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+    <script>
+        $('.file-list input[type="checkbox"]').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            radioClass: 'iradio_square-blue'
+        });
+    </script>
+{% endblock %}
