@@ -62,7 +62,6 @@ class Student(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     password_hash = db.Column(db.String(128))
     name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
-    role = db.Column(db.Integer)
 
     @property
     def password(self):
@@ -82,10 +81,11 @@ class Student(UserMixin, db.Model):
 class Team(db.Model):
     __tablename__ = 'teams'
     id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
     status = db.Column(db.Integer)
     reject_reason = db.Column(db.Text)
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
 
     def __repr__(self):
         return '<Team %r>' % self.id
@@ -94,8 +94,8 @@ class Team(db.Model):
 class TeamMember(db.Model):
     __tablename__ = 'team_members'
     id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), primary_key=True)
-    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
     team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
 
     def __repr__(self):
@@ -105,7 +105,7 @@ class TeamMember(db.Model):
 class Homework(db.Model):
     __tablename__ = 'homework'
     id = db.Column(db.Integer, primary_key=True)
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
     base_requirement = db.Column(db.Text)
     begin_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
@@ -116,11 +116,11 @@ class Homework(db.Model):
         return '<Homework %r>' % self.id
 
 
-class Submission(db.Model):
+class Submission(db.Model):                       # 学生提交作业信息
     __tablename__ = 'submissions'
     id = db.Column(db.Integer, primary_key=True)
-    homework_id = db.Column(db.Integer, db.ForeignKey('homework.id'), primary_key=True)
-    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), primary_key=True)
+    homework_id = db.Column(db.Integer, db.ForeignKey('homework.id'))
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
     text_content = db.Column(db.Text)
     score = db.Column(db.Integer)
     comments = db.Column(db.Text)
@@ -130,10 +130,10 @@ class Submission(db.Model):
         return '<Submission %r>' % self.id
 
 
-class Attachment(db.Model):
+class Attachment(db.Model):                       # 学生提交作业附件信息
     __tablename__ = 'attachments'
     id = db.Column(db.Integer, primary_key=True)
-    submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'), primary_key=True)
+    submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'))
     guid = db.Column(db.Text)
     status = db.Column(db.Boolean)
 

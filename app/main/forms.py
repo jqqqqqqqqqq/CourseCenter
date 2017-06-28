@@ -6,6 +6,7 @@ from wtforms.validators import DataRequired, Length, InputRequired
 from flask_uploads import UploadSet
 
 ups = UploadSet('files', extensions=('xls', 'xlsx'))
+homework_ups = UploadSet('files', extensions=('txt', 'doc', 'docx'))  # 暂时只允许提交三种作业文件
 
 
 class SemesterForm(FlaskForm):
@@ -40,3 +41,9 @@ class UploadForm(FlaskForm):
             FileAllowed(ups, u'只接受xls(或xlsx)文件!'),
             FileRequired(u'文件未选择!')])
     submit = SubmitField(u'上传')
+
+
+class HomeworkForm(FlaskForm):
+    text = TextAreaField('作业')
+    homework_up = FileField(validators=[
+        FileAllowed(homework_ups, u'只接受txt和doc(docx)文件!')])
