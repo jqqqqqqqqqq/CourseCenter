@@ -51,8 +51,6 @@
                         <dd>{{ course.outline | safe }}</dd>
                         <dt>学分</dt>
                         <dd>{{ course.credit | int }}</dd>
-                        <dt>小组人数</dt>
-                        <dd>{{ course.teamsize | int }}</dd>
                     </dl>
 {#                    <button class="btn btn-primary btn-block btn-flat" onclick="location.href='{{url_for("main.manage_course")}}?action=delete&id={{course.id}}'">删除</button>#}
 {#                    <button class="btn btn-primary btn-block btn-flat" onclick="location.href='{{url_for("main.manage_course")}}?action=end&id={{course.id}}'">结束学期</button>#}
@@ -137,9 +135,7 @@
                     {{ wtf.form_field(form.semester) }}
                     {{ wtf.form_field(form.course_info) }}
                     {{ wtf.form_field(form.place) }}
-                    {{ wtf.form_field(form.outline) }}
                     {{ wtf.form_field(form.credit) }}
-                    {{ wtf.form_field(form.teamsize) }}
                     {{ wtf.form_field(form.stuff_info) }}
 
                     <button type="submit" class="btn btn-primary btn-block btn-flat">提交</button>
@@ -154,6 +150,5 @@
 {{ super() }}
     <script>
         $('#credit').attr('type', 'number');
-        $('#teamsize').attr('type', 'number');
     </script>
 {% endblock %}

@@ -1,10 +1,9 @@
 from flask import render_template, redirect, url_for, flash, request, session
 from . import main
-from .forms import AddSemesterForm
 from .. import db
 import os
 from datetime import date
-from .forms import CourseForm, UploadForm
+from .forms import AddSemesterForm, CourseForm, CourseFormTeacher
 from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
 from flask_login import current_user, login_required
 from functools import wraps
@@ -190,10 +189,11 @@ def manage_course():
         course.name = form.name.data
         course.course_info = form.course_info.data
         course.place = form.place.data
-        course.outline = form.outline.data
         course.credit = int(form.credit.data)
-        course.teamsize = int(form.teamsize.data)
         course.semester_id = form.semester.data
+        course.outline = '无'
+        course.teamsize_min = 1
+        course.teamsize_max = 5
         course.status = True
 
         db.session.add(course)
@@ -266,7 +266,20 @@ def manage_course():
 @UserAuth.teacher
 @UserAuth.teacher_course_access
 def set_course_info(course_id):
-    return render_template('teacher/course.html', course_id=course_id)
+    form = CourseFormTeacher()
+    course = Course.query.filter_by(id=course_id).first()
+    if form.validate_on_submit():
+        course.outline = form.outline.data
+        course.teamsize_min = form.teamsize_min.data
+        course.teamsize_max = form.teamsize_max.data
+        db.session.add(course)
+        db.session.commit()
+        flash('修改成功！', 'success')
+        return redirect(url_for('main.set_course_info', course_id=course_id))
+    form.outline.data = course.outline
+    form.teamsize_min.data = course.teamsize_min
+    form.teamsize_max.data = course.teamsize_max
+    return render_template('teacher/course.html', course_id=course_id, form=form, course=course)
 
 
 @main.route('/teacher/<course_id>/resource', methods=['GET', 'POST'])
