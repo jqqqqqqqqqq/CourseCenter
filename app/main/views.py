@@ -5,15 +5,16 @@ from .. import db
 from ..models.models import Semester
 import os, time
 from datetime import date
-from .forms import CourseForm
+from .forms import CourseForm, UploadForm
 from app.models import models
 
 this_term = 1  # TODO: add semester selection
 from werkzeug.utils import secure_filename
 from flask import request
-from .. import config
+from .. import config, ups
+import openpyxl
 
-ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}
+ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -42,41 +43,44 @@ def manage_semester():
     semester_list = Semester.query.all()
     return render_template('manage/semester.html', form=form, semesters=semester_list)
 
-# 可能会使用的上传文件函数
-# def allowed_file(filename):
-#     return '.' in filename and \
-#            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-#
-#
-# @main.route('/upload_file', methods=['GET', 'POST'])
-# def upload_file():
-#     if request.method == 'POST':
-#         file = request.files['file']
-#         if file and allowed_file(file.filename):
-#             filename = secure_filename(file.filename)
-#             file.save(os.path.join(config['UPLOAD_FOLDER'], filename))
-#             return redirect(url_for('uploaded_file',
-#                                     filename=filename))
 
- # 实验版本，未完成↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+def read_file(file_path):
+    workbook = openpyxl.load_workbook(filename=file_path)  # 打开xls文件
+
+    sheet_student = workbook.get_sheet_by_name('学生信息')
+    sheet_teacher = workbook.get_sheet_by_name('老师信息')  # 通过sheet名字访问sheet
+    student_info = []
+    teacher_info = []
+    for i in range(2, sheet_student.max_row + 1):
+        student_list = {'id': sheet_student.cell(row=i, column=1).value,
+                        'name': sheet_student.cell(row=i, column=2).value,
+                        'password': 666}  # 学生初始密码 666
+        student_info.append(student_list)
+    for i in range(2, sheet_teacher.max_row + 1):
+        teacher_list = {'id': sheet_student.cell(row=i, column=1).value,
+                        'name': sheet_student.cell(row=i, column=2).value,
+                        'teacher_info': sheet_student.cell(row=i, column=3).value,
+                        'password': 666}  # 老师初始密码 666
+        teacher_info.append(teacher_list)
+    return student_info, teacher_info
+
+
+@main.route('/uploads', methods=['GET', 'POST'])
+def upload_file():
+    form = UploadForm()
+    if form.validate_on_submit():
+        filename = ups.save(form.up.data)
+        file_url = ups.url(filename)
+
+    else:
+        file_url = None
+    return render_template('upload.html', form=form, file_url=file_url)
+
 
 @main.route('/index-teacher', methods=['GET', 'POST'])
 def index_teacher():
     return render_template('auth_teacher/index_teacher.html')
 
-@main.route('/index-teacher/teacher-coures_info', methods=['GET', 'POST'])
-def teacher_course_info():
-    form = CourseForm()
-    course = models.Course.query.filter_by(id=this_term).first()
-    if form.validate_on_submit():
-        course.course_info = form.course_info.data
-        course.outline = form.outline.data
-        return redirect(request.args.get('next') or url_for('main.'))
-    form.outline.data = course.outline
-    form.course_info = course.course_info
-    return render_template('auth_teacher/teacher_course_info.html', form=form)
-
-# 实验版本，未完成↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 @main.route('/index-teacher/teacher-course', methods=['GET', 'POST'])
 def teacher_course():
@@ -144,6 +148,7 @@ def manage_course():
         course.credit = int(form.credit.data)
         course.teamsize = int(form.teamsize.data)
         course.semester_id = form.semester.data
+        course.status = True
         db.session.add(course)
         db.session.commit()
         flash('添加成功！', 'success')

@@ -142,14 +142,10 @@ class Course(db.Model):
     outline = db.Column(db.Text)
     credit = db.Column(db.Integer)
     teamsize = db.Column(db.Integer)
+    status = db.Column(db.Boolean)
 
     def __repr__(self):
         return '<Course %r>' % self.id
-
-    def update_course(self, course):
-
-        db.session.add(course)
-        db.session.commit()
 
 
 class CourseTime(db.Model):
@@ -176,6 +172,7 @@ class TeacherTeam(db.Model):
 class Teacher(UserMixin, db.Model):
     __tablename__ = 'teachers'
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128))
     password_hash = db.Column(db.String(128))
     teacher_info = db.Column(db.Text)
 
