@@ -1,0 +1,73 @@
+{% extends "base_main.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - 课程管理{% endblock %}
+
+{% block content_header %}
+    <h1>课程信息</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
+    <li class="active">课程信息</li>
+{% endblock %}
+
+{% block content_main %}
+    <article>
+        <div class="box box-primary course-box" data-href="#">
+            <div class="box-header with-border">
+                <h3 class="box-title">
+                    2015第3学期
+                </h3>
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-sm btn-primary" data-toggle="tooltip"
+                            data-original-title="编辑" id="toggleEdit">
+                        <i class="fa fa-edit"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="box-body">
+                <form action="" method="post">
+                    <div class="form-group">
+                        <label for="">课程要求</label>
+                        <textarea class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="">团队人数上下限</label>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <input type="number" class="form-control" placeholder="下限">
+                            </div>
+                            <div class="col-xs-6">
+                                <input type="number" class="form-control" placeholder="上限">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="">课程大纲</label>
+                        <textarea class="form-control"></textarea>
+                    </div>
+                    <input type="submit" class="form-control btn btn-primary btn-block">
+                </form>
+            </div>
+        </div>
+        <!-- /.box-primary -->
+    </article>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $('#toggleEdit').click(function () {
+        if($(this).hasClass('btn-danger')) {
+            $(this).removeClass('btn-danger');
+            $(this).addClass('btn-primary');
+            $('.form-control').hide();
+        } else {
+            $(this).removeClass('btn-primary');
+            $(this).addClass('btn-danger');
+            $('.form-control').show();
+        }
+    });
+</script>
+{% endblock %}

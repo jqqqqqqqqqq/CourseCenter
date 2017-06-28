@@ -48,7 +48,7 @@ class Semester(db.Model):
 
 
 class SCRelationship(db.Model):     # 学生课程之间的关系 (多对多)
-    __tablename__ = 'SCRelationship'
+    __tablename__ = 'sc_elationship'
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
@@ -145,7 +145,6 @@ class Course(db.Model):
     __tablename__ = 'courses'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
-    teacherTeam_id = db.Column(db.Integer, db.ForeignKey('teacher_teams.id'))
     semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
     course_info = db.Column(db.Text)
     place = db.Column(db.String(50))
@@ -170,13 +169,14 @@ class CourseTime(db.Model):
         return '<CourseTime %r>' % self.id
 
 
-class TeacherTeam(db.Model):
-    __tablename__ = 'teacher_teams'
+class TCRelationship(db.Model):
+    __tablename__ = 'tc_relationship'
     id = db.Column(db.Integer, primary_key=True)
     teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'))
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
 
     def __repr__(self):
-        return '<TeacherTeam %r>' % self.id
+        return '<TCRelationship %r>' % self.id
 
 
 class Teacher(UserMixin, db.Model):

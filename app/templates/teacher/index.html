@@ -1,0 +1,59 @@
+{% extends "base_main.html" %}
+
+{% block title %}{{ super() }} - 课程管理{% endblock %}
+
+{% block content_header %}
+    <h1>课程选择
+        <small>请选择一节课</small>
+    </h1>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li class="active"><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        .course-box {
+            cursor: pointer;
+            user-select: none;
+        }
+    </style>
+{% endblock %}
+
+{% block content_main %}
+    <article>
+        <div class="row">
+            <div class="col-xs-6">
+                <div class="box box-primary course-box" data-href="#">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">
+                            2015第3学期
+                        </h3>
+                    </div>
+                    <div class="box-body">
+                        <dl class="dl-horizontal">
+                            <dt>时间</dt>
+                            <dd>一些时间到另一些时间</dd>
+                            <dt>上课地点</dt>
+                            <dd>一些地点</dd>
+                            <dt>学生人数</dt>
+                            <dd>大概全宇宙的学生</dd>
+                        </dl>
+                    </div>
+                </div>
+                <!-- /.box-primary -->
+            </div>
+        </div>
+    </article>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        $('.course-box').click(function () {
+            window.location.href = $(this).data('href');
+        });
+    </script>
+{% endblock %}
