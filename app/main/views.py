@@ -131,6 +131,7 @@ def manage_course():
         course.credit = int(form.credit.data)
         course.teamsize = int(form.teamsize.data)
         course.semester_id = form.semester.data
+        course.status = True
         db.session.add(course)
         db.session.commit()
         flash('添加成功！', 'success')
