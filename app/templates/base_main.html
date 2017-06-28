@@ -121,9 +121,13 @@ desired effect
 {#                </ul>#}
 {#                <!-- /.sidebar-menu -->#}
                 <ul class="sidebar-menu">
-                    <li><a href="{{ url_for('main.manage_semester') }}"><i class="fa fa-calendar"></i> <span>学期管理</span></a></li>
-                    <li><a href="{{ url_for('main.manage_course') }}"><i class="fa fa-book"></i> <span>课程管理</span></a></li>
-                    <li><a href="{{ url_for('main.set_course_info') }}"><i class="fa fa-book"></i> <span>课程信息</span></a></li>
+                    {% if current_user.user_type() == 0 %}
+                        <li><a href="{{ url_for('main.manage_semester') }}"><i class="fa fa-calendar"></i> <span>学期管理</span></a></li>
+                        <li><a href="{{ url_for('main.manage_course') }}"><i class="fa fa-book"></i> <span>课程管理</span></a></li>
+                    {% elif current_user.user_type() == 1 %}
+                        <li><a href="{{ url_for('main.set_course_info') }}"><i class="fa fa-book"></i> <span>课程信息</span></a></li>
+                    {% elif current_user.user_type() == 2 %}
+                    {% endif %}
                 </ul>
             </section>
             <!-- /.sidebar -->

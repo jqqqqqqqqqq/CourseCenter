@@ -23,6 +23,10 @@ class DeanInfo(UserMixin, db.Model):
         return self.id
 
     @staticmethod
+    def user_type():
+        return 0
+
+    @staticmethod
     def init_dean():
         """野兽先辈管理员说"""
         dean = DeanInfo.query.first()
@@ -73,6 +77,10 @@ class Student(UserMixin, db.Model):
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    @staticmethod
+    def user_type():
+        return 2
 
     def __repr__(self):
         return '<Student %r>' % self.id
@@ -196,6 +204,10 @@ class Teacher(UserMixin, db.Model):
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    @staticmethod
+    def user_type():
+        return 1
 
     def __repr__(self):
         return '<Teacher %r>' % self.id
