@@ -134,6 +134,7 @@ class Attachment(db.Model):
 class Course(db.Model):
     __tablename__ = 'courses'
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
     teacherTeam_id = db.Column(db.Integer, db.ForeignKey('teacher_teams.id'))
     semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
     course_info = db.Column(db.Text)

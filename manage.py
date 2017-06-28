@@ -22,6 +22,5 @@ def deploy():
     upgrade()
     DeanInfo.init_dean()
 
-
 if __name__ == '__main__':
     manager.run()

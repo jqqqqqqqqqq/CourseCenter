@@ -116,22 +116,29 @@ def set_course_info():
 @main.route('/manage-course', methods=['GET', 'POST'])
 def manage_course():
     form = CourseForm()
-    course = models.Course.query.filter_by(id=this_term).first()
-    session['course_id'] = course.id
+    # course = models.Course.query.filter_by(id=this_term).first()
+    # session['course_id'] = course.id
     if form.validate_on_submit():
         print(form.course_info.data)
         # _course = models.Course()
+        course = models.Course()
+        course.name = form.name.data
         course.course_info = form.course_info.data
         course.place = form.place.data
         course.outline = form.outline.data
         course.credit = int(form.credit.data)
         course.teamsize = int(form.teamsize.data)
+        course.semester_id = int(form.semester_id.data)
+        db.session.add(course)
         db.session.commit()
-        flash('编辑成功！', 'success')
+        flash('添加成功！', 'success')
         return redirect(request.args.get('next') or url_for('main.manage_course'))
-    form.course_info.data = course.course_info
-    form.place.data = course.place
-    form.outline.data = course.outline
-    form.credit.data = course.credit
-    form.teamsize.data = course.teamsize
-    return render_template('manage_course.html', form=form)
+    # form.course_info.data = course.course_info
+    # form.place.data = course.place
+    # form.outline.data = course.outline
+    # form.credit.data = course.credit
+    # form.teamsize.data = course.teamsize
+
+    course_list = models.Course.query.all()  # 显示课程
+    semester_list = Semester.query('id')
+    return render_template('manage_course.html', form=form, courses=course_list, semesters=semester_list)
