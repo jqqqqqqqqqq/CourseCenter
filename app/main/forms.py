@@ -32,6 +32,7 @@ class AddSemesterForm(FlaskForm):
     base_info = TextAreaField('学期基本信息')
     time = StringField('学期时间', validators=[DataRequired()])
 
+
 class UploadForm(FlaskForm):
     up = FileField(validators=[
             FileAllowed(ups, u'只接受xls(或xlsx)文件!'),
