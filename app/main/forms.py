@@ -1,12 +1,9 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, BooleanField, SelectField, DateField, SubmitField, IntegerField
-<<<<<<< HEAD
 from wtforms.validators import DataRequired, Length
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-=======
 from wtforms import RadioField
 from wtforms.validators import DataRequired, Length, InputRequired
->>>>>>> 253d2068f75cbedf8d9fa3e5f3fd82848ce4b4f9
 # from ..models.models import Semester
 from flask_uploads import UploadSet
 
