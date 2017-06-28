@@ -2,13 +2,12 @@ from flask import render_template, redirect, url_for, flash, request, session
 from . import main
 from .forms import AddSemesterForm
 from .. import db
-from ..models.models import Semester
 import os
 from datetime import date
 from .forms import CourseForm, UploadForm
-from app.models import models
-from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course
+from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
 from flask_login import current_user, login_required
+from functools import wraps
 
 this_term = 1  # TODO: add semester selection
 from flask import request
@@ -19,6 +18,55 @@ from config import basedir
 ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
 
 
+class UserAuth:
+    """
+    权限认证装饰器，对应装饰器应用在route下即可，若权限不够将返回主页
+    """
+    @staticmethod
+    def dean(func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            if not current_user.user_type() == 0:
+                flash('无权限', 'danger')
+                return redirect(url_for('main.index'))
+            else:
+                return func(*args, **kwargs)
+        return decorated
+
+    @staticmethod
+    def teacher(func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            if not current_user.user_type() == 1:
+                flash('无权限', 'danger')
+                return redirect(url_for('main.index'))
+            else:
+                return func(*args, **kwargs)
+        return decorated
+
+    @staticmethod
+    def student(func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            if not current_user.user_type() == 2:
+                flash('无权限！', 'danger')
+                return redirect(url_for('main.index'))
+            else:
+                return func(*args, **kwargs)
+        return decorated
+
+    @staticmethod
+    def teacher_course_access(func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            if not TCRelationship.query.filter_by(teacher_id=current_user.id, course_id=kwargs['course_id']).first():
+                flash('无权限！', 'danger')
+                return redirect(url_for('main.index'))
+            else:
+                return func(*args, **kwargs)
+        return decorated
+
+
 @main.before_request
 @login_required
 def before_request():
@@ -27,11 +75,18 @@ def before_request():
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    # return redirect(url_for('auth.login'))
+    if current_user.user_type() == 1:
+        tcrels = TCRelationship.query.filter_by(teacher_id=current_user.id).all()
+        courses = []
+        for rel in tcrels:
+            courses.append(Course.query.filter_by(id=rel.course_id).first())
+        return render_template('teacher/index.html', courses=courses)
+
     return render_template('index.html')
 
 
 @main.route('/manage/semester', methods=['GET', 'POST'])
+@UserAuth.dean
 def manage_semester():
     form = AddSemesterForm()
     if form.validate_on_submit():
@@ -72,39 +127,6 @@ def read_file(file_path):
         teacher_info.append(teacher_list)
     return student_info, teacher_info
 
-
-@main.route('/uploads', methods=['GET', 'POST'])
-def upload_file():
-    form = UploadForm()
-    if form.validate_on_submit():
-        filename = ups.save(form.up.data)
-        file_url = ups.url(filename)
-        file_path = os.path.join(basedir, 'uploads', filename)
-        student_info, teacher_info = read_file(file_path=file_path)
-        for i in student_info:
-            student = Student.query.filter_by(id=i.get('id')).first()
-            if student is None:
-                student = Student()
-            student.id = int(i.get('id'))
-            student.name = i.get('name')
-            student.password = str(i.get('password'))
-            db.session.add(student)
-        for i in teacher_info:
-            teacher = Teacher.query.filter_by(id=i.get('id')).first()
-            if teacher is None:
-                teacher = Teacher()
-            teacher.id = int(i.get('id'))
-            teacher.name = i.get('name')
-            teacher.teacher_info = i.get('teacher_info')
-            teacher.password = str(i.get('password'))
-            db.session.add(teacher)
-        db.session.commit()
-        os.remove(file_path)
-    else:
-        file_url = None
-    return render_template('upload.html', form=form, file_url=file_url)
-
-
 @main.route('/index-teacher', methods=['GET', 'POST'])
 def index_teacher():
     return render_template('auth_teacher/index_teacher.html')
@@ -136,13 +158,14 @@ def teacher_teammanagement():
 
 
 @main.route('/manage/course', methods=['GET', 'POST'])
+@UserAuth.dean
 def manage_course():
     semester_list = Semester.query.all()
     form = CourseForm()
     form.semester.choices = [(a.id, str(a.id / 100) + '学年第' + str(a.id % 100) + '学期') for a in semester_list]
     if 'action' in request.args:
         if request.args['action'] == 'delete':
-            _course = models.Course.query.filter_by(id=int(request.args['id'])).first()
+            _course = Course.query.filter_by(id=int(request.args['id'])).first()
             if not _course:
                 flash('找不到该课程', 'danger')
                 return redirect(request.args.get('next') or url_for('main.manage_course'))
@@ -151,7 +174,7 @@ def manage_course():
             flash('删除成功', 'success')
             return redirect(request.args.get('next') or url_for('main.manage_course'))
         elif request.args['action'] == 'end':
-            _course = models.Course.query.filter_by(id=int(request.args['id'])).first()
+            _course = Course.query.filter_by(id=int(request.args['id'])).first()
             if not _course:
                 flash('找不到该课程', 'danger')
                 return redirect(request.args.get('next') or url_for('main.manage_course'))
@@ -163,7 +186,7 @@ def manage_course():
     if form.validate_on_submit():
 
         # course的基本信息
-        course = models.Course()
+        course = Course()
         course.name = form.name.data
         course.course_info = form.course_info.data
         course.place = form.place.data
@@ -220,7 +243,7 @@ def manage_course():
         flash('添加成功！', 'success')
         return redirect(request.args.get('next') or url_for('main.manage_course'))
 
-    course_list = models.Course.query.all()  # 显示课程
+    course_list = Course.query.all()  # 显示课程
     stuff_list = {}
     for course in course_list:
         sclist = SCRelationship.query.filter_by(course_id=course.id).all()
@@ -239,22 +262,22 @@ def manage_course():
     return render_template('manage/course.html', form=form, courses=course_list, semesters=semester_list, stuff=stuff_list)
 
 
-@main.route('/teacher', methods=['GET', 'POST'])
-def teacher_index():
-    # TODO: 这个是要被合并到主index里的 登陆做完之后应该通过获取用户组来判断进入那个index
-    return render_template('teacher/index.html')
+@main.route('/teacher/<course_id>/course', methods=['GET', 'POST'])
+@UserAuth.teacher
+@UserAuth.teacher_course_access
+def set_course_info(course_id):
+    return render_template('teacher/course.html', course_id=course_id)
 
 
-@main.route('/teacher/course', methods=['GET', 'POST'])
-def set_course_info():
-    return render_template('teacher/course.html')
+@main.route('/teacher/<course_id>/resource', methods=['GET', 'POST'])
+@UserAuth.teacher
+@UserAuth.teacher_course_access
+def manage_resource(course_id):
+    return render_template('teacher/resource.html', course_id=course_id)
 
 
-@main.route('/teacher/resource', methods=['GET', 'POST'])
-def resource():
-    return render_template('teacher/resource.html')
-
-
-@main.route('/teacher/homework', methods=['GET', 'POST'])
-def set_homework():
-    return render_template('teacher/homework.html')
+@main.route('/teacher/<course_id>/homework', methods=['GET', 'POST'])
+@UserAuth.teacher
+@UserAuth.teacher_course_access
+def set_homework(course_id):
+    return render_template('teacher/homework.html', course_id=course_id)
