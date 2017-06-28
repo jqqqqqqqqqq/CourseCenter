@@ -172,6 +172,7 @@ class TeacherTeam(db.Model):
 class Teacher(UserMixin, db.Model):
     __tablename__ = 'teachers'
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128))
     password_hash = db.Column(db.String(128))
     teacher_info = db.Column(db.Text)
 

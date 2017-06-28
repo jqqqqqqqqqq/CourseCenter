@@ -11,7 +11,8 @@ from app.models import models
 this_term = 1  # TODO: add semester selection
 from werkzeug.utils import secure_filename
 from flask import request
-from .. import config
+from .. import config, ups
+import openpyxl
 
 ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
 
@@ -42,21 +43,27 @@ def manage_semester():
     semester_list = Semester.query.all()
     return render_template('manage/semester.html', form=form, semesters=semester_list)
 
-# 可能会使用的上传文件函数
-# def allowed_file(filename):
-#     return '.' in filename and \
-#            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-#
-#
-# @main.route('/upload_file', methods=['GET', 'POST'])
-# def upload_file():
-#     if request.method == 'POST':
-#         file = request.files['file']
-#         if file and allowed_file(file.filename):
-#             filename = secure_filename(file.filename)
-#             file.save(os.path.join(config['UPLOAD_FOLDER'], filename))
-#             return redirect(url_for('uploaded_file',
-#                                     filename=filename))
+
+def read_file(file_path):
+    workbook = openpyxl.load_workbook(filename=file_path)  # 打开xls文件
+
+    sheet_student = workbook.get_sheet_by_name('学生信息')
+    sheet_teacher = workbook.get_sheet_by_name('老师信息')  # 通过sheet名字访问sheet
+    student_info = []
+    teacher_info = []
+    for i in range(2, sheet_student.max_row + 1):
+        student_list = {'id': sheet_student.cell(row=i, column=1).value,
+                        'name': sheet_student.cell(row=i, column=2).value,
+                        'password': 666}  # 学生初始密码 666
+        student_info.append(student_list)
+    for i in range(2, sheet_teacher.max_row + 1):
+        teacher_list = {'id': sheet_student.cell(row=i, column=1).value,
+                        'name': sheet_student.cell(row=i, column=2).value,
+                        'teacher_info': sheet_student.cell(row=i, column=3).value,
+                        'password': 666}  # 老师初始密码 666
+        teacher_info.append(teacher_list)
+    return student_info, teacher_info
+
 
 @main.route('/uploads', methods=['GET', 'POST'])
 def upload_file():
@@ -64,6 +71,7 @@ def upload_file():
     if form.validate_on_submit():
         filename = ups.save(form.up.data)
         file_url = ups.url(filename)
+
     else:
         file_url = None
     return render_template('upload.html', form=form, file_url=file_url)
