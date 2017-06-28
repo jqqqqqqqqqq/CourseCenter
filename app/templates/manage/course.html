@@ -76,6 +76,39 @@
                 </div>
             </div>
         </div>
+        {% for course in courses %}
+            <div class="box box-primary collapsed-box">
+                <div class="box-header with-border">
+                    <h3 class="box-title">
+                         课程名称：{{course.name | safe}}
+                    </h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    状态：{% if course.status %}开课{% else %}结课{% endif %}
+                </div>
+                <div class="box-body">
+                    课程信息：{{ course.course_info | safe }}
+                </div>
+                <div class="box-body">
+                    时间：{{ (course.semester_id / 100) | int }}学年第{{ course.semester_id % 100 }}学期
+                </div>
+                <div class="box-body">
+                    上课地点：{{ course.place | safe }}
+                </div>
+                <div class="box-body">
+                    课程大纲：{{ course.outline | safe }}
+                </div>
+                <div class="box-body">
+                    学分：{{ course.credit | int }}
+                </div>
+                <div class="box-body">
+                    小组人数：{{ course.teamsize | int }}
+                </div>
+
+                <!-- /.box-body -->
+            </div>
+        {% endfor %}
         <!-- /.box -->
         {% for message in get_flashed_messages(with_categories=True) %}
         <div class="alert alert-{{ message[0] }} alert-dismissible">
@@ -83,10 +116,10 @@
             {{ message[1] }}
         </div>
         {% endfor  %}
-        <div class="box box-info collapsed-box">
+        <div class="box box-info">
             <div class="box-header with-border">
                 <h3 class="box-title">
-                    编辑课程
+                    添加课程
                 </h3>
                 <div class="box-tools pull-right">
                     <button type="button" class="btn btn-sm btn-primary" data-widget="collapse"><i
@@ -96,6 +129,8 @@
             <div class="box-body">
                 <form method="post">
                 <div class="set-course">
+                    {{ wtf.form_field(form.name) }}
+                    {{ wtf.form_field(form.semester) }}
                     {{ wtf.form_field(form.course_info) }}
                     {{ wtf.form_field(form.place) }}
                     {{ wtf.form_field(form.outline) }}

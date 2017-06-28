@@ -134,6 +134,7 @@ class Attachment(db.Model):
 class Course(db.Model):
     __tablename__ = 'courses'
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
     teacherTeam_id = db.Column(db.Integer, db.ForeignKey('teacher_teams.id'))
     semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
     course_info = db.Column(db.Text)
@@ -141,14 +142,10 @@ class Course(db.Model):
     outline = db.Column(db.Text)
     credit = db.Column(db.Integer)
     teamsize = db.Column(db.Integer)
+    status = db.Column(db.Boolean)
 
     def __repr__(self):
         return '<Course %r>' % self.id
-
-    def update_course(self, course):
-
-        db.session.add(course)
-        db.session.commit()
 
 
 class CourseTime(db.Model):

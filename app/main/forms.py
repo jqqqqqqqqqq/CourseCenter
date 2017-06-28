@@ -1,7 +1,12 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, BooleanField, SelectField, DateField, SubmitField, IntegerField
+<<<<<<< HEAD
 from wtforms.validators import DataRequired, Length
 from flask_wtf.file import FileField, FileRequired, FileAllowed
+=======
+from wtforms import RadioField
+from wtforms.validators import DataRequired, Length, InputRequired
+>>>>>>> 253d2068f75cbedf8d9fa3e5f3fd82848ce4b4f9
 # from ..models.models import Semester
 from flask_uploads import UploadSet
 
@@ -15,12 +20,12 @@ class SemesterForm(FlaskForm):
 
 
 class CourseForm(FlaskForm):
-    # id = IntegerField('课程ID', validators=[DataRequired()])
     # teacherTeam_id = IntegerField('教师团队ID', validators=[DataRequired()])
-    # semester_id = IntegerField('学期ID', validators=[DataRequired()])
+    semester = SelectField(' 学期', choices=[], validators=[InputRequired()], coerce=int)
+    name = StringField('课程名称', validators=[InputRequired()])
     course_info = TextAreaField('课程基本信息', validators=[])
     place = StringField('地点', validators=[Length(0, 50)])
-    outline = TextAreaField('课程大纲', validators=[])
+    outline = TextAreaField('课程大纲', validators=[InputRequired()])
     credit = IntegerField('学分', validators=[DataRequired()])
     teamsize = IntegerField('课程人数', validators=[DataRequired()])
 

@@ -22,7 +22,7 @@ def index():
     return render_template('index.html')
 
 
-@main.route('/manage-semester', methods=['GET', 'POST'])
+@main.route('/manage/semester', methods=['GET', 'POST'])
 def manage_semester():
     form = AddSemesterForm()
     if form.validate_on_submit():
@@ -40,7 +40,7 @@ def manage_semester():
         flash('添加成功！', 'success')
         return redirect(url_for('main.manage_semester'))
     semester_list = Semester.query.all()
-    return render_template('manage_semester.html', form=form, semesters=semester_list)
+    return render_template('manage/semester.html', form=form, semesters=semester_list)
 
 # 可能会使用的上传文件函数
 # def allowed_file(filename):
@@ -122,25 +122,34 @@ def set_course_info():
     return render_template('set_course_info.html', form=form)
 
 
-@main.route('/manage-course', methods=['GET', 'POST'])
+@main.route('/manage/course', methods=['GET', 'POST'])
 def manage_course():
+    semester_list = Semester.query.all()
     form = CourseForm()
-    course = models.Course.query.filter_by(id=this_term).first()
-    session['course_id'] = course.id
+    form.semester.choices = [(a.id, str(a.id / 100) + '学年第' + str(a.id % 100) + '学期') for a in semester_list]
+    # course = models.Course.query.filter_by(id=this_term).first()
+    # session['course_id'] = course.id
     if form.validate_on_submit():
         print(form.course_info.data)
         # _course = models.Course()
+        course = models.Course()
+        course.name = form.name.data
         course.course_info = form.course_info.data
         course.place = form.place.data
         course.outline = form.outline.data
         course.credit = int(form.credit.data)
         course.teamsize = int(form.teamsize.data)
+        course.semester_id = form.semester.data
+        course.status = True
+        db.session.add(course)
         db.session.commit()
-        flash('编辑成功！', 'success')
+        flash('添加成功！', 'success')
         return redirect(request.args.get('next') or url_for('main.manage_course'))
-    form.course_info.data = course.course_info
-    form.place.data = course.place
-    form.outline.data = course.outline
-    form.credit.data = course.credit
-    form.teamsize.data = course.teamsize
-    return render_template('manage_course.html', form=form)
+    # form.course_info.data = course.course_info
+    # form.place.data = course.place
+    # form.outline.data = course.outline
+    # form.credit.data = course.credit
+    # form.teamsize.data = course.teamsize
+
+    course_list = models.Course.query.all()  # 显示课程
+    return render_template('manage/course.html', form=form, courses=course_list, semesters=semester_list)
