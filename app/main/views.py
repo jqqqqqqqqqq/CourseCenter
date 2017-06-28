@@ -115,7 +115,9 @@ def set_course_info():
 
 @main.route('/manage/course', methods=['GET', 'POST'])
 def manage_course():
+    semester_list = Semester.query.all()
     form = CourseForm()
+    form.semester.choices = [(a.id, str(a.id / 100) + '学年第' + str(a.id % 100) + '学期') for a in semester_list]
     # course = models.Course.query.filter_by(id=this_term).first()
     # session['course_id'] = course.id
     if form.validate_on_submit():
@@ -128,7 +130,7 @@ def manage_course():
         course.outline = form.outline.data
         course.credit = int(form.credit.data)
         course.teamsize = int(form.teamsize.data)
-        course.semester_id = int(form.semester_id.data)
+        course.semester_id = form.semester.data
         db.session.add(course)
         db.session.commit()
         flash('添加成功！', 'success')
@@ -140,5 +142,4 @@ def manage_course():
     # form.teamsize.data = course.teamsize
 
     course_list = models.Course.query.all()  # 显示课程
-    semester_list = Semester.query('id')
-    return render_template('manage_course.html', form=form, courses=course_list, semesters=semester_list)
+    return render_template('manage/course.html', form=form, courses=course_list, semesters=semester_list)

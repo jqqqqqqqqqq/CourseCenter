@@ -80,27 +80,27 @@
             <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title">
-                         {{course.name | safe}}
+                         课程名称：{{course.name | safe}}
                     </h3>
                 </div>
                 <!-- /.box-header -->
                 <div class="box-body">
-                    {{ course.course_info | safe }}
+                    课程信息：{{ course.course_info | safe }}
                 </div>
                 <div class="box-body">
-                    {{ (course.semester_id / 100) | int }}学年第{{ course.semester_id % 100 }}学期
+                    时间：{{ (course.semester_id / 100) | int }}学年第{{ course.semester_id % 100 }}学期
                 </div>
                 <div class="box-body">
-                    {{ course.place | safe }}
+                    上课地点：{{ course.place | safe }}
                 </div>
                 <div class="box-body">
-                    {{ course.outline | safe }}
+                    课程大纲：{{ course.outline | safe }}
                 </div>
                 <div class="box-body">
-                    {{ course.credit | int }}
+                    学分：{{ course.credit | int }}
                 </div>
                 <div class="box-body">
-                    {{ course.teamsize | int }}
+                    小组人数：{{ course.teamsize | int }}
                 </div>
                 <!-- /.box-body -->
             </div>
@@ -125,6 +125,8 @@
             <div class="box-body">
                 <form method="post">
                 <div class="set-course">
+                    {{ wtf.form_field(form.name) }}
+                    {{ wtf.form_field(form.semester) }}
                     {{ wtf.form_field(form.course_info) }}
                     {{ wtf.form_field(form.place) }}
                     {{ wtf.form_field(form.outline) }}

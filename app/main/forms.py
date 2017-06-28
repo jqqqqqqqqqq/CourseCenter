@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, BooleanField, SelectField, DateField, SubmitField, IntegerField
+from wtforms import RadioField
 from wtforms.validators import DataRequired, Length, InputRequired
 # from ..models.models import Semester
 
@@ -13,7 +14,7 @@ class SemesterForm(FlaskForm):
 
 class CourseForm(FlaskForm):
     # teacherTeam_id = IntegerField('教师团队ID', validators=[DataRequired()])
-    semester_id = IntegerField('学期ID', validators=[DataRequired()])
+    semester = SelectField(' 学期', choices=[], validators=[InputRequired()], coerce=int)
     name = StringField('课程名称', validators=[InputRequired()])
     course_info = TextAreaField('课程基本信息', validators=[])
     place = StringField('地点', validators=[Length(0, 50)])
