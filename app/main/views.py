@@ -231,3 +231,24 @@ def manage_course():
         }
 
     return render_template('manage/course.html', form=form, courses=course_list, semesters=semester_list, stuff=stuff_list)
+
+
+@main.route('/teacher', methods=['GET', 'POST'])
+def teacher_index():
+    # TODO: 这个是要被合并到主index里的 登陆做完之后应该通过获取用户组来判断进入那个index
+    return render_template('teacher/index.html')
+
+
+@main.route('/teacher/course', methods=['GET', 'POST'])
+def set_course_info():
+    return render_template('teacher/course.html')
+
+
+@main.route('/teacher/resource', methods=['GET', 'POST'])
+def resource():
+    return render_template('teacher/resource.html')
+
+
+@main.route('/teacher/homework', methods=['GET', 'POST'])
+def set_homework():
+    return render_template('teacher/homework.html')
