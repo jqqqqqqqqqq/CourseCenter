@@ -153,3 +153,6 @@ def resource():
     return render_template('teacher/resource.html')
 
 
+@main.route('/teacher/homework', methods=['GET', 'POST'])
+def set_homework():
+    return render_template('teacher/homework.html')
