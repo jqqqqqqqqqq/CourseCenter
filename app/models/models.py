@@ -79,6 +79,16 @@ class Student(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     @staticmethod
+    def init_student():
+        """野兽先辈学生说"""
+        student = Student.query.first()
+        if student is None:
+            student = Student(id=666)
+            student.password = '666'
+            db.session.add(student)
+            db.session.commit()
+
+    @staticmethod
     def user_type():
         return 2
 
@@ -204,6 +214,16 @@ class Teacher(UserMixin, db.Model):
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    @staticmethod
+    def init_teacher():
+        """野兽先辈老师说"""
+        teacher = Teacher.query.first()
+        if teacher is None:
+            teacher = Teacher(id=777)
+            teacher.password = '777'
+            db.session.add(teacher)
+            db.session.commit()
 
     @staticmethod
     def user_type():
