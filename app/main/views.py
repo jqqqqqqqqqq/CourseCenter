@@ -7,12 +7,14 @@ import os, time
 from datetime import date
 from .forms import CourseForm, UploadForm
 from app.models import models
+from ..models.models import Student, Teacher
 
 this_term = 1  # TODO: add semester selection
 from werkzeug.utils import secure_filename
 from flask import request
 from .. import config, ups
 import openpyxl
+from config import basedir
 
 ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
 
@@ -57,9 +59,9 @@ def read_file(file_path):
                         'password': 666}  # 学生初始密码 666
         student_info.append(student_list)
     for i in range(2, sheet_teacher.max_row + 1):
-        teacher_list = {'id': sheet_student.cell(row=i, column=1).value,
-                        'name': sheet_student.cell(row=i, column=2).value,
-                        'teacher_info': sheet_student.cell(row=i, column=3).value,
+        teacher_list = {'id': sheet_teacher.cell(row=i, column=1).value,
+                        'name': sheet_teacher.cell(row=i, column=2).value,
+                        'teacher_info': sheet_teacher.cell(row=i, column=3).value,
                         'password': 666}  # 老师初始密码 666
         teacher_info.append(teacher_list)
     return student_info, teacher_info
@@ -71,7 +73,27 @@ def upload_file():
     if form.validate_on_submit():
         filename = ups.save(form.up.data)
         file_url = ups.url(filename)
-
+        file_path = os.path.join(basedir, 'uploads', filename)
+        student_info, teacher_info = read_file(file_path=file_path)
+        for i in student_info:
+            student = Student.query.filter_by(id=i.get('id')).first()
+            if student is None:
+                student = Student()
+            student.id = int(i.get('id'))
+            student.name = i.get('name')
+            student.password = str(i.get('password'))
+            db.session.add(student)
+        for i in teacher_info:
+            teacher = Teacher.query.filter_by(id=i.get('id')).first()
+            if teacher is None:
+                teacher = Teacher()
+            teacher.id = int(i.get('id'))
+            teacher.name = i.get('name')
+            teacher.teacher_info = i.get('teacher_info')
+            teacher.password = str(i.get('password'))
+            db.session.add(teacher)
+        db.session.commit()
+        os.remove(file_path)
     else:
         file_url = None
     return render_template('upload.html', form=form, file_url=file_url)

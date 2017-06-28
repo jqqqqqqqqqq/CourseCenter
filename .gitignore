@@ -99,3 +99,5 @@ ENV/
 
 data-dev.sqlite
 data-test.sqlite
+
+uploads/
