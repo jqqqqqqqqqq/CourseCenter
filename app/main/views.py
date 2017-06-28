@@ -129,29 +129,6 @@ def teacher_teammanagement():
     return render_template('auth_teacher/teacher_teammanagement.html')
 
 
-@main.route('/set-course-info', methods=['GET', 'POST'])
-def set_course_info():
-    form = CourseForm()
-    course = models.Course.query.filter_by(id=this_term).first()
-    session['course_id'] = course.id
-    if form.validate_on_submit():
-        print(form.course_info.data)
-        # _course = models.Course()
-        course.course_info = form.course_info.data
-        course.place = form.place.data
-        course.outline = form.outline.data
-        course.credit = int(form.credit.data)
-        course.teamsize = int(form.teamsize.data)
-        db.session.commit()
-        return redirect(request.args.get('next') or url_for('main.set_course_info'))
-    form.course_info.data = course.course_info
-    form.place.data = course.place
-    form.outline.data = course.outline
-    form.credit.data = course.credit
-    form.teamsize.data = course.teamsize
-    return render_template('set_course_info.html', form=form)
-
-
 @main.route('/manage/course', methods=['GET', 'POST'])
 def manage_course():
     semester_list = Semester.query.all()
@@ -159,6 +136,26 @@ def manage_course():
     form.semester.choices = [(a.id, str(a.id / 100) + '学年第' + str(a.id % 100) + '学期') for a in semester_list]
     # course = models.Course.query.filter_by(id=this_term).first()
     # session['course_id'] = course.id
+    if 'action' in request.args:
+        if request.args['action'] == 'delete':
+            _course = models.Course.query.filter_by(id=int(request.args['id'])).first()
+            if not _course:
+                flash('找不到该课程', 'danger')
+                return redirect(request.args.get('next') or url_for('main.manage_course'))
+            db.session.delete(_course)
+            db.session.commit()
+            flash('删除成功', 'success')
+            return redirect(request.args.get('next') or url_for('main.manage_course'))
+        elif request.args['action'] == 'end':
+            _course = models.Course.query.filter_by(id=int(request.args['id'])).first()
+            if not _course:
+                flash('找不到该课程', 'danger')
+                return redirect(request.args.get('next') or url_for('main.manage_course'))
+            _course.status = False
+            db.session.commit()
+            flash('结束成功', 'success')
+            return redirect(request.args.get('next') or url_for('main.manage_course'))
+
     if form.validate_on_submit():
         print(form.course_info.data)
         # _course = models.Course()
