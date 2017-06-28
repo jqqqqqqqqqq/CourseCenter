@@ -5,7 +5,7 @@ from .. import db
 from ..models.models import Semester
 import os, time
 from datetime import date
-from .forms import CourseForm
+from .forms import CourseForm, UploadForm
 from app.models import models
 
 this_term = 1  # TODO: add semester selection
@@ -58,6 +58,15 @@ def manage_semester():
 #             return redirect(url_for('uploaded_file',
 #                                     filename=filename))
 
+@main.route('/uploads', methods=['GET', 'POST'])
+def upload_file():
+    form = UploadForm()
+    if form.validate_on_submit():
+        filename = ups.save(form.up.data)
+        file_url = ups.url(filename)
+    else:
+        file_url = None
+    return render_template('upload.html', form=form, file_url=file_url)
 
 
 @main.route('/index-teacher', methods=['GET', 'POST'])
