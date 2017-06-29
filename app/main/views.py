@@ -3,7 +3,7 @@ from . import main
 from .. import db
 import os
 from datetime import date
-from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr
+from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm
 from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
 from flask_login import current_user, login_required
 from functools import wraps
@@ -144,6 +144,7 @@ def read_file(file_path):
                         'password': 666}  # 老师初始密码 666
         teacher_info.append(teacher_list)
     return student_info, teacher_info
+
 
 @main.route('/index-teacher', methods=['GET', 'POST'])
 def index_teacher():
