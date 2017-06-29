@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SelectField, DateField, SubmitField, IntegerField, \
     FileField
@@ -8,6 +7,7 @@ from flask_uploads import UploadSet
 
 ups = UploadSet('files', extensions=('xls', 'xlsx'))
 homework_ups = UploadSet('files', extensions=('txt', 'doc', 'docx'))  # 暂时只允许提交三种作业文件
+upsr = UploadSet('files', extensions=('xls', 'xlsx', 'pdf', 'doc', 'docx', 'txt', 'zip', '7z', 'rar'))
 
 
 class SemesterForm(FlaskForm):
@@ -46,12 +46,15 @@ class HomeworkForm(FlaskForm):
         FileAllowed(homework_ups, u'只接受txt和doc(docx)文件!')])
 
 
-class AcceptTeam(FlaskForm):
-    id = IntegerField(validators=[InputRequired()])
-    # button = SubmitField('通过')
+class UploadResourceForm(FlaskForm):
+    up = FileField(validators=[
+        FileAllowed(upsr, u'xls, xlsx, pdf, doc, docx, txt, zip, 7z, rar'),
+        FileRequired(u'文件未选择!')])
+    submit = SubmitField(u'上传')
 
 
-class RejectTeam(FlaskForm):
-    id = IntegerField(validators=[InputRequired()])
-    # button = SubmitField('拒绝')
-    reason = TextAreaField('拒绝理由', validators=[InputRequired()])
+class Homework(FlaskForm):
+    base_requirement = StringField('作业要求', validators=[DataRequired()])
+    time = StringField('持续时间', validators=[DataRequired()])
+    weight = IntegerField('权重', validators=[DataRequired()])
+    max_submit_attempts = IntegerField('最大提交次数', validators=[DataRequired()])

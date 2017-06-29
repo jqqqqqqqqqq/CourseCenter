@@ -1,16 +1,15 @@
 from flask import render_template, redirect, url_for, flash, request, session
 from . import main
+from .forms import AddSemesterForm
 from .. import db
 from ..models.models import Semester
 import os
 from datetime import date
-from .forms import *
-from app.models import models
-from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course
+from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm
+from .forms import Homework
+from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
 from flask_login import current_user, login_required
 from functools import wraps
-
-this_term = 1  # TODO: add semester selection
 from flask import request
 from .. import config, ups
 import openpyxl
@@ -67,6 +66,17 @@ class UserAuth:
                 return func(*args, **kwargs)
         return decorated
 
+    @staticmethod
+    def student_course_access(func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            if not SCRelationship.query.filter_by(student_id=current_user.id, course_id=kwargs['course_id']).first():
+                flash('无权限！', 'danger')
+                return redirect(url_for('main.index'))
+            else:
+                return func(*args, **kwargs)
+        return decorated
+
 
 @main.before_request
 @login_required
@@ -76,12 +86,22 @@ def before_request():
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
+
+    #教师特色主页
     if current_user.user_type() == 1:
         tcrels = TCRelationship.query.filter_by(teacher_id=current_user.id).all()
         courses = []
         for rel in tcrels:
             courses.append(Course.query.filter_by(id=rel.course_id).first())
         return render_template('teacher/index.html', courses=courses)
+
+    # 学生特色主页
+    if current_user.user_type() == 2:
+        tcrels = SCRelationship.query.filter_by(student_id=current_user.id).all()
+        courses = []
+        for rel in tcrels:
+            courses.append(Course.query.filter_by(id=rel.course_id).first())
+        return render_template('student/index.html', courses=courses)
 
     return render_template('index.html')
 
@@ -128,6 +148,7 @@ def read_file(file_path):
         teacher_info.append(teacher_list)
     return student_info, teacher_info
 
+
 @main.route('/index-teacher', methods=['GET', 'POST'])
 def index_teacher():
     return render_template('auth_teacher/index_teacher.html')
@@ -138,13 +159,43 @@ def teacher_course():
     return render_template('auth_teacher/teacher_course.html')
 
 
-@main.route('/index-teacher/teacher-resource', methods=['GET', 'POST'])
-def teacher_resource():
-    return render_template('auth_teacher/teacher_resource.html')
+@main.route('/uploadresource', methods=['GET', 'POST'])
+def teacher_resource():  # TODO: add 文件系统
+    form = UploadResourceForm()
+    if form.validate_on_submit():
+        filename = upsr.save(form.up.data)
+        file_url = upsr.url(filename)
+    else:
+        file_url = None
+    return render_template('uploadresource.html', form=form, file_url=file_url)
 
 
 @main.route('/index-teacher/teacher-homework', methods=['GET', 'POST'])
 def teacher_homework():
+    form = Homework()
+    if form.validate_on_submit():
+        begin_time, end_time = form.time.data.split('-')
+        month, day, year = begin_time.split('/')
+        begin_time = date(int(year), int(month), int(day))
+        month, day, year = end_time.split('/')
+        end_time = date(int(year), int(month), int(day))
+        #确定作业ID
+        homework_list = Homework.query.all()
+        list_length = len(homework_list)
+        if list_length == 0:
+            a = 0
+        else:
+            a = list_length+1
+        #确定课程ID
+        relationship = TCRelationship.query.filter_by(teacher_id=forms.form.username.data).first()
+        course = Course.query.filter_by(TCRelationship_id=relationship).first()
+        db.session.add(Homework(id=a, course_id=course.id.data, base_requirement=form.base_requirement.data,
+                                begin_time=begin_time, end_time=end_time, weight=form.weight.data,
+                                max_submit_attempts=form.max_submit_attempts.data))
+        db.session.commit()
+        flash('发布成功！', 'success')
+        return redirect(url_for('uth_teacher/teacher_homework'))
+    homework_list = Homework.query.all()
     return render_template('auth_teacher/teacher_homework.html')
 
 
@@ -155,60 +206,7 @@ def teacher_communicate():
 
 @main.route('/index-teacher/teacher-teammanagement', methods=['GET', 'POST'])
 def teacher_teammanagement():
-    if "accept" in request.form.values():
-        form = AcceptTeam()
-        _team = models.Team.query.filter_by(id=int(form.id.data)).first()
-        if _team:
-            _team.status = 1  # 1是通过
-            db.session.add(_team)
-            db.session.commit()
-            flash("通过成功", "success")
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-        else:
-            flash("找不到此团队", "danger")
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-    elif "reject" in request.form.values():
-        form = RejectTeam()
-        _team = models.Team.query.filter_by(id=int(form.id.data)).first()
-        if _team:
-            _team.status = 2  # 2是拒绝
-            _team.reason = form.reason.data
-            db.session.add(_team)
-            db.session.commit()
-            flash("拒绝成功", "success")
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-        else:
-            flash("找不到此团队", "danger")
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-
-    _team_list = models.Team.query.all()
-
-    class TeamList:
-        id = 0
-        status = 0
-        team_name = ""
-
-        def __init__(self, id, status, team_name):
-            self.id = id
-            self.status = status
-            self.team_name = team_name
-
-    team_list = [TeamList(a.id, a.status, a.team_name) for a in _team_list]
-    for team in team_list:
-        _team_members = models.TeamMember.query.filter_by(team_id=team.id).all()
-        member_name = ""
-        for member in _team_members:
-            real_name = models.Student.query.filter_by(id=member.student_id).first().name
-            member_name += member.team_name + "(" + real_name + "), "
-        team.member_name = member_name  # 把所有人名字构造成一个字符串
-
-        team.accept_form = AcceptTeam()
-        team.accept_form.id.data = team.id
-
-        team.reject_form = RejectTeam()
-        team.reject_form.id.data = team.id
-    return render_template('auth_teacher/teacher_teammanagement.html',
-                           team_list=team_list)
+    return render_template('auth_teacher/teacher_teammanagement.html')
 
 
 @main.route('/manage/course', methods=['GET', 'POST'])
@@ -318,7 +316,6 @@ def manage_course():
 
 
 @main.route('/teacher/<course_id>/course', methods=['GET', 'POST'])
-@UserAuth.teacher
 @UserAuth.teacher_course_access
 def set_course_info(course_id):
     form = CourseFormTeacher()
@@ -338,14 +335,20 @@ def set_course_info(course_id):
 
 
 @main.route('/teacher/<course_id>/resource', methods=['GET', 'POST'])
-@UserAuth.teacher
 @UserAuth.teacher_course_access
 def manage_resource(course_id):
     return render_template('teacher/resource.html', course_id=course_id)
 
 
 @main.route('/teacher/<course_id>/homework', methods=['GET', 'POST'])
-@UserAuth.teacher
 @UserAuth.teacher_course_access
 def set_homework(course_id):
     return render_template('teacher/homework.html', course_id=course_id)
+
+
+@main.route('/student/<course_id>/course', methods=['GET'])
+@UserAuth.student_course_access
+def show_course(course_id):
+    course = Course.query.filter_by(id=course_id).first()
+    return render_template('student/course.html', course_id=course_id, course=course)
+
