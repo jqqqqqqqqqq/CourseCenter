@@ -31,8 +31,8 @@ class CourseForm(FlaskForm):
 class CourseFormTeacher(FlaskForm):
     course_info = TextAreaField('课程基本信息', validators=[InputRequired()])
     outline = TextAreaField('课程大纲', validators=[InputRequired()])
-    teamsize_max = IntegerField('课程人数上限', validators=[DataRequired()])
-    teamsize_min = IntegerField('课程人数下限', validators=[DataRequired()])
+    teamsize_max = IntegerField('团队人数上限', validators=[DataRequired()])
+    teamsize_min = IntegerField('团队人数下限', validators=[DataRequired()])
 
 
 class AddSemesterForm(FlaskForm):
