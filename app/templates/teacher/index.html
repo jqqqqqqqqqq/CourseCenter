@@ -27,7 +27,7 @@
         <div class="row">
         {% for course in courses %}
                 <div class="col-xs-6">
-                    <div class="box box-primary course-box" data-href="/teacher/{{ course.id }}/course">
+                    <div class="box box-{% if course.status %}primary{% else %}default{% endif %} course-box" data-href="/teacher/{{ course.id }}/course">
                         <div class="box-header with-border">
                             <h3 class="box-title">
                                 {{ course.name }}
@@ -39,7 +39,7 @@
                                 <dt>上课地点</dt>
                                 <dd>{{ course.place }}</dd>
                                 <dt>开课状态</dt>
-                                <dd>{{ course.status }}</dd>
+                                <dd>{% if course.status %}开课{% else %}结课{% endif %}</dd>
                             </dl>
                         </div>
                     </div>

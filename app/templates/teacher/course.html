@@ -4,7 +4,7 @@
 {% block title %}{{ super() }} - 课程管理{% endblock %}
 
 {% block content_header %}
-    <h1>课程信息</h1>
+    <h1>{{ course.name }}：课程信息</h1>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -20,7 +20,7 @@
         </div>
     {% endfor  %}
     <article>
-        <div class="box box-primary course-box" data-href="#">
+        <div class="box box-{% if course.status %}primary{% else %}default{% endif %} course-box" data-href="#">
             <div class="box-header with-border">
                 <h3 class="box-title">
                     {{ course.name }}<small>{{ semester(course.semester_id) }}</small>
