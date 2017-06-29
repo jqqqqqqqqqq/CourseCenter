@@ -350,13 +350,15 @@ def set_homework(course_id):
         homework.end_time = end_time
         homework.weight = form.weight.data
         homework.max_submit_attempts = form.max_submit_attempts.data
+        homework.course_id = course_id
 
         db.session.add(homework)
         db.session.commit()
         flash('发布成功！', 'success')
         return redirect(url_for('main.set_homework', course_id=course_id))
-    homework_list = Homework.query.all()
-    return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form)
+    homework_list = Homework.query.filter_by(course_id=course_id).all()
+    course = Course.query.filter_by(id=course_id).first()
+    return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form, course=course)
 
 
 @main.route('/student/<course_id>/course', methods=['GET'])
