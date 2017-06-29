@@ -1,6 +1,8 @@
 from flask import render_template, redirect, url_for, flash, request, session
 from . import main
+from .forms import AddSemesterForm
 from .. import db
+from ..models.models import Semester
 import os
 from datetime import date
 from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm
