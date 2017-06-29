@@ -7,6 +7,7 @@ from flask_uploads import UploadSet
 
 ups = UploadSet('files', extensions=('xls', 'xlsx'))
 homework_ups = UploadSet('files', extensions=('txt', 'doc', 'docx'))  # 暂时只允许提交三种作业文件
+upsr = UploadSet('files', extensions=('xls', 'xlsx', 'pdf', 'doc', 'docx', 'txt', 'zip', '7z', 'rar'))
 
 
 class SemesterForm(FlaskForm):
@@ -43,3 +44,10 @@ class HomeworkForm(FlaskForm):
     text = TextAreaField('作业')
     homework_up = FileField(validators=[
         FileAllowed(homework_ups, u'只接受txt和doc(docx)文件!')])
+
+
+class UploadResourceForm(FlaskForm):
+    up = FileField(validators=[
+        FileAllowed(upsr, u'xls, xlsx, pdf, doc, docx, txt, zip, 7z, rar'),
+        FileRequired(u'文件未选择!')])
+    submit = SubmitField(u'上传')
