@@ -175,6 +175,7 @@ class Course(db.Model):
     teamsize_max = db.Column(db.Integer)
     teamsize_min = db.Column(db.Integer)
     status = db.Column(db.Boolean)
+    upload_time = db.Column(db.String(128))
 
     def __repr__(self):
         return '<Course %r>' % self.id
