@@ -3,7 +3,7 @@ from . import main
 from .. import db
 import os
 from datetime import date
-from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr
+from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, Homework
 from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
 from flask_login import current_user, login_required
 from functools import wraps
@@ -149,6 +149,30 @@ def teacher_resource():  # TODO: add 文件系统
 
 @main.route('/index-teacher/teacher-homework', methods=['GET', 'POST'])
 def teacher_homework():
+    form = Homework()
+    if form.validate_on_submit():
+        begin_time, end_time = form.time.data.split('-')
+        month, day, year = begin_time.split('/')
+        begin_time = date(int(year), int(month), int(day))
+        month, day, year = end_time.split('/')
+        end_time = date(int(year), int(month), int(day))
+        #确定作业ID
+        homework_list = Homework.query.all()
+        list_length = len(homework_list)
+        if list_length == 0:
+            a = 0
+        else:
+            a = list_length+1
+        #确定课程ID
+        relationship = TCRelationship.query.filter_by(teacher_id=forms.form.username.data).first()
+        course = Course.query.filter_by(TCRelationship_id=relationship).first()
+        db.session.add(Homework(id=a, course_id=course.id.data, base_requirement=form.base_requirement.data,
+                                begin_time=begin_time, end_time=end_time, weight=form.weight.data,
+                                max_submit_attempts=form.max_submit_attempts.data))
+        db.session.commit()
+        flash('发布成功！', 'success')
+        return redirect(url_for('main.manage_semester'))
+    homework_list = Homework.query.all()
     return render_template('auth_teacher/teacher_homework.html')
 
 
