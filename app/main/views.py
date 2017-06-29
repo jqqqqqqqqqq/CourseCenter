@@ -160,11 +160,17 @@ def teacher_course():
 
 
 @main.route('/uploadresource', methods=['GET', 'POST'])
-def teacher_resource():  # TODO: add 文件系统
+def teacher_resource():
     form = UploadResourceForm()
     if form.validate_on_submit():
-        filename = upsr.save(form.up.data, basedir + '/uploads/teacher_resources')
-        file_url = upsr.url(filename)
+        try:
+            (name, ext) = os.path.splitext(form.up.data.filename)
+            #print(ext)
+            filename = upsr.save(form.up.data, basedir + '/uploads/teacher_resources', name=str(uuid.uuid4())+'.'+ext)
+            file_url = upsr.url(filename)
+        except UploadNotAllowed:
+            flash('附件上传不允许！', 'danger')
+            return redirect(request.args.get('next') or url_for('uploadresource.html'))
     else:
         file_url = None
     return render_template('uploadresource.html', form=form, file_url=file_url)
@@ -413,18 +419,3 @@ def submit_homework(course_id):  # TODO:学生上传作业
             submission_1.submit_attempts = 1
             submission_1.submitter_id = current_user.id
             submission_1.submit_status = 1
-
-            if form.homework_up.data:
-                filename = homework_ups.save(form.homework_up.data)
-
-                attachment = Attachment()
-                attachment.submission.id = submission_1.id
-                attachment.guid = uuid.uuid1()
-                attachment.status = False
-                attachment.file_name = filename
-                db.ssession.add(attachment)
-            db.session.add(submission_1)
-        db.session.commit()
-        flash('提交成功!')
-        return redirect
-    return render_template('', form=form)
