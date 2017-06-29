@@ -168,7 +168,8 @@ class Course(db.Model):
     place = db.Column(db.String(50))
     outline = db.Column(db.Text)
     credit = db.Column(db.Integer)
-    teamsize = db.Column(db.Integer)
+    teamsize_max = db.Column(db.Integer)
+    teamsize_min = db.Column(db.Integer)
     status = db.Column(db.Boolean)
 
     def __repr__(self):

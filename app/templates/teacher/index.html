@@ -25,26 +25,31 @@
 {% block content_main %}
     <article>
         <div class="row">
-            <div class="col-xs-6">
-                <div class="box box-primary course-box" data-href="#">
-                    <div class="box-header with-border">
-                        <h3 class="box-title">
-                            2015第3学期
-                        </h3>
+        {% for course in courses %}
+                <div class="col-xs-6">
+                    <div class="box box-primary course-box" data-href="/teacher/{{ course.id }}/course">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">
+                                {{ course.name }}
+                                <small>{{ (course.semester_id / 100) | int  }}年第{{ course.semester_id % 100 }}学期</small>
+                            </h3>
+                        </div>
+                        <div class="box-body">
+                            <dl class="dl-horizontal">
+                                <dt>上课地点</dt>
+                                <dd>{{ course.place }}</dd>
+                                <dt>开课状态</dt>
+                                <dd>{{ course.status }}</dd>
+                            </dl>
+                        </div>
                     </div>
-                    <div class="box-body">
-                        <dl class="dl-horizontal">
-                            <dt>时间</dt>
-                            <dd>一些时间到另一些时间</dd>
-                            <dt>上课地点</dt>
-                            <dd>一些地点</dd>
-                            <dt>学生人数</dt>
-                            <dd>大概全宇宙的学生</dd>
-                        </dl>
-                    </div>
+                    <!-- /.box-primary -->
                 </div>
-                <!-- /.box-primary -->
-            </div>
+            {% if loop.index % 2 == 0 and not loop.last %}
+                </div>>
+                <div class="row">
+            {% endif %}
+        {% endfor %}
         </div>
     </article>
 {% endblock %}

@@ -13,11 +13,17 @@
 {% endblock %}
 
 {% block content_main %}
+    {% for message in get_flashed_messages(with_categories=True) %}
+        <div class="alert alert-{{ message[0] }} alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            {{ message[1] }}
+        </div>
+    {% endfor  %}
     <article>
         <div class="box box-primary course-box" data-href="#">
             <div class="box-header with-border">
                 <h3 class="box-title">
-                    2015第3学期
+                    {{ semester(course.semester_id) }}
                 </h3>
                 <div class="box-tools pull-right">
                     <button type="button" class="btn btn-sm btn-primary" data-toggle="tooltip"
@@ -28,24 +34,20 @@
             </div>
             <div class="box-body">
                 <form action="" method="post">
+                    {{ form.hidden_tag() }}
+                    {{ wtf.form_field(form.outline) }}
+                    <p class="form-data">{{ form.outline.data }}</p>
                     <div class="form-group">
-                        <label for="">课程要求</label>
-                        <textarea class="form-control"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="">团队人数上下限</label>
                         <div class="row">
                             <div class="col-xs-6">
-                                <input type="number" class="form-control" placeholder="下限">
+                                {{ wtf.form_field(form.teamsize_min, placeholder="下限") }}
+                                <p class="form-data">{{ form.teamsize_min.data }}</p>
                             </div>
                             <div class="col-xs-6">
-                                <input type="number" class="form-control" placeholder="上限">
+                                {{ wtf.form_field(form.teamsize_max, placeholder="上限") }}
+                                <p class="form-data">{{ form.teamsize_max.data }}</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="">课程大纲</label>
-                        <textarea class="form-control"></textarea>
                     </div>
                     <input type="submit" class="form-control btn btn-primary btn-block">
                 </form>
@@ -58,16 +60,21 @@
 {% block scripts %}
 {{ super() }}
 <script>
+    $('.form-control').hide();
     $('#toggleEdit').click(function () {
         if($(this).hasClass('btn-danger')) {
             $(this).removeClass('btn-danger');
             $(this).addClass('btn-primary');
             $('.form-control').hide();
+            $('.form-data').show();
         } else {
             $(this).removeClass('btn-primary');
             $(this).addClass('btn-danger');
             $('.form-control').show();
+            $('.form-data').hide();
         }
     });
+    $('#teamsize_min').attr('type', 'number');
+    $('#teamsize_max').attr('type', 'number');
 </script>
 {% endblock %}
