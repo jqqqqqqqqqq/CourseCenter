@@ -7,8 +7,6 @@ from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr
 from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
 from flask_login import current_user, login_required
 from functools import wraps
-
-this_term = 1  # TODO: add semester selection
 from flask import request
 from .. import config, ups
 import openpyxl
@@ -65,6 +63,17 @@ class UserAuth:
                 return func(*args, **kwargs)
         return decorated
 
+    @staticmethod
+    def student_course_access(func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            if not SCRelationship.query.filter_by(student_id=current_user.id, course_id=kwargs['course_id']).first():
+                flash('无权限！', 'danger')
+                return redirect(url_for('main.index'))
+            else:
+                return func(*args, **kwargs)
+        return decorated
+
 
 @main.before_request
 @login_required
@@ -74,12 +83,22 @@ def before_request():
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
+
+    #教师特色主页
     if current_user.user_type() == 1:
         tcrels = TCRelationship.query.filter_by(teacher_id=current_user.id).all()
         courses = []
         for rel in tcrels:
             courses.append(Course.query.filter_by(id=rel.course_id).first())
         return render_template('teacher/index.html', courses=courses)
+
+    # 学生特色主页
+    if current_user.user_type() == 2:
+        tcrels = SCRelationship.query.filter_by(student_id=current_user.id).all()
+        courses = []
+        for rel in tcrels:
+            courses.append(Course.query.filter_by(id=rel.course_id).first())
+        return render_template('student/index.html', courses=courses)
 
     return render_template('index.html')
 
@@ -269,7 +288,6 @@ def manage_course():
 
 
 @main.route('/teacher/<course_id>/course', methods=['GET', 'POST'])
-@UserAuth.teacher
 @UserAuth.teacher_course_access
 def set_course_info(course_id):
     form = CourseFormTeacher()
@@ -289,14 +307,20 @@ def set_course_info(course_id):
 
 
 @main.route('/teacher/<course_id>/resource', methods=['GET', 'POST'])
-@UserAuth.teacher
 @UserAuth.teacher_course_access
 def manage_resource(course_id):
     return render_template('teacher/resource.html', course_id=course_id)
 
 
 @main.route('/teacher/<course_id>/homework', methods=['GET', 'POST'])
-@UserAuth.teacher
 @UserAuth.teacher_course_access
 def set_homework(course_id):
     return render_template('teacher/homework.html', course_id=course_id)
+
+
+@main.route('/student/<course_id>/course', methods=['GET'])
+@UserAuth.student_course_access
+def show_course(course_id):
+    course = Course.query.filter_by(id=course_id).first()
+    return render_template('student/course.html', course_id=course_id, course=course)
+
