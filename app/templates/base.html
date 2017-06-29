@@ -1,6 +1,8 @@
 {% extends "bootstrap/base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
+{% macro semester(id) %}{{ (id / 100) | int }}学年第{{ id % 100 }}学期{% endmacro %}
+
 {% block title %}课程中心{% endblock %}
 
 {% block head %}
