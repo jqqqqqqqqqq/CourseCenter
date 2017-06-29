@@ -139,10 +139,12 @@ class Submission(db.Model):                       # 学生提交作业信息
     id = db.Column(db.Integer, primary_key=True)
     homework_id = db.Column(db.Integer, db.ForeignKey('homework.id'))
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
+    submitter_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     text_content = db.Column(db.Text)
     score = db.Column(db.Integer)
     comments = db.Column(db.Text)
     submit_attempts = db.Column(db.Integer)
+    submit_status = db.Column(db.Integer)
 
     def __repr__(self):
         return '<Submission %r>' % self.id
@@ -153,6 +155,7 @@ class Attachment(db.Model):                       # 学生提交作业附件信�
     id = db.Column(db.Integer, primary_key=True)
     submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'))
     guid = db.Column(db.Text)
+    file_name = db.Column(db.String(128))
     status = db.Column(db.Boolean)
 
     def __repr__(self):
