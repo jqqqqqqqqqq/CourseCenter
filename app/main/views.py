@@ -338,7 +338,6 @@ def set_homework(course_id):
         else:
             homework = Homework()
 
-        homework.id = course_id
         homework.name = form.name.data
         homework.base_requirement = form.base_requirement.data
         homework.begin_time = begin_time
