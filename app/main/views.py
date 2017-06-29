@@ -1,6 +1,8 @@
 from flask import render_template, redirect, url_for, flash, request, session
 from . import main
+from .forms import AddSemesterForm
 from .. import db
+from ..models.models import Semester
 import os
 from datetime import date
 from .forms import AddSemesterForm, CourseForm, CourseFormTeacher
@@ -125,6 +127,7 @@ def read_file(file_path):
                         'password': 666}  # 老师初始密码 666
         teacher_info.append(teacher_list)
     return student_info, teacher_info
+
 
 @main.route('/index-teacher', methods=['GET', 'POST'])
 def index_teacher():
