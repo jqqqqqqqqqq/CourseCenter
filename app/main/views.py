@@ -3,7 +3,7 @@ from . import main
 from .. import db
 import os
 from datetime import date
-from .forms import AddSemesterForm, CourseForm, CourseFormTeacher
+from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr
 from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
 from flask_login import current_user, login_required
 from functools import wraps
@@ -141,9 +141,16 @@ def teacher_resource():
     return render_template('auth_teacher/teacher_resource.html')
 
 
-@main.route('/index-teacher/teacher-homework', methods=['GET', 'POST'])
-def teacher_homework():
-    return render_template('auth_teacher/teacher_homework.html')
+@main.route('/uploadresource', methods=['GET', 'POST'])
+def teacher_resource():
+    form = UploadResourceForm()
+    if form.validate_on_submit():
+        filename = upsr.save(form.up.data)
+        file_url = upsr.url(filename)
+
+    else:
+        file_url = None
+    return render_template('uploadresource.html', form=form, file_url=file_url)
 
 
 @main.route('/index-teacher/teacher-communicate', methods=['GET', 'POST'])
