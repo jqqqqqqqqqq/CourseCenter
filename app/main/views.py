@@ -3,16 +3,19 @@ from . import main
 from .. import db
 import os
 from datetime import date, datetime
-from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm, HomeworkFormTeacher
-from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester, Homework
+from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm, HomeworkFormTeacher, \
+    HomeworkForm
+from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester, Homework, Submission,\
+    TeamMember, Team
 from flask_login import current_user, login_required
 from functools import wraps
 from flask import request
 from .. import config, ups
 import openpyxl
 from config import basedir
-
-ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
+from flask_uploads import UploadNotAllowed
+from openpyxl.utils.exceptions import InvalidFileException
+import uuid
 
 
 class UserAuth:
@@ -169,30 +172,6 @@ def teacher_resource():  # TODO: add 文件系统
 
 @main.route('/index-teacher/teacher-homework', methods=['GET', 'POST'])
 def teacher_homework():
-    form = HomeworkFormTeacher()
-    if form.validate_on_submit():
-        begin_time, end_time = form.time.data.split('-')
-        month, day, year = begin_time.split('/')
-        begin_time = date(int(year), int(month), int(day))
-        month, day, year = end_time.split('/')
-        end_time = date(int(year), int(month), int(day))
-        #确定作业ID
-        homework_list = HomeworkFormTeacher.query.all()
-        list_length = len(homework_list)
-        if list_length == 0:
-            a = 0
-        else:
-            a = list_length+1
-        #确定课程ID
-        relationship = TCRelationship.query.filter_by(teacher_id=current_user.id).first()
-        course = Course.query.filter_by(TCRelationship_id=relationship).first()
-        db.session.add(HomeworkFormTeacher(id=a, course_id=course.id.data, base_requirement=form.base_requirement.data,
-                                begin_time=begin_time, end_time=end_time, weight=form.weight.data,
-                                max_submit_attempts=form.max_submit_attempts.data))
-        db.session.commit()
-        flash('发布成功！', 'success')
-        return redirect(url_for('uth_teacher/teacher_homework'))
-    homework_list = HomeworkFormTeacher.query.all()
     return render_template('auth_teacher/teacher_homework.html')
 
 
@@ -246,13 +225,20 @@ def manage_course():
         course.teamsize_max = 5
         course.status = True
 
+        try:
+            # 上传文件处理
+            filename = ups.save(form.stuff_info.data, name=str(uuid.uuid4())+".xlsx")
+            file_path = os.path.join(basedir, 'uploads', filename)
+            student_info, teacher_info = read_file(file_path=file_path)
+        except UploadNotAllowed:
+            flash('附件上传不允许！', 'danger')
+            return redirect(request.args.get('next') or url_for('main.manage_course'))
+        except InvalidFileException:
+            flash('附件类型不正确，请使用 xlsx！', 'danger')
+            return redirect(request.args.get('next') or url_for('main.manage_course'))
+
         db.session.add(course)
         db.session.commit()
-
-        # 上传文件处理
-        filename = ups.save(form.stuff_info.data)
-        file_path = os.path.join(basedir, 'uploads', filename)
-        student_info, teacher_info = read_file(file_path=file_path)
 
         # 添加学生
         for i in student_info:
@@ -374,3 +360,25 @@ def show_course_info(course_id):
     course = Course.query.filter_by(id=course_id).first()
     return render_template('student/course.html', course_id=course_id, course=course)
 
+
+@main.route('/student/<course_id>/submit',methods=['GET', 'POST'])
+def submit_homework(course_id):
+    form = HomeworkForm()
+    teammember = TeamMember.query.filter_by(student_id=current_user.id).first()
+    team = Team.query.filter_by(team_id=teammember.team_id).first()
+    homework = Homework.query.filter_by(course_id=team.course_id).first()
+
+    submission = Submission.query.filter_by(team_id=teammember.team_id).filter_by(homework_id=homework.id).first()
+
+    if form.validate_on_submit():
+        if submission is not None:
+            pass
+        else:
+            # 新建提交作业
+            submission_1 = Submission()
+            submission_1.homework_id = homework.id
+            submission_1.team_id = team.id
+            submission_1.text_content = form.text_content.data
+            submission_1.submit_attempts = 1
+            submission_1.submitter_id = current_user.id
+            submission_1.submit_status = 1
