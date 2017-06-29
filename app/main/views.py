@@ -1,13 +1,10 @@
 from flask import render_template, redirect, url_for, flash, request, session
 from . import main
-from .forms import AddSemesterForm
 from .. import db
-from ..models.models import Semester
 import os
-from datetime import date
-from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm
-from .forms import Homework
-from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
+from datetime import date, datetime
+from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm, HomeworkFormTeacher
+from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester, Homework
 from flask_login import current_user, login_required
 from functools import wraps
 from flask import request
@@ -172,7 +169,7 @@ def teacher_resource():  # TODO: add 文件系统
 
 @main.route('/index-teacher/teacher-homework', methods=['GET', 'POST'])
 def teacher_homework():
-    form = Homework()
+    form = HomeworkFormTeacher()
     if form.validate_on_submit():
         begin_time, end_time = form.time.data.split('-')
         month, day, year = begin_time.split('/')
@@ -180,22 +177,22 @@ def teacher_homework():
         month, day, year = end_time.split('/')
         end_time = date(int(year), int(month), int(day))
         #确定作业ID
-        homework_list = Homework.query.all()
+        homework_list = HomeworkFormTeacher.query.all()
         list_length = len(homework_list)
         if list_length == 0:
             a = 0
         else:
             a = list_length+1
         #确定课程ID
-        relationship = TCRelationship.query.filter_by(teacher_id=forms.form.username.data).first()
+        relationship = TCRelationship.query.filter_by(teacher_id=current_user.id).first()
         course = Course.query.filter_by(TCRelationship_id=relationship).first()
-        db.session.add(Homework(id=a, course_id=course.id.data, base_requirement=form.base_requirement.data,
+        db.session.add(HomeworkFormTeacher(id=a, course_id=course.id.data, base_requirement=form.base_requirement.data,
                                 begin_time=begin_time, end_time=end_time, weight=form.weight.data,
                                 max_submit_attempts=form.max_submit_attempts.data))
         db.session.commit()
         flash('发布成功！', 'success')
         return redirect(url_for('uth_teacher/teacher_homework'))
-    homework_list = Homework.query.all()
+    homework_list = HomeworkFormTeacher.query.all()
     return render_template('auth_teacher/teacher_homework.html')
 
 
@@ -343,12 +340,37 @@ def manage_resource(course_id):
 @main.route('/teacher/<course_id>/homework', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def set_homework(course_id):
-    return render_template('teacher/homework.html', course_id=course_id)
+
+    form = HomeworkFormTeacher()
+    if form.validate_on_submit():
+        begin_time, end_time = form.time.data.split(' - ')
+        begin_time = datetime.strptime(begin_time, '%m/%d/%Y %H:%M')
+        end_time = datetime.strptime(end_time, '%m/%d/%Y %H:%M')
+
+        if request.args.get('action') == 'edit':
+            homework = Homework.query.filter_by(id=request.args.get('homework_id')).first()
+        else:
+            homework = Homework()
+
+        homework.id = course_id
+        homework.name = form.name.data
+        homework.base_requirement = form.base_requirement.data
+        homework.begin_time = begin_time
+        homework.end_time = end_time
+        homework.weight = form.weight.data
+        homework.max_submit_attempts = form.max_submit_attempts.data
+
+        db.session.add(homework)
+        db.session.commit()
+        flash('发布成功！', 'success')
+        return redirect(url_for('main.set_homework', course_id=course_id))
+    homework_list = Homework.query.all()
+    return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form)
 
 
 @main.route('/student/<course_id>/course', methods=['GET'])
 @UserAuth.student_course_access
-def show_course(course_id):
+def show_course_info(course_id):
     course = Course.query.filter_by(id=course_id).first()
     return render_template('student/course.html', course_id=course_id, course=course)
 

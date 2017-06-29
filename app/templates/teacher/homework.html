@@ -6,7 +6,7 @@
 {% block content_header %}
     <h1>
         作业信息
-        <span data-toggle="modal" data-target="#homeworkModal">
+        <span data-toggle="modal" data-target="#homeworkModal" data-action="add">
             <button type="button" class="btn btn-sm btn-success" data-toggle="tooltip"
                     data-original-title="添加" id="toggleEdit">
                 <i class="fa fa-plus"></i>
@@ -15,41 +15,60 @@
     </h1>
 {% endblock %}
 
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='components/datepicker/css/datepicker.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='components/bootstrap-daterangepicker/daterangepicker.css') }}">
+{% endblock %}
+
 {% block breadcrumb %}
     <li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
     <li class="active">作业信息</li>
 {% endblock %}
 
 {% block content_main %}
+    {% for message in get_flashed_messages(with_categories=True) %}
+        <div class="alert alert-{{ message[0] }} alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            {{ message[1] }}
+        </div>
+    {% endfor  %}
     <article>
-        <div class="box box-primary" data-href="#">
-            <div class="box-header with-border">
-                <h3 class="box-title">
-                    某个作业
-                </h3>
-                <div class="box-tools pull-right">
-                    <span data-toggle="modal" data-target="#homeworkModal">
-                        <button type="button" class="btn btn-sm btn-primary" data-toggle="tooltip"
-                                data-original-title="编辑" id="toggleEdit">
-                            <i class="fa fa-edit"></i>
-                        </button>
-                    </span>
+        {% for homework in homeworks %}
+            <div class="box box-primary" data-href="#">
+                <div class="box-header with-border">
+                    <h3 class="box-title">
+                        {{ homework.name }}
+                    </h3>
+                    <div class="box-tools pull-right">
+                        <span data-toggle="modal" data-target="#homeworkModal"
+                              data-action="edit"
+                              data-homework-id="{{ homework.id }}">
+                            <button type="button" class="btn btn-sm btn-primary" data-toggle="tooltip"
+                                    data-original-title="编辑" id="toggleEdit" data-action="edit">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+                <div class="box-body ">
+                    {{ homework.base_requirement }}
+                    <dl class="dl-horizontal">
+                        <dt>持续时间</dt>
+                        <dd>
+                            <time>{{ homework.begin_time.strftime(('%m/%d/%Y %H:%M')) }}</time>
+                            到
+                            <time>{{ homework.end_time.strftime(('%m/%d/%Y %H:%M')) }}</time>
+                        </dd>
+                        <dt>占比</dt>
+                        <dd>{{ homework.weight }}%</dd>
+                        <dt>允许提交次数</dt>
+                        <dd>{{ homework.max_submit_attempts }}</dd>
+                    </dl>
                 </div>
             </div>
-            <div class="box-body ">
-                无可奉告。
-                <dl class="dl-horizontal">
-                    <dt>时间</dt>
-                    <dd><time>-1s</time>到<time>+1s</time></dd>
-                    <dt>占比</dt>
-                    <dd>45%</dd>
-                    <dt>允许提交次数</dt>
-                    <dd>20000</dd>
-                </dl>
-            </div>
-        </div>
-
-        <!-- /.box-primary -->
+            <!-- /.box-primary -->
+        {% endfor %}
     </article>
     <!-- Modal -->
     <div class="modal fade" id="homeworkModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -58,14 +77,20 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                    <h4 class="modal-title" id="homeworkModalLabel">
+                        添加作业
+                    </h4>
                 </div>
                 <div class="modal-body">
-                    ...
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
+                    <form method="post" id="form">
+                        {{ form.hidden_tag() }}
+                        {{ wtf.form_field(form.name) }}
+                        {{ wtf.form_field(form.base_requirement) }}
+                        {{ wtf.form_field(form.time) }}
+                        {{ wtf.form_field(form.weight, type="number") }}
+                        {{ wtf.form_field(form.max_submit_attempts, type="number") }}
+                        <input type="submit" value="提交" class="btn btn-primary btn-block">
+                    </form>
                 </div>
             </div>
         </div>
@@ -74,6 +99,45 @@
 
 {% block scripts %}
 {{ super() }}
-<script>
-</script>
+    <!-- bootstrap datepicker -->
+    <script src="{{ url_for('static', filename='components/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
+    <script>
+        var homeworks = {
+            {% for homework in homeworks %}
+                {{ homework.id }}: {
+                    name: "{{ homework.name }}",
+                    base_requirement: "{{ homework.base_requirement }}",
+                    time: "{{ homework.begin_time.strftime('%m/%d/%Y %H:%M') }} - {{ homework.end_time.strftime('%m/%d/%Y %H:%M') }}",
+                    weight: {{ homework.weight }},
+                    max_submit_attempts: {{ homework.max_submit_attempts }}
+                },
+            {% endfor %}
+        }
+        $('#time').daterangepicker({
+            timePicker: true,
+            timePicker24Hour: true,
+            timePickerIncrement: 30,
+            locale: {
+                format: 'MM/DD/YYYY HH:mm'
+            }
+        });
+        $('#homeworkModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            if(button.data('action') === 'add') {
+                $('#homeworkModalLabel').html('添加作业');
+                $('#form')[0].reset();
+                $('#form').attr('action', '?action=add');
+
+            } else if (button.data('action') === 'edit') {
+                var id = button.data('homework-id');
+                $('#homeworkModalLabel').html('修改作业');
+                $('#name').val(homeworks[id].name);
+                $('#base_requirement').val(homeworks[id].base_requirement);
+                $('#time').val(homeworks[id].time);
+                $('#weight').val(homeworks[id].weight);
+                $('#max_submit_attempts').val(homeworks[id].max_submit_attempts);
+                $('#form').attr('action', '?action=edit&homework_id=' + id);
+            }
+        });
+    </script>
 {% endblock %}
