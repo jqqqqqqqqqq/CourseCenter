@@ -163,7 +163,7 @@ def teacher_course():
 def teacher_resource():  # TODO: add 文件系统
     form = UploadResourceForm()
     if form.validate_on_submit():
-        filename = upsr.save(form.up.data)
+        filename = upsr.save(form.up.data, basedir + '/uploads/teacher_resources')
         file_url = upsr.url(filename)
     else:
         file_url = None
