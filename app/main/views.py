@@ -7,6 +7,7 @@ import os
 from datetime import date
 from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm
 from .forms import homework_ups, HomeworkForm
+from .forms import Homework
 from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
 from ..models.models import Homework, Team, TeamMember, Submission
 from flask_login import current_user, login_required

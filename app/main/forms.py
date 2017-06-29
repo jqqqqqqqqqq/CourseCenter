@@ -51,3 +51,10 @@ class UploadResourceForm(FlaskForm):
         FileAllowed(upsr, u'xls, xlsx, pdf, doc, docx, txt, zip, 7z, rar'),
         FileRequired(u'文件未选择!')])
     submit = SubmitField(u'上传')
+
+
+class Homework(FlaskForm):
+    base_requirement = StringField('作业要求', validators=[DataRequired()])
+    time = StringField('持续时间', validators=[DataRequired()])
+    weight = IntegerField('权重', validators=[DataRequired()])
+    max_submit_attempts = IntegerField('最大提交次数', validators=[DataRequired()])
