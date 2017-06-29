@@ -16,6 +16,8 @@ from flask import request
 from .. import config, ups
 import openpyxl
 from config import basedir
+from flask_uploads import UploadNotAllowed
+from openpyxl.utils.exceptions import InvalidFileException
 
 ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
 
@@ -227,13 +229,17 @@ def manage_course():
         course.teamsize_max = 5
         course.status = True
 
-        db.session.add(course)
-        db.session.commit()
-
-        # 上传文件处理
-        filename = ups.save(form.stuff_info.data)
-        file_path = os.path.join(basedir, 'uploads', filename)
-        student_info, teacher_info = read_file(file_path=file_path)
+        try:
+            # 上传文件处理
+            filename = ups.save(form.stuff_info.data)
+            file_path = os.path.join(basedir, 'uploads', filename)
+            student_info, teacher_info = read_file(file_path=file_path)
+        except UploadNotAllowed:
+            flash('附件上传不允许！', 'danger')
+            return redirect(request.args.get('next') or url_for('main.manage_course'))
+        except InvalidFileException:
+            flash('附件类型不正确，请使用 xlsx！', 'danger')
+            return redirect(request.args.get('next') or url_for('main.manage_course'))
 
         # 添加学生
         for i in student_info:
@@ -268,6 +274,7 @@ def manage_course():
                 tcrel = TCRelationship(teacher_id=teacher.id, course_id=course.id)
             db.session.add(tcrel)
 
+        db.session.add(course)
         db.session.commit()
         os.remove(file_path)
 
