@@ -171,7 +171,7 @@ def teacher_homework():
                                 max_submit_attempts=form.max_submit_attempts.data))
         db.session.commit()
         flash('发布成功！', 'success')
-        return redirect(url_for('main.manage_semester'))
+        return redirect(url_for('uth_teacher/teacher_homework'))
     homework_list = Homework.query.all()
     return render_template('auth_teacher/teacher_homework.html')
 
