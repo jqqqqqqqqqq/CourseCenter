@@ -1,15 +1,12 @@
 from flask import render_template, redirect, url_for, flash, request, session
 from . import main
-from .forms import AddSemesterForm
 from .. import db
-from ..models.models import Semester
 import os
-from datetime import date
-from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm
-from .forms import homework_ups, HomeworkForm
-from .forms import Homework
-from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester
-from ..models.models import Homework, Team, TeamMember, Submission
+from datetime import date, datetime
+from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm, HomeworkFormTeacher, \
+    HomeworkForm
+from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester, Homework, Submission,\
+    TeamMember, Team
 from flask_login import current_user, login_required
 from functools import wraps
 from flask import request
@@ -18,8 +15,7 @@ import openpyxl
 from config import basedir
 from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
-
-ALLOWED_EXTENSIONS = {"xls", "xlsx", "csv"}             # set(["xls", "xlsx"]) 允许上传的文件类型
+import uuid
 
 
 class UserAuth:
@@ -167,7 +163,7 @@ def teacher_course():
 def teacher_resource():  # TODO: add 文件系统
     form = UploadResourceForm()
     if form.validate_on_submit():
-        filename = upsr.save(form.up.data, basedir + '/uploads/teacher_resources')
+        filename = upsr.save(form.up.data)
         file_url = upsr.url(filename)
     else:
         file_url = None
@@ -231,7 +227,7 @@ def manage_course():
 
         try:
             # 上传文件处理
-            filename = ups.save(form.stuff_info.data)
+            filename = ups.save(form.stuff_info.data, name=str(uuid.uuid4())+".xlsx")
             file_path = os.path.join(basedir, 'uploads', filename)
             student_info, teacher_info = read_file(file_path=file_path)
         except UploadNotAllowed:
@@ -240,6 +236,9 @@ def manage_course():
         except InvalidFileException:
             flash('附件类型不正确，请使用 xlsx！', 'danger')
             return redirect(request.args.get('next') or url_for('main.manage_course'))
+
+        db.session.add(course)
+        db.session.commit()
 
         # 添加学生
         for i in student_info:
@@ -274,7 +273,6 @@ def manage_course():
                 tcrel = TCRelationship(teacher_id=teacher.id, course_id=course.id)
             db.session.add(tcrel)
 
-        db.session.add(course)
         db.session.commit()
         os.remove(file_path)
 
@@ -328,12 +326,36 @@ def manage_resource(course_id):
 @main.route('/teacher/<course_id>/homework', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def set_homework(course_id):
-    return render_template('teacher/homework.html', course_id=course_id)
+
+    form = HomeworkFormTeacher()
+    if form.validate_on_submit():
+        begin_time, end_time = form.time.data.split(' - ')
+        begin_time = datetime.strptime(begin_time, '%m/%d/%Y %H:%M')
+        end_time = datetime.strptime(end_time, '%m/%d/%Y %H:%M')
+
+        if request.args.get('action') == 'edit':
+            homework = Homework.query.filter_by(id=request.args.get('homework_id')).first()
+        else:
+            homework = Homework()
+
+        homework.name = form.name.data
+        homework.base_requirement = form.base_requirement.data
+        homework.begin_time = begin_time
+        homework.end_time = end_time
+        homework.weight = form.weight.data
+        homework.max_submit_attempts = form.max_submit_attempts.data
+
+        db.session.add(homework)
+        db.session.commit()
+        flash('发布成功！', 'success')
+        return redirect(url_for('main.set_homework', course_id=course_id))
+    homework_list = Homework.query.all()
+    return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form)
 
 
 @main.route('/student/<course_id>/course', methods=['GET'])
 @UserAuth.student_course_access
-def show_course(course_id):
+def show_course_info(course_id):
     course = Course.query.filter_by(id=course_id).first()
     return render_template('student/course.html', course_id=course_id, course=course)
 
