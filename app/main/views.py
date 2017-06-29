@@ -4,9 +4,9 @@ from .. import db
 import os
 from datetime import date, datetime
 from .forms import AddSemesterForm, CourseForm, CourseFormTeacher, upsr, UploadResourceForm, HomeworkFormTeacher, \
-    HomeworkForm
+    HomeworkForm, homework_ups
 from ..models.models import Student, Teacher, SCRelationship, TCRelationship, Course, Semester, Homework, Submission,\
-    TeamMember, Team
+    TeamMember, Team, Attachment
 from flask_login import current_user, login_required
 from functools import wraps
 from flask import request
@@ -344,7 +344,6 @@ def set_homework(course_id):
         else:
             homework = Homework()
 
-        homework.id = course_id
         homework.name = form.name.data
         homework.base_requirement = form.base_requirement.data
         homework.begin_time = begin_time
@@ -368,7 +367,7 @@ def show_course_info(course_id):
 
 
 @main.route('/student/<course_id>/submit',methods=['GET', 'POST'])
-def submit_homework(course_id):
+def submit_homework(course_id):  # TODO:学生上传作业
     form = HomeworkForm()
     teammember = TeamMember.query.filter_by(student_id=current_user.id).first()
     team = Team.query.filter_by(team_id=teammember.team_id).first()
@@ -376,9 +375,41 @@ def submit_homework(course_id):
 
     submission = Submission.query.filter_by(team_id=teammember.team_id).filter_by(homework_id=homework.id).first()
 
+    # 显示当前的作业提交信息，如果没有提交，则显示内容为空
+    form.text = submission.text_content
+    # TODO:显示上传附件
+
     if form.validate_on_submit():
         if submission is not None:
-            pass
+            # 队长对提交的操作
+            if team.owner_id == current_user.id:
+                # 提交达到最大次数
+                if submission.submit_attempts >= homework.max_submit_attempts:
+                    flash('已达最大提交次数')
+                # 队长提交
+                else:
+                    submission.submit_attempts += 1
+                    submission.text_content = form.text_content.data
+                    attachment_1 = Attachment.query.filter_by(submission_id=submission.id).first()
+
+            # 非队长成员对提交的操作
+            else:
+                # 曾经提交过
+                if submission.submit_status:
+                    flash('已经有提交，但你不是组长不能修改')
+                # 曾经提交过，但是处于可修改状态，但是达到最大提交次数
+                elif submission.submit_attempts >= homework.max_submit_attempts:
+                    flash('已达最大提交次数')
+                # 成员再提交
+                else:
+                    submission.submit_attempts += 1
+                    submission.text_content = form.text_content.data
+                    db.session.add(submission)
+                    if form.homework_up.data:
+                        attachment_1 = Attachment.query.filter_by(submission_id=submission.id).first()
+                        filename = homework_ups.save(form.homework_up.data)
+                        attachment_1.file_name = filename
+                        db.session.add(attachment_1)
         else:
             # 新建提交作业
             submission_1 = Submission()
