@@ -270,6 +270,7 @@ def set_course_info(course_id):
     course = Course.query.filter_by(id=course_id).first()
     if form.validate_on_submit():
         course.outline = form.outline.data
+        course.course_info = form.course_info.data
         course.teamsize_min = form.teamsize_min.data
         course.teamsize_max = form.teamsize_max.data
         db.session.add(course)
@@ -277,6 +278,7 @@ def set_course_info(course_id):
         flash('修改成功！', 'success')
         return redirect(url_for('main.set_course_info', course_id=course_id))
     form.outline.data = course.outline
+    form.course_info.data = course.course_info
     form.teamsize_min.data = course.teamsize_min
     form.teamsize_max.data = course.teamsize_max
     return render_template('teacher/course.html', course_id=course_id, form=form, course=course)
