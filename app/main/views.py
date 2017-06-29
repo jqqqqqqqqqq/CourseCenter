@@ -142,12 +142,11 @@ def teacher_resource():
 
 
 @main.route('/uploadresource', methods=['GET', 'POST'])
-def teacher_resource():
+def teacher_resource():  # TODO: add 文件系统
     form = UploadResourceForm()
     if form.validate_on_submit():
         filename = upsr.save(form.up.data)
         file_url = upsr.url(filename)
-
     else:
         file_url = None
     return render_template('uploadresource.html', form=form, file_url=file_url)
