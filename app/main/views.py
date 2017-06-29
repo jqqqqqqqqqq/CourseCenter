@@ -136,11 +136,6 @@ def teacher_course():
     return render_template('auth_teacher/teacher_course.html')
 
 
-@main.route('/index-teacher/teacher-resource', methods=['GET', 'POST'])
-def teacher_resource():
-    return render_template('auth_teacher/teacher_resource.html')
-
-
 @main.route('/uploadresource', methods=['GET', 'POST'])
 def teacher_resource():  # TODO: add 文件系统
     form = UploadResourceForm()
@@ -150,6 +145,11 @@ def teacher_resource():  # TODO: add 文件系统
     else:
         file_url = None
     return render_template('uploadresource.html', form=form, file_url=file_url)
+
+
+@main.route('/index-teacher/teacher-homework', methods=['GET', 'POST'])
+def teacher_homework():
+    return render_template('auth_teacher/teacher_homework.html')
 
 
 @main.route('/index-teacher/teacher-communicate', methods=['GET', 'POST'])
