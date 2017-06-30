@@ -5,7 +5,7 @@ from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms.validators import DataRequired, Length, InputRequired
 from flask_uploads import UploadSet
 
-ups = UploadSet('files', extensions=('xls', 'xlsx'))
+ups = UploadSet('files', extensions=('xlsx'))
 homework_ups = UploadSet('files', extensions=('txt', 'doc', 'docx'))   # 只允许提交三种作业文件 提交作业ups
 upsr = UploadSet('files', extensions=('xls', 'xlsx', 'pdf', 'doc', 'docx', 'txt', 'zip', '7z', 'rar'))
 
