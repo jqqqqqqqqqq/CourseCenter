@@ -149,16 +149,6 @@ def read_file(file_path):
     return student_info, teacher_info
 
 
-@main.route('/index-teacher', methods=['GET', 'POST'])
-def index_teacher():
-    return render_template('auth_teacher/index_teacher.html')
-
-
-@main.route('/index-teacher/teacher-course', methods=['GET', 'POST'])
-def teacher_course():
-    return render_template('auth_teacher/teacher_course.html')
-
-
 @main.route('/uploadresource', methods=['GET', 'POST'])
 def teacher_resource():
     form = UploadResourceForm()
@@ -174,21 +164,6 @@ def teacher_resource():
     else:
         file_url = None
     return render_template('uploadresource.html', form=form, file_url=file_url)
-
-
-@main.route('/index-teacher/teacher-homework', methods=['GET', 'POST'])
-def teacher_homework():
-    return render_template('auth_teacher/teacher_homework.html')
-
-
-@main.route('/index-teacher/teacher-communicate', methods=['GET', 'POST'])
-def teacher_communicate():
-    return render_template('auth_teacher/teacher_communicate.html')
-
-
-@main.route('/index-teacher/teacher-teammanagement', methods=['GET', 'POST'])
-def teacher_teammanagement():
-    return render_template('auth_teacher/teacher_teammanagement.html')
 
 
 @main.route('/manage/course', methods=['GET', 'POST'])
@@ -339,6 +314,7 @@ def set_homework(course_id):
         begin_time = datetime.strptime(begin_time, '%m/%d/%Y %H:%M')
         end_time = datetime.strptime(end_time, '%m/%d/%Y %H:%M')
 
+        # 可能是edit或者是add
         if request.args.get('action') == 'edit':
             homework = Homework.query.filter_by(id=request.args.get('homework_id')).first()
         else:
@@ -354,10 +330,32 @@ def set_homework(course_id):
 
         db.session.add(homework)
         db.session.commit()
+
+        if request.args.get('homework_id'):
+            flash('修改成功！', 'success')
+            return redirect(url_for('main.set_homework',
+                                    course_id=course_id,
+                                    action='show',
+                                    homework_id=request.args.get('homework_id')))
         flash('发布成功！', 'success')
         return redirect(url_for('main.set_homework', course_id=course_id))
-    homework_list = Homework.query.filter_by(course_id=course_id).all()
     course = Course.query.filter_by(id=course_id).first()
+    if request.args.get('action') == 'show':
+        # 作业详情
+        homework = Homework.query.filter_by(id=request.args.get('homework_id')).first()
+        form.name.data = homework.name
+        form.base_requirement.data = homework.base_requirement
+        form.time.data = '{} - {}'.format(homework.begin_time.strftime('%m/%d/%Y %H:%M'),
+                                          homework.end_time.strftime('%m/%d/%Y %H:%M'))
+        form.weight.data = homework.weight
+        form.max_submit_attempts.data = homework.max_submit_attempts
+
+        return render_template('teacher/homework_detail.html',
+                               course_id=course_id,
+                               course=course,
+                               form=form,
+                               homework=homework)
+    homework_list = Homework.query.filter_by(course_id=course_id).all()
     return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form, course=course)
 
 

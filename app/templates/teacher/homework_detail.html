@@ -1,17 +1,11 @@
 {% extends "base_main.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}{{ super() }} - 课程管理{% endblock %}
+{% block title %}{{ super() }} - 作业详情{% endblock %}
 
 {% block content_header %}
     <h1>
-        {{ course.name }}：作业信息
-        <span data-toggle="modal" data-target="#homeworkModal" data-action="add">
-            <button type="button" class="btn btn-sm btn-success" data-toggle="tooltip"
-                    data-original-title="添加" id="toggleEdit">
-                <i class="fa fa-plus"></i>
-            </button>
-        </span>
+        {{ course.name }}：作业详情
     </h1>
 {% endblock %}
 
@@ -23,7 +17,8 @@
 
 {% block breadcrumb %}
     <li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
-    <li class="active">作业信息</li>
+    <li><a href="/teacher/{{ course_id }}/homework"> 作业信息</a></li>
+    <li class="active"> 作业详情</li>
 {% endblock %}
 
 {% block content_main %}
@@ -32,39 +27,43 @@
             <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
             {{ message[1] }}
         </div>
-    {% endfor %}
+    {% endfor  %}
     <article>
         <div class="box box-primary" data-href="#">
             <div class="box-header with-border">
                 <h3 class="box-title">
-                    作业列表
+                    {{ homework.name }}
+
                 </h3>
+                <div class="box-tools pull-right">
+                    <span data-toggle="modal" data-target="#homeworkModal">
+                        <button type="button"
+                                class="btn btn-sm btn-primary"
+                                data-toggle="tooltip"
+                                title="编辑">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                    </span>
+                </div>
             </div>
-            <div class="box-body no-padding">
-                <table class="table table-hover table-stripped">
-                    <thead>
-                        <tr>
-                            <th>作业名</th>
-                            <th>时间</th>
-                        </tr>
-                    </thead>
-                    <thead>
-                        {% for homework in homeworks %}
-                            <tr>
-                                <td>
-                                    <a href="?action=show&homework_id={{ homework.id }}">
-                                        {{ homework.name }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <time>{{ homework.begin_time.strftime(('%m/%d/%Y %H:%M')) }}</time>
-                                    到
-                                    <time>{{ homework.end_time.strftime(('%m/%d/%Y %H:%M')) }}</time>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </thead>
-                </table>
+            <div class="box-body">
+                {{ homework.base_requirement }}
+            </div>
+            <div class="box-footer">
+                <dl class="dl-horizontal">
+                    <dt>作业时间</dt>
+                    <dd>
+                        <td>
+                            <time>{{ homework.begin_time.strftime(('%m/%d/%Y %H:%M')) }}</time>
+                            到
+                            <time>{{ homework.end_time.strftime(('%m/%d/%Y %H:%M')) }}</time>
+                        </td>
+                    </dd>
+                    <dt>权重</dt>
+                    <dd>{{ homework.weight }}</dd>
+                    <dt>最大提交次数</dt>
+                    <dd>{{ homework.max_submit_attempts }}</dd>
+                </dl>
             </div>
         </div>
     </article>
@@ -76,11 +75,11 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title" id="homeworkModalLabel">
-                        添加作业
+                        编辑作业
                     </h4>
                 </div>
                 <div class="modal-body">
-                    <form method="post" id="form" action="?action=add">
+                    <form method="post" id="form" action="?action=edit&homework_id={{ homework.id }}">
                         {{ form.hidden_tag() }}
                         {{ wtf.form_field(form.name) }}
                         {{ wtf.form_field(form.base_requirement) }}
