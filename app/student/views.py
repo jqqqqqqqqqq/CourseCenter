@@ -184,14 +184,17 @@ def submit_homework(course_id, homework_id):
     return render_template('/student/submit.html', submission=submission, attachment=attachment_previous)
 
 
-@student.route('/student/<course_id>/givegrade_stu/<team_id>', methods=['GET', 'POST'])
-def givegrade_stu(team_id):
-    team_member = TeamMember.query.filter_by(team_id=team_id).all()
+@student.route('/student/<course_id>/givegrade_stu', methods=['GET', 'POST'])
+def givegrade_stu():
+    team_member_1 = TeamMember.query.filter_by(student_id=current_user.id)
+    team = Team.query.filter_by(id=team_member_1.team_id)
+    team_member = TeamMember.query.filter_by(team_id=team.id).all()
+    count = team_member.count()
     student_list = []
+    sum = 0
     for i in team_member:
         student = Student.query.filter_by(id=i.student_id).first()
-        student_list.append({student.name: team_member.grade})
-    team = Team.query.filter_by(team_id=team_id)
+        student_list.append({student.name: i.grade})
     #无法打分情况
     if request.method == 'POST':
         if current_user.id != team.owner_id:
@@ -202,7 +205,12 @@ def givegrade_stu(team_id):
                 for i in team_member:
                     if i.student_id == key:
                         i.grade = value
-                        db.session.add(i)
+                        sum = sum + i.grade
+                        if sum != count:
+                            flash('打分错误，每个人平均分不是1', 'danger')
+                            return redirect(request.args.get('next') or url_for('student.give_grade'))
+                        else:
+                            db.session.add(i)
             db.session.commit()
     return render_template('/student/givegrade_stu.html', student_list=student_list)
 
