@@ -7,7 +7,6 @@ from ..upload_utils import secure_filename
 from . import teacher
 from .. import db
 from ..auths import UserAuth
-from .forms import GradeFromTeacherForm
 from .forms import up_corrected, UploadCorrected,\
     CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
 from ..models.models import Course, Homework, Team, TeamMember, Student, Submission, Attachment
@@ -209,7 +208,7 @@ def teacher_corrected(course_id, homework_id):
                 return redirect(request.args.get('next') or url_for('teacher.teacher_corrected'))
             #可能加入全体广播 向全部学生广播教师修改作业已上传
             flash('上传成功')
-            return redirect(url_for('teacher.teacher_corrected'))
+            return redirect(url_for('teacher.teacher_corrected', form=form))
     return render_template('teacher/upload_corrected.html', form=form)
 
 
@@ -269,55 +268,61 @@ def teacher_teammanagement():
                            team_list=team_list)
 
 
-@teacher.route('<homework_id>/givegrade_tea', methods=['GET', 'POST'])
-def givegrade_tea( homework_id):
-    # course = Course.query.filter_by(id=course_id).first()
-    # homework = Homework.query.filter_by(id=homework_id).first()
+@teacher.route('/teacher/<course_id>/givegrade_team/<homework_id>', methods=['GET', 'POST'])
+def givegrade_teacher(course_id, homework_id): # TODO：完成老师给分
     #显示学生已提交的作业，显示附件
     submission = Submission.query.filter_by(homework_id=homework_id).filter_by(commit_status=1).all()
     homework_list = []
     for i in submission:
         attachment = Attachment.query.filter_by(submission_id=submission.id)
-        #attachment_url不确定怎么写
-        homework_list.append({'team_id': i.team_id, 'text_content': i.text_content, 'attachment_url': attachment.file_name,
-                        'grade': i.grade, 'comments': i.comments})
 
-    form = GradeFromTeacherForm()
-    for i in homework_list:
-        #一次提交一个分数与评论
-        if request.form.get('action') == 'submit':
-            if form.validate_on_submit():
-                i['grade'] = form.grade.data
-                i['comments'] = form.comments.data
-                submission_1 = submission.query.filter_by(team_id=i['team_id'])
-                submission_1.grade = form.grade.data
-                submission_1.comments = form.comments.data
-                db.session.add(submission_1)
-                db.session.commit()
-                return redirect(request.args.get('next') or url_for('teacher/homework/givegrade_tea.html'))
-            #评论或者分数为空
-            else:
-                flash('请输入分数以及评论', 'danger')
-                return redirect(url_for('teacher/homework/givegrade_tea.html'))
-        #单个作业下载
-        else:
-            if request.form.get('action') == 'download':
-                # 文件是否存在 attachment_url不确定是不是对的
-                if os.path.isfile(os.path.join(os.getcwd(), 'uploads', str(i['attachment_url']))):
-                    response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(i['attachment_url']))))
-                else:
-                    flash('选择的文件不存在')
-                    return redirect(url_for('index'))
-                response.headers["Content-Disposition"] = "attachment; filename=" + str(i['attachment_url']) + ";"
-                return response
-    #打包下载
-    if request.form.get('action') == 'multidownload':
-        filelist = request.args.get('filelist')
-        output_filename = request.args.get('output_filename')
-        zipf = zipfile.ZipFile(output_filename, 'w')
-        [zipf.write(filename, filename.rsplit(os.path.sep, 1)[-1]) for filename in filelist]
-        zipf.close()
-        response = make_response(send_file(os.path.join(os.getcwd(), output_filename)))
-        response.headers["Content-Disposition"] = "attachment; filename=" + output_filename + ";"
-        return response
+        homework_list.append({'team_id': i.team_id, 'text_content': i.text_content,
+                              'grade': i.grade, 'comments': i.comments})
+    request.args.get('team_id')
+    # 提交评价和评分
+    if request.method == 'POST' and request.args.get('action') == 'submit':
+        pass
+    # 单个下载学生作业
+    if request.method == 'POST' and request.args.get('action') == 'download':
+        pass
+    # 批量下载学生作业
+    if request.method == 'POST' and request.args.get('action') == 'multi_download':
+        pass
+    # for i in homework_list:
+    #     #一次提交一个分数与评论
+    #     if request.args.get('action') == 'submit':
+    #         if form.validate_on_submit():
+    #             i['grade'] = form.grade.data
+    #             i['comments'] = form.comments.data
+    #             submission_1 = submission.query.filter_by(team_id=i['team_id'])
+    #             submission_1.grade = form.grade.data
+    #             submission_1.comments = form.comments.data
+    #             db.session.add(submission_1)
+    #             db.session.commit()
+    #             return redirect(request.args.get('next') or url_for('teacher/homework/givegrade_tea.html'))
+    #         #评论或者分数为空
+    #         else:
+    #             flash('请输入分数以及评论', 'danger')
+    #             return redirect(url_for('teacher/homework/givegrade_tea.html'))
+    #     #单个作业下载
+    #     else:
+    #         if request.args.get('action') == 'download':
+    #             # 文件是否存在 attachment_url不确定是不是对的
+    #             if os.path.isfile(os.path.join(os.getcwd(), 'uploads', str(i['attachment_url']))):
+    #                 response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(i['attachment_url']))))
+    #             else:
+    #                 flash('选择的文件不存在')
+    #                 return redirect(url_for('index'))
+    #             response.headers["Content-Disposition"] = "attachment; filename=" + str(i['attachment_url']) + ";"
+    #             return response
+    # #打包下载
+    # if request.form.get('action') == 'multidownload':
+    #     filelist = request.args.get('filelist')
+    #     output_filename = request.args.get('output_filename')
+    #     zipf = zipfile.ZipFile(output_filename, 'w')
+    #     [zipf.write(filename, filename.rsplit(os.path.sep, 1)[-1]) for filename in filelist]
+    #     zipf.close()
+    #     response = make_response(send_file(os.path.join(os.getcwd(), output_filename)))
+    #     response.headers["Content-Disposition"] = "attachment; filename=" + output_filename + ";"
+    #     return response
     return render_template('teacher/homework/givegrade_tea.html', homework_list=homework_list)
