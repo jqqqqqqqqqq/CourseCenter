@@ -12,7 +12,7 @@ import uuid
 from config import basedir
 
 
-@student.route('/student/<course_id>/file/<file_name>', methods=['GET'])
+@student.route('/<course_id>/file/<file_name>', methods=['GET'])
 @UserAuth.student_course_access
 def download_resource(course_id, file_name):
     # 这里提供的是样例路径，具体根据实际路径修改
@@ -21,14 +21,14 @@ def download_resource(course_id, file_name):
     return response
 
 
-@student.route('/student/<course_id>/course', methods=['GET'])
+@student.route('/<course_id>/course', methods=['GET'])
 @UserAuth.student_course_access
 def show_course_info(course_id):
     course = Course.query.filter_by(id=course_id).first()
     return render_template('student/course.html', course_id=course_id, course=course)
 
 
-@student.route('/student/<course_id>/homework/<homework_id>/submit', methods=['GET', 'POST'])
+@student.route('/<course_id>/homework/<homework_id>/submit', methods=['GET', 'POST'])
 def submit_homework(course_id, homework_id):
     form = HomeworkForm()
     team_member = TeamMember.query.filter_by(student_id=current_user.id).first()
@@ -120,12 +120,12 @@ def submit_homework(course_id, homework_id):
     return render_template('/student/submit.html', submission=submission, attachment=attachment_previous)
 
 
-@student.route('/student/<course_id>/teams', methods=['GET', 'POST'])
+@student.route('/<course_id>/teams', methods=['GET', 'POST'])
 def team_view(course_id):
     return
 
 
-@student.route('/student/<course_id>/my_team', methods=['GET', 'POST'])
+@student.route('/<course_id>/my_team', methods=['GET', 'POST'])
 def my_team(course_id):
     student_id = current_user.id
     owner = Team.query.filter_by(owner_id=student_id).first()  # 测试是不是队长

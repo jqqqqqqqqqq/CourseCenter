@@ -105,6 +105,7 @@ def manage_course():
 
         try:
             # 上传文件处理
+            print(os.getcwd() + '/uploads')
             filename = ups.save(form.stuff_info.data, name=str(uuid.uuid4())+".xlsx")
             file_path = os.path.join(basedir, 'uploads', filename)
             student_info, teacher_info = read_file(file_path=file_path)
