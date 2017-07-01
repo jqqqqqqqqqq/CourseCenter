@@ -4,11 +4,12 @@ from flask_login import login_required
 from . import teacher
 from .. import db
 from ..auths import UserAuth
-from .forms import CourseForm, HomeworkForm, UploadResourceForm, upsr
-from ..models.models import Course, Homework
+from .forms import CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
+from ..models.models import Course, Homework, Team, TeamMember, Student
 import uuid
 from flask_uploads import UploadNotAllowed
-
+import os
+from config import basedir
 
 @teacher.before_request
 @login_required
@@ -110,3 +111,59 @@ def teacher_resource():
     else:
         file_url = None
     return render_template('uploadresource.html', form=form, file_url=file_url)
+
+
+@teacher.route('/index-teacher/teacher-teammanagement', methods=['GET', 'POST'])
+def teacher_teammanagement():
+    if "accept" in request.form.values():
+        form = AcceptTeam()
+        _team = Team.query.filter_by(id=int(form.id.data)).first()
+        if _team:
+            _team.status = 1  # 1是通过
+            db.session.add(_team)
+            db.session.commit()
+            flash("通过成功", "success")
+            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+        else:
+            flash("找不到此团队", "danger")
+            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+    elif "reject" in request.form.values():
+        form = RejectTeam()
+        _team = Team.query.filter_by(id=int(form.id.data)).first()
+        if _team:
+            _team.status = 2  # 2是拒绝
+            _team.reason = form.reason.data
+            db.session.add(_team)
+            db.session.commit()
+            flash("拒绝成功", "success")
+            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+        else:
+            flash("找不到此团队", "danger")
+            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+
+    _team_list = Team.query.all()
+
+    class TeamList:
+        id = 0
+        status = 0
+        team_name = ""
+
+        def __init__(self, id, status, team_name):
+            self.id = id
+            self.status = status
+            self.team_name = team_name
+
+    team_list = [TeamList(a.id, a.status, a.team_name) for a in _team_list]
+    for team in team_list:
+        _team_members = TeamMember.query.filter_by(team_id=team.id).all()
+        member_name = ""
+        for member in _team_members:
+            real_name = Student.query.filter_by(id=member.student_id).first().name
+            member_name += member.team_name + "(" + real_name + "), "
+        team.member_name = member_name  # 把所有人名字构造成一个字符串
+        team.accept_form = AcceptTeam()
+        team.accept_form.id.data = team.id
+        team.reject_form = RejectTeam()
+        team.reject_form.id.data = team.id
+    return render_template('auth_teacher/teacher_teammanagement.html',
+                           team_list=team_list)

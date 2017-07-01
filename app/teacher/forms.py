@@ -26,3 +26,14 @@ class UploadResourceForm(FlaskForm):
         FileAllowed(upsr, u'xls, xlsx, pdf, doc, docx, txt, zip, 7z, rar'),
         FileRequired(u'文件未选择!')])
     submit = SubmitField(u'上传')
+
+
+class AcceptTeam(FlaskForm):
+    id = IntegerField(validators=[InputRequired()])
+    # button = SubmitField('通过')
+
+
+class RejectTeam(FlaskForm):
+    id = IntegerField(validators=[InputRequired()])
+    # button = SubmitField('拒绝')
+    reason = TextAreaField('拒绝理由',validators=[InputRequired()])
