@@ -16,7 +16,7 @@ from config import basedir
 @UserAuth.student_course_access
 def download_resource(course_id, file_name):
     # 这里提供的是样例路径，具体根据实际路径修改
-    response = make_response(send_file(os.getcwd() + '/uploads/' + str(file_name)))
+    response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(file_name)))
     response.headers["Content-Disposition"] = "attachment; filename="+str(file_name)+";";
     return response
 
