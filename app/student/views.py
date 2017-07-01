@@ -117,17 +117,18 @@ def submit_homework(course_id, homework_id):
                 submission_1 = submission_previous.submit_attempts + 1
             else:
                 submission_1.submit_attempts = 1
-
+            submission_previous.submit_status = 0
             submission_1.homework_id = homework.id
             submission_1.team_id = team.id
             submission_1.text_content = form.text_content.data
             submission_1.submitter_id = current_user.id
             submission_1.submit_status = 1  # 提交状态 1 已提交
             db.session.add(submission_1)
+            db.session.add(submission_previous)
             db.session.commit()   # 提交更改 生成submission_1.id
 
             if form.homework_up.data:
-                # 保存到uploads/<course-id>/<homework-id><team-id>
+                # 保存到uploads/<course-id>/<homework-id>/<team-id>
                 guid = uuid.uuid4()
                 try:
                     (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
@@ -155,33 +156,41 @@ def submit_homework(course_id, homework_id):
 
 
 @student.route('/student/<course_id>/givegrade_stu', methods=['GET', 'POST'])
-def givegrade_stu():
-    team_member_1 = TeamMember.query.filter_by(student_id=current_user.id)
+def givegrade_stu(course_id):
+    team_member_1 = TeamMember.query.filter_by(student_id=current_user.id).first()
     team = Team.query.filter_by(id=team_member_1.team_id)
     team_member = TeamMember.query.filter_by(team_id=team.id).all()
-    count = team_member.count()
+
     student_list = []
-    sum = 0
+
+    # student_list用于在打分页面显示分数
     for i in team_member:
-        student = Student.query.filter_by(id=i.student_id).first()
-        student_list.append({student.name: i.grade})
-    #无法打分情况
+        student_temp = Student.query.filter_by(id=i.student_id).first()
+        # student_list.append({student_temp.name: i.grade})
+        student_list.append({'student_id': student_temp.id,
+                             'student_name': student_temp.name,
+                             'student_grade': i.grade})
+    # 无法打分情况
     if request.method == 'POST':
         if current_user.id != team.owner_id:
             flash('权限不足，只有组长可以打分', 'danger')
             return redirect(request.args.get('next') or url_for('student.give_grade'))
         else:
-            for key, value in request.form.items():
-                for i in team_member:
-                    if i.student_id == key:
-                        i.grade = value
-                        sum = sum + i.grade
-                        if sum != count:
-                            flash('打分错误，每个人平均分不是1', 'danger')
-                            return redirect(request.args.get('next') or url_for('student.give_grade'))
-                        else:
-                            db.session.add(i)
-            db.session.commit()
+            # key = student_id value = team_member.grade
+            sum_total = 0
+            for grade in request.form:
+                sum_total += float(grade[-1])
+            # 所有人的得分系数合应为1
+            if sum_total > 1:
+                flash('所有人的得分系数合应为1', 'danger')
+                return redirect(url_for('student.givegrade_stu', student_list=student_list))
+            else:
+                for student_t in team_member:
+                    student_t.grade = float(request.form.get[str(student_t.student_id)])
+                    db.session.add(student_t)
+                db.session.commit()
+                flash('设置成功', 'success')
+                return redirect(url_for('student.givegrade_stu', student_list=student_list))
     return render_template('/student/givegrade_stu.html', student_list=student_list)
 
 
