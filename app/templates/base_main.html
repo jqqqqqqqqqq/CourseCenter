@@ -88,9 +88,9 @@ desired effect
 {#                                </li>#}
                                 <!-- Menu Footer-->
                                 <li class="user-footer">
-{#                                    <div class="pull-left">#}
-{#                                        <a href="#" class="btn btn-default btn-flat">个人信息</a>#}
-{#                                    </div>#}
+                                    <div class="pull-left">
+                                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-default btn-flat">个人信息</a>
+                                    </div>
                                     <div class="pull-right">
                                         <a href="{{ url_for('auth.logout') }}" class="btn btn-default btn-flat">登出</a>
                                     </div>

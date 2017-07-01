@@ -3,6 +3,8 @@ from flask_login import login_user, logout_user, login_required
 from .forms import LoginForm, ChangePasswordForm
 from . import auth
 from ..models.models import DeanInfo, Student, Teacher
+from flask_login import current_user
+from .. import db
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -36,16 +38,18 @@ def logout():
     return redirect(url_for('auth.login'))
 
 
-@auth.route('/change-password')
+@auth.route('/change-password', methods=['GET', 'POST'])
 @login_required
 def change_password():
-    form = ChangePasswordform()
+    form = ChangePasswordForm()
     if form.validate_on_submit():
         if current_user.verify_password(form.old_password.data):
             current_user.password = form.new_password.data
             db.session.add(current_user)
-            flash("密码修改成功")
+            flash('密码修改成功', 'success')
+            logout_user()
             return redirect(url_for('auth.login'))
         else:
-            flash('旧密码错误')
+            print(2333)
+            flash('旧密码错误', 'danger')
     return render_template('auth/change_password.html', form=form)
