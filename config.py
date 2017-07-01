@@ -7,7 +7,7 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_RECORD_QUERIES = True
-    UPLOADED_FILES_DEST = os.getcwd() + '/uploads' # 创建文件上传目录
+    UPLOADED_FILES_DEST = os.path.join(basedir, 'uploads') # 创建文件上传目录
 
     @staticmethod
     def init_app(app):

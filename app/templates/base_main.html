@@ -114,9 +114,9 @@ desired effect
                         <li><a href="{{ url_for('teacher.set_course_info', course_id=course_id) }}">
                             <i class="fa fa-info"></i> <span>课程信息</span></a>
                         </li>
-{#                        <li><a href="{{ url_for('main.manage_resource', course_id=course_id) }}">#}
-{#                            <i class="fa fa-folder"></i> <span>课程资源</span></a>#}
-{#                        </li>#}
+                        <li><a href="{{ url_for('teacher.manage_resource', course_id=course_id) }}">
+                            <i class="fa fa-folder"></i> <span>课程资源</span></a>
+                        </li>
                         <li><a href="{{ url_for('teacher.set_homework', course_id=course_id) }}">
                             <i class="fa fa-book"></i> <span>课程作业</span></a>
                         </li>
@@ -150,6 +150,12 @@ desired effect
 
             <!-- Main content -->
             <section class="content">
+                {% for message in get_flashed_messages(with_categories=True) %}
+                    <div class="alert alert-{{ message[0] }} alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                        {{ message[1] }}
+                    </div>
+                {% endfor %}
                 {% block content_main %}
 
                 <!-- Your Page Content Here -->
@@ -177,6 +183,52 @@ desired effect
     {{ super() }}
     <!-- AdminLTE App -->
     <script src="{{ url_for('static', filename='components/AdminLTE/dist/js/app.min.js') }}"></script>
+    <script>
+        jQuery(function ($) {
+            $.extend({
+                form: function (url, data, method) {
+                    if (method == null) method = 'POST';
+                    if (data == null) data = {};
+
+                    var form = $('<form>').attr({
+                        method: method,
+                        action: url
+                    }).css({
+                        display: 'none'
+                    });
+
+                    var addData = function (name, data) {
+                        if ($.isArray(data)) {
+                            for (var i = 0; i < data.length; i++) {
+                                var value = data[i];
+                                addData(name + '[]', value);
+                            }
+                        } else if (typeof data === 'object') {
+                            for (var key in data) {
+                                if (data.hasOwnProperty(key)) {
+                                    addData(name + '[' + key + ']', data[key]);
+                                }
+                            }
+                        } else if (data != null) {
+                            form.append($('<input>').attr({
+                                type: 'hidden',
+                                name: String(name),
+                                value: String(data)
+                            }));
+                        }
+                    };
+
+                    for (var key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            addData(key, data[key]);
+                        }
+                    }
+
+                    return form.appendTo('body');
+                }
+            });
+        });
+    </script>
 
 {% endblock %}
 

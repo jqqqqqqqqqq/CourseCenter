@@ -24,52 +24,85 @@
 
 {% block content_main %}
     <article>
-        <div class="box box-primary course-box" data-href="#">
+        <div class="box box-primary course-box" data-href="?path=/">
             <div class="box-header with-border">
                 <h3 class="box-title">
-                    /
+                    <ol class="breadcrumb">
+                        <li><a href="?path=/">根目录</a></li>
+                        {% for dir in path[1:-1].split('/') %}
+                            <li{% if loop.last %} class="active"{% endif %}>
+                                <a href="?path={{ '/' + '/'.join(path[1:-1].split('/')[:loop.index]) + '/' }}">
+                                    {{ dir }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ol>
                 </h3>
             </div>
             <div class="box-body no-padding">
                 <div class="file-control">
                     <div class="btn-group">
-                        <button class="btn btn-default btn-sm">
+                        <button class="btn btn-primary btn-sm" onclick="$('#file').click()">
                             <i class="fa fa-upload"></i>
                         </button>
-                        <button class="btn btn-danger btn-sm">
-                            <i class="fa fa-trash-o"></i>
+                        <button class="btn btn-default btn-sm" onclick="mkdir()">
+                            <i class="fa fa-folder-o"></i>
                         </button>
                     </div>
-                    <botton type="botton" class="btn btn-default btn-sm">
-                        <i class="fa fa-folder-o"></i>
-                    </botton>
+                    <form id="fileForm" method="post" enctype="multipart/form-data" action="?path={{ path }}" style="display: none">
+                        <input type="file" name="file" id="file">
+                    </form>
                 </div>
                 <div class="table-responsive file-list">
                     <table class="table table-hover table-striped">
                         <thead>
                             <tr>
-                                <th width="40"><input type="checkbox"></th>
                                 <th width="30"></th>
                                 <th>文件名</th>
                                 <th width="10%">大小</th>
                                 <th width="20%">修改日期</th>
+                                <td width="100">操作</td>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><input type="checkbox"></td>
-                                <td><i class="fa fa-file"></i></td>
-                                <td><a href="#">这里有一个，文件</a></td>
-                                <td>10000000TB</td>
-                                <td>一个世纪以前</td>
-                            </tr>
-                            <tr>
-                                <td><input type="checkbox"></td>
-                                <td><i class="fa fa-folder"></i></td>
-                                <td><a href="#">这里有一个，文件夹</a></td>
-                                <td>100000000000PB</td>
-                                <td>白垩纪</td>
-                            </tr>
+                            {% for file in files if file.is_dir() %}
+                                <tr>
+                                    <td><i class="fa fa-folder"></i></td>
+                                    <td>
+                                        <a href="?path={{ path }}{{ file.name }}/">
+                                            {{ file.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ file.stat().st_size }}B</td>
+                                    <td>{{ file.stat().st_mtime }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-danger btn-sm" onclick="delFile('{{ file.name }}')">
+                                                <i class="fa fa-trash-o"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            {% for file in files if file.is_file() %}
+                                <tr>
+                                    <td><i class="fa fa-file"></i></td>
+                                    <td>
+                                        <a href="?path={{ path }}&filename={{ file.name }}&download=true">
+                                            {{ file.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ file.stat().st_size }}B</td>
+                                    <td>{{ file.stat().st_mtime }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-danger btn-sm" onclick="delFile('{{ file.name }}')">
+                                                <i class="fa fa-trash-o"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -82,9 +115,21 @@
 {% block scripts %}
 {{ super() }}
     <script>
-        $('.file-list input[type="checkbox"]').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            radioClass: 'iradio_square-blue'
+        $('#file').change(function () {
+            $('#fileForm').submit();
         });
+
+        function mkdir() {
+            dirname = prompt('请输入文件夹名');
+            if(dirname){
+                $.form('?path={{ path }}', {dirname: dirname}, 'POST').submit();
+            }
+        }
+
+        function delFile(filename) {
+            if(confirm('确定要删除吗？')){
+                $.form('?path={{ path }}', {action: 'delete', filename: filename}, 'POST').submit();
+            }
+        }
     </script>
 {% endblock %}

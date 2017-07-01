@@ -1,6 +1,9 @@
-from flask import flash, redirect, render_template, url_for, request
+import os
+import shutil
+from flask import flash, redirect, render_template, url_for, request, current_app, send_from_directory
 from datetime import datetime
 from flask_login import login_required
+from ..upload_utils import secure_filename
 from . import teacher
 from .. import db
 from ..auths import UserAuth
@@ -17,6 +20,7 @@ def before_request():
 @teacher.route('/<course_id>/course', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def set_course_info(course_id):
+    # 教师课程信息
     form = CourseForm()
     course = Course.query.filter_by(id=course_id).first()
     if form.validate_on_submit():
@@ -36,7 +40,76 @@ def set_course_info(course_id):
 @teacher.route('/<course_id>/resource', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def manage_resource(course_id):
-    return render_template('teacher/resource.html', course_id=course_id)
+    # 教师课程资源
+    path = request.args.get('path')
+    if not path:
+        return redirect(url_for('teacher.manage_resource', course_id=course_id, path='/'))
+
+    expand_path = os.path.join(current_app.config['UPLOADED_FILES_DEST'], 'resource', course_id, path[1:])
+    if not os.path.exists(expand_path):
+        # 没有文件夹？赶紧新建一个，真鸡儿丢人
+        os.mkdir(expand_path)
+
+    if request.method == 'POST' and 'file' in request.files:
+        # 上传文件
+        file = request.files['file']
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(current_app.config['UPLOADED_FILES_DEST'], 'resource', course_id, path[1:], filename)
+        if os.path.exists(filepath):
+            flash('已经存在了同名文件', 'danger')
+            return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+        file.save(filepath)
+        flash('上传成功！', 'success')
+        return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+
+    if request.method == 'POST' and 'dirname' in request.form:
+        # 新建文件夹
+        dirname = request.form['dirname']
+        dirpath = os.path.join(current_app.config['UPLOADED_FILES_DEST'], 'resource', course_id, path[1:], dirname)
+        if os.path.exists(dirpath):
+            flash('已经存在了同名文件夹', 'danger')
+            return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+        os.mkdir(dirpath)
+        flash('新建文件夹成功！', 'success')
+        return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+
+    if 'action' in request.form:
+        if request.form.get('action') == 'delete':
+            # 删除
+            filepath = os.path.join(
+                current_app.config['UPLOADED_FILES_DEST'],
+                'resource',
+                course_id,
+                path[1:],
+                request.form.get('filename')
+            )
+            if not os.path.exists(filepath):
+                flash('文件不存在！', 'danger')
+                redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+            if os.path.isfile(filepath):
+                os.remove(filepath)
+            else:
+                shutil.rmtree(filepath)
+            flash('删除成功！', 'success')
+            redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+
+    if request.args.get('download'):
+        # 下载
+        filedir = os.path.join(
+            current_app.config['UPLOADED_FILES_DEST'],
+            'resource',
+            course_id,
+            path[1:])
+        filename = request.args.get('filename')
+        print(filename)
+        if os.path.exists(os.path.join(filedir, filename)):
+            return send_from_directory(filedir, filename, as_attachment=True)
+        else:
+            flash('文件不存在！', 'danger')
+            redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+
+    files = list(os.scandir(expand_path))
+    return render_template('teacher/resource.html', course_id=course_id, files=files, path=path)
 
 
 @teacher.route('/<course_id>/homework', methods=['GET', 'POST'])
