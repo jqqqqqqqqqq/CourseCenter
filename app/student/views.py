@@ -70,8 +70,10 @@ def submit_homework(course_id, homework_id):
         # 无法提交情况
         if current_user.id != team.owner_id:
             flash('权限不足，只有组长可以管理作业', 'danger')
+            return redirect(request.args.get('next') or url_for('student.submit_homework'))
         elif submission.submit_attempts >= homework.max_submit_attempts:
             flash('提交已达最大次数，无法提交', 'danger')
+            return redirect(request.args.get('next') or url_for('student.submit_homework'))
         # 可以提交情况
         else:
             if request.args.get('action') == 'edit':
@@ -88,11 +90,11 @@ def submit_homework(course_id, homework_id):
                     # 保存到uploads/<course-id>/<homework-id>
                     guid = uuid.uuid4()
                     try:
-                        (name, ext) = os.path.splitext(form.up.data.filename)
-                        filename = homework_ups.save(form.homework_up.data,
-                                                     folder=os.path.join(basedir, 'uploads', str(course_id),
+                        (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
+                        name = homework_ups.save(form.homework_up.data,
+                                                 folder=os.path.join(basedir, 'uploads', str(course_id),
                                                                      str(homework_id)),
-                                                     name=str(guid) + ext)
+                                                 name=str(guid) + ext)
                     except UploadNotAllowed:
                         flash('附件上传不允许！', 'danger')
                         return redirect(request.args.get('next') or url_for('student.submit_homework'))
@@ -101,10 +103,10 @@ def submit_homework(course_id, homework_id):
                         return redirect(request.args.get('next') or url_for('student.submit_homework'))
                     attachment_previous.guid = guid
                     # 保存绝对路径
-                    attachment_previous.file_name = str(filename)
+                    attachment_previous.file_name = str(name)
                     db.ssession.add(attachment_previous)
-                    db.session.commit()
-                flash('更改成功!')
+                    flash('更改成功!')
+                db.session.commit()
                 return redirect(url_for('student.submit_homework', submission=submission, attachment=attachment_previous))
             else:
                 # 新建提交
@@ -123,10 +125,10 @@ def submit_homework(course_id, homework_id):
                     # 保存到uploads/<course-id>/<homework-id>
                     guid = uuid.uuid4()
                     try:
-                        (name, ext) = os.path.splitext(form.up.data.filename)
-                        filename = homework_ups.save(form.homework_up.data,
+                        (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
+                        name = homework_ups.save(form.homework_up.data,
                                                      folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                                     str(homework_id)),
+                                                                         str(homework_id)),
                                                      name=str(guid) + ext)
                     except UploadNotAllowed:
                         flash('附件上传不允许！', 'danger')
@@ -138,12 +140,12 @@ def submit_homework(course_id, homework_id):
                     attachment.submission_id = submission.id
                     attachment.guid = guid
                     attachment.status = False
-                    # 保存绝对路径
-                    attachment.file_name = str(filename)
+                    # 保存文件名
+                    attachment.file_name = str(name)
                     db.ssession.add(attachment)
+                    flash('提交成功!')
                 db.session.commit()
-                flash('提交成功!')
-            return redirect(url_for('main.submit_homework', submission=submission, attachment=attachment))
+                return redirect(url_for('main.submit_homework', submission=submission, attachment=attachment))
     return render_template('/student/submit.html', submission=submission, attachment=attachment_previous)
 
 
