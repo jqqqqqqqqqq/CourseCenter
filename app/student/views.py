@@ -20,7 +20,7 @@ def index():
 # 提供打包的功能,需要根据实际情况修改
 # 提供一个filelist，是一个list，包含的是目标多个文件的绝对路径
 # output_filename是目标zip的名字
-@student.route('/student/*****'), methods=['GET'])
+@student.route('/student/*****', methods=['GET'])
 @UserAuth.student_course_access
 def multi_download():
     filelist = request.args.get('filelist')
