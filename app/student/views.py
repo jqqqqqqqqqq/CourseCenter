@@ -4,7 +4,7 @@ from flask_login import current_user
 from . import student
 from .. import db
 from ..auths import UserAuth
-from ..models.models import Course, TeamMember, Team, Homework, Submission, Attachment
+from ..models.models import Course, TeamMember, Team, Homework, Submission, Attachment, Team, TeamMember
 from .forms import HomeworkForm, homework_ups
 from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
@@ -126,5 +126,23 @@ def team_view(course_id):
 
 
 @student.route('/student/<course_id>/my_team', methods=['GET', 'POST'])
-def team_view(course_id):
+def my_team(course_id):
+    student_id = current_user.id
+    owner = Team.query.filter_by(owner_id=student_id).first()  # 测试是不是队长
+    if owner:
+        # 如果是队长，则展示团队管理页面
+        # TODO: 团队管理
+        pass
+    else:
+        member = TeamMember.query.filter_by(student_id=student_id).first()
+        if member:
+            # 如果是队员，则展示团队信息
+            # TODO：团队信息
+
+            pass
+        else:
+            # 啥都不是，直接返回没有团队
+            # TODO: 没有团队
+            return render_template('/student/no_team.html')
+
     return

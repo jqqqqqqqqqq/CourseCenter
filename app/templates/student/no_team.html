@@ -1,0 +1,35 @@
+{% extends "base_main.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - 课程管理{% endblock %}
+
+{% block content_header %}
+    <h1>课程信息</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
+    <li class="active">课程信息</li>
+{% endblock %}
+
+{% block content_main %}
+    {% for message in get_flashed_messages(with_categories=True) %}
+        <div class="alert alert-{{ message[0] }} alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            {{ message[1] }}
+        </div>
+    {% endfor  %}
+    <article>
+        <div class="box box-primary course-box" data-href="#">
+            <div class="box-header with-border">
+                <h3 class="box-title">
+                    你还没有团队<small>去加入一个吧</small>
+                </h3>
+            </div>
+        </div>
+        <!-- /.box-primary -->
+    </article>
+{% endblock %}
+
+
+{% endblock %}
