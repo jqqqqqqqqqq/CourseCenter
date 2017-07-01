@@ -101,7 +101,7 @@ class Team(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))  # 此team_name是团队名称
-    status = db.Column(db.Integer)  # 0: building 1: pending 2: accepted 3: rejected
+    status = db.Column(db.Integer)  # 0: building 1: pending 2: accepted 3: rejected 4: dismiss
     reject_reason = db.Column(db.Text)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
 

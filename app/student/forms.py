@@ -19,3 +19,7 @@ class CreateTeamForm(FlaskForm):
     status = IntegerField('队伍状态')
     course_id = IntegerField('所属课程', validators=[DataRequired()])
     rejection_reason = TextAreaField('拒绝理由')
+
+
+class MemberForm(FlaskForm):
+    member_id = IntegerField(validators=[InputRequired])

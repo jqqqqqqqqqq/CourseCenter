@@ -4,7 +4,7 @@ from flask_login import current_user
 from . import student
 from ..auths import UserAuth
 from ..models.models import *
-from .forms import HomeworkForm, homework_ups, CreateTeamForm
+from .forms import HomeworkForm, homework_ups, CreateTeamForm, MemberForm
 from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
 import uuid
@@ -165,12 +165,30 @@ def team_view(course_id):
 @student.route('/<course_id>/my_team', methods=['GET', 'POST'])
 def my_team(course_id):
     student_id = current_user.id
-    owner = Team.query.filter_by(owner_id=student_id).first()  # 测试是不是队长
-    if owner:
+    team = Team.query.filter_by(owner_id=student_id).first()  # 测试是不是队长
+    if team:
         # 如果是队长，则展示团队管理页面
-        teammate_list = TeamMember.query.filter_by(team_id=owner.id)
+        teammate_list = TeamMember.query.filter_by(team_id=team.id)
         for member in teammate_list:
-            member.real_name = Student.query.filter_by(id=member.student_id).first().name
+            member.real_name = Student.query.filter_by(id=member.student_id).first().name  # 通过member里的status在前端做通过/拒绝
+        member_form = MemberForm()
+        if member.validate_on_submit():
+            if request.args.get('action') == 'accept':
+                member = TeamMember.query.filter_by(student_id=member_form.member_id.data)
+                member.status = 1  # 1: Accepted
+                db.session.add(member)
+                db.session.commit()
+                flash('接受成功', 'success')
+            elif request.args.get('action') == 'reject':
+                member = TeamMember.query.filter_by(student_id=member_form.member_id.data)
+                member.status = 2  # 2: Rejected
+                db.session.add(member)
+                db.session.commit()
+                flash('拒绝成功', 'success')
+        elif request.args.get('action') == 'dismiss':
+            team.status = 4  # 4: dismiss
+            db.session.add(team)
+            db.session.commit()
 
         return render_template('/student/team_manage.html', teammate_list=teammate_list)
     else:
