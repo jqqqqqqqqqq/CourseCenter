@@ -115,7 +115,7 @@ class TeamMember(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
     team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))  # 此team_name是学生的昵称
-    status = db.Column(db.Integer)
+    status = db.Column(db.Integer)  # 0: pending 1: accepted 2: rejected
 
     def __repr__(self):
         return '<TeamMember %r>' % self.id
