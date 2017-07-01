@@ -27,7 +27,7 @@ def submit_homework(course_id, homework_id):
     homework = Homework.query.filter_by(course_id=team.course_id).first()
 
     # 取最新的submission记录 attachment记录
-    submission = Submission.query.filter_by(team_id=team_member.team_id).filter_by(homework_id=homework.id)[-1]
+    submission = Submission.query.filter_by(team_id=team_member.team_id).filter_by(homework_id=homework.id).first()
     attachment_previous = Attachment.query.filter_by(submission_id=submission.id).first()
 
     if form.validate_on_submit():
@@ -70,20 +70,18 @@ def submit_homework(course_id, homework_id):
                 return redirect(url_for('student.submit_homework', submission=submission, attachment=attachment_previous))
             else:
                 # 新建提交
-                submission_1 = Submission()
+                submission = Submission()
 
-                submission_1.submit_attempts = 1
-                submission_1.homework_id = homework.id
-                submission_1.team_id = team.id
-                submission_1.text_content = form.text_content.data
-                submission_1.submitter_id = current_user.id
-                submission_1.submit_status = 1  # 提交状态 1 已提交
-                db.session.add(submission_1)
+                submission.submit_attempts = 1
+                submission.homework_id = homework.id
+                submission.team_id = team.id
+                submission.text_content = form.text_content.data
+                submission.submitter_id = current_user.id
+                submission.submit_status = 1  # 提交状态 1 已提交
+                db.session.add(submission)
                 db.session.commit()   # 提交更改 生成submission_1.id
 
                 if form.homework_up.data:
-                # 删除原来的作业
-                    os.remove(attachment_previous.file_name)
                     # 保存到uploads/<course-id>/<homework-id>/homework
                     guid = uuid.uuid4()
                     try:
@@ -99,7 +97,7 @@ def submit_homework(course_id, homework_id):
                         flash('附件类型不正确，请使用txt、doc、docx', 'danger')
                         return redirect(request.args.get('next') or url_for('main.submit_homework'))
                     attachment = Attachment()
-                    attachment.submission_id = submission_1.id
+                    attachment.submission_id = submission.id
                     attachment.guid = guid
                     attachment.status = False
                     # 保存绝对路径
@@ -107,5 +105,5 @@ def submit_homework(course_id, homework_id):
                     db.ssession.add(attachment)
                 db.session.commit()
                 flash('提交成功!')
-            return redirect(url_for('main.submit_homework', submission=submission_1, attachment=attachment))
+            return redirect(url_for('main.submit_homework', submission=submission, attachment=attachment))
     return render_template('/student/submit.html', submission=submission, attachment=attachment_previous)
