@@ -40,7 +40,7 @@ def download_resource(course_id, file_name):
 
     # 文件是否存在
     if os.path.isfile(os.path.join(os.getcwd(), 'uploads', str(file_name))):
-        response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(file_name)))
+        response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(file_name))))
     else:
         flash('选择的文件不存在')
         return redirect(url_for('index'))
