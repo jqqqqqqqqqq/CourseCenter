@@ -1,5 +1,5 @@
 import os
-from flask import render_template, flash, request, redirect, url_for
+from flask import render_template, flash, request, redirect, url_for, make_response, send_file
 from flask_login import current_user
 from . import student
 from .. import db
@@ -10,6 +10,15 @@ from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
 import uuid
 from config import basedir
+
+
+@student.route('/student/<course_id>/<file_name>', methods=['GET'])
+@UserAuth.student_course_access
+def download_resource(course_id, file_name):
+    # 这里提供的是样例路径，具体根据实际路径修改
+    response = make_response(send_file(os.getcwd() + '/uploads/' + str(file_name)))
+    response.headers["Content-Disposition"] = "attachment; filename="+str(file_name)+";";
+    return response
 
 
 @student.route('/student/<course_id>/course', methods=['GET'])
@@ -27,7 +36,7 @@ def submit_homework(course_id, homework_id):
     homework = Homework.query.filter_by(course_id=team.course_id).first()
 
     # 取最新的submission记录 attachment记录
-    submission = Submission.query.filter_by(team_id=team_member.team_id).filter_by(homework_id=homework.id)[-1]
+    submission = Submission.query.filter_by(team_id=team_member.team_id).filter_by(homework_id=homework.id).first()
     attachment_previous = Attachment.query.filter_by(submission_id=submission.id).first()
 
     if form.validate_on_submit():
@@ -45,16 +54,18 @@ def submit_homework(course_id, homework_id):
                 db.session.add(submission)
 
                 if form.homework_up.data:
-                    # 删除原来的作业
-                    os.remove(attachment_previous.file_name)
-                    # 保存到uploads/<course-id>/<homework-id>/homework
+                    # 删除原来的作业附件
+                    if attachment_previous:
+                        os.remove(os.path.join(basedir, 'uploads', str(course_id),
+                                               str(homework_id), attachment_previous.guid))
+                    # 保存到uploads/<course-id>/<homework-id>
                     guid = uuid.uuid4()
                     try:
                         (name, ext) = os.path.splitext(form.up.data.filename)
                         filename = homework_ups.save(form.homework_up.data,
                                                      folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                                     str(homework_id), 'homework'),
-                                                     name=str(guid)+'.'+ext)
+                                                                     str(homework_id)),
+                                                     name=str(guid) + ext)
                     except UploadNotAllowed:
                         flash('附件上传不允许！', 'danger')
                         return redirect(request.args.get('next') or url_for('student.submit_homework'))
@@ -70,28 +81,26 @@ def submit_homework(course_id, homework_id):
                 return redirect(url_for('student.submit_homework', submission=submission, attachment=attachment_previous))
             else:
                 # 新建提交
-                submission_1 = Submission()
+                submission = Submission()
 
-                submission_1.submit_attempts = 1
-                submission_1.homework_id = homework.id
-                submission_1.team_id = team.id
-                submission_1.text_content = form.text_content.data
-                submission_1.submitter_id = current_user.id
-                submission_1.submit_status = 1  # 提交状态 1 已提交
-                db.session.add(submission_1)
+                submission.submit_attempts = 1
+                submission.homework_id = homework.id
+                submission.team_id = team.id
+                submission.text_content = form.text_content.data
+                submission.submitter_id = current_user.id
+                submission.submit_status = 1  # 提交状态 1 已提交
+                db.session.add(submission)
                 db.session.commit()   # 提交更改 生成submission_1.id
 
                 if form.homework_up.data:
-                # 删除原来的作业
-                    os.remove(attachment_previous.file_name)
-                    # 保存到uploads/<course-id>/<homework-id>/homework
+                    # 保存到uploads/<course-id>/<homework-id>
                     guid = uuid.uuid4()
                     try:
                         (name, ext) = os.path.splitext(form.up.data.filename)
                         filename = homework_ups.save(form.homework_up.data,
                                                      folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                                     str(homework_id), 'homework'),
-                                                     name=str(guid)+'.'+ext)
+                                                                     str(homework_id)),
+                                                     name=str(guid) + ext)
                     except UploadNotAllowed:
                         flash('附件上传不允许！', 'danger')
                         return redirect(request.args.get('next') or url_for('main.submit_homework'))
@@ -99,7 +108,7 @@ def submit_homework(course_id, homework_id):
                         flash('附件类型不正确，请使用txt、doc、docx', 'danger')
                         return redirect(request.args.get('next') or url_for('main.submit_homework'))
                     attachment = Attachment()
-                    attachment.submission_id = submission_1.id
+                    attachment.submission_id = submission.id
                     attachment.guid = guid
                     attachment.status = False
                     # 保存绝对路径
@@ -107,5 +116,5 @@ def submit_homework(course_id, homework_id):
                     db.ssession.add(attachment)
                 db.session.commit()
                 flash('提交成功!')
-            return redirect(url_for('main.submit_homework', submission=submission_1, attachment=attachment))
+            return redirect(url_for('main.submit_homework', submission=submission, attachment=attachment))
     return render_template('/student/submit.html', submission=submission, attachment=attachment_previous)
