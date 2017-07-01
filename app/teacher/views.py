@@ -7,8 +7,17 @@ from ..upload_utils import secure_filename
 from . import teacher
 from .. import db
 from ..auths import UserAuth
-from .forms import CourseForm, HomeworkForm
+from .forms import CourseForm, HomeworkForm, UploadResourceForm, upsr, up_corrected, UploadCorrected
 from ..models.models import Course, Homework
+import uuid, os
+from .forms import CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
+from ..models.models import Course, Homework, Team, TeamMember, Student
+import uuid
+from flask_uploads import UploadNotAllowed
+from config import basedir
+from openpyxl.utils.exceptions import InvalidFileException
+import os
+from config import basedir
 
 
 @teacher.before_request
@@ -165,3 +174,100 @@ def set_homework(course_id):
                                homework=homework)
     homework_list = Homework.query.filter_by(course_id=course_id).all()
     return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form, course=course)
+
+
+@teacher.route('/uploadresource', methods=['GET', 'POST'])
+def teacher_resource():
+    form = UploadResourceForm()
+    if form.validate_on_submit():
+        try:
+            (name, ext) = os.path.splitext(form.up.data.filename)
+            filename = upsr.save(form.up.data, basedir + '/uploads/teacher_resources', name=str(uuid.uuid4())+ext)
+            file_url = upsr.url(filename)
+        except UploadNotAllowed:
+            flash('附件上传不允许！', 'danger')
+            return redirect(request.args.get('next') or url_for('uploadresource.html'))
+    else:
+        file_url = None
+    return render_template('uploadresource.html', form=form, file_url=file_url)
+
+
+@teacher.route('/teacher/<course_id>/<homework_id>/upload', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def teacher_corrected(course_id, homework_id):
+    #上传老师批改后的作业
+    form = UploadCorrected()
+    if form.validate_on_submit():
+        if form.up_corrected:
+            try:
+                name_temp, ext = os.path.splitext(form.up_corrected.data.filename)
+                # 保存文件在basedir/uploads/<course_id>/<homework_id>/teacher_corrected.ext (通过特定名字找下载)
+                up_corrected.save(form.up_corrected,
+                                  folder=os.path.join(basedir, 'uploads', str(course_id), str(homework_id)),
+                                  name=u'teacher_corrected' + ext)
+            except InvalidFileException:
+                flash(u'附件类型不正确，请使用zip或rar', 'danger')
+                return redirect(request.args.get('next') or url_for('teacher.teacher_corrected'))
+            except UploadNotAllowed:
+                flash(u'附件上传不允许')
+                return redirect(request.args.get('next') or url_for('teacher.teacher_corrected'))
+            #可能加入全体广播 向全部学生广播教师修改作业已上传
+            flash('上传成功')
+            return redirect(url_for('teacher.teacher_corrected'))
+    return render_template('teacher/upload_corrected.html', form=form)
+
+
+@teacher.route('/index-teacher/teacher-teammanagement', methods=['GET', 'POST'])
+def teacher_teammanagement():
+    if "accept" in request.form.values():
+        form = AcceptTeam()
+        _team = Team.query.filter_by(id=int(form.id.data)).first()
+        if _team:
+            _team.status = 1  # 1是通过
+            db.session.add(_team)
+            db.session.commit()
+            flash("通过成功", "success")
+            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+        else:
+            flash("找不到此团队", "danger")
+            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+    elif "reject" in request.form.values():
+        form = RejectTeam()
+        _team = Team.query.filter_by(id=int(form.id.data)).first()
+        if _team:
+            _team.status = 2  # 2是拒绝
+            _team.reason = form.reason.data
+            db.session.add(_team)
+            db.session.commit()
+            flash("拒绝成功", "success")
+            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+        else:
+            flash("找不到此团队", "danger")
+            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+
+    _team_list = Team.query.all()
+
+    class TeamList:
+        id = 0
+        status = 0
+        team_name = ""
+
+        def __init__(self, id, status, team_name):
+            self.id = id
+            self.status = status
+            self.team_name = team_name
+
+    team_list = [TeamList(a.id, a.status, a.team_name) for a in _team_list]
+    for team in team_list:
+        _team_members = TeamMember.query.filter_by(team_id=team.id).all()
+        member_name = ""
+        for member in _team_members:
+            real_name = Student.query.filter_by(id=member.student_id).first().name
+            member_name += member.team_name + "(" + real_name + "), "
+        team.member_name = member_name  # 把所有人名字构造成一个字符串
+        team.accept_form = AcceptTeam()
+        team.accept_form.id.data = team.id
+        team.reject_form = RejectTeam()
+        team.reject_form.id.data = team.id
+    return render_template('auth_teacher/teacher_teammanagement.html',
+                           team_list=team_list)

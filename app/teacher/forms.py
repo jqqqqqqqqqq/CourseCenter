@@ -1,6 +1,11 @@
 from flask_wtf import FlaskForm
-from wtforms import TextAreaField, IntegerField, StringField
+from wtforms import TextAreaField, IntegerField, StringField, SubmitField
 from wtforms.validators import InputRequired, DataRequired
+from flask_uploads import UploadSet
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+
+upsr = UploadSet('files', extensions=('xls', 'xlsx', 'pdf', 'doc', 'docx', 'txt', 'zip', '7z', 'rar'))
+up_corrected = UploadSet('files', extensions=('zip', 'rar'))
 
 
 class CourseForm(FlaskForm):
@@ -15,3 +20,27 @@ class HomeworkForm(FlaskForm):
     time = StringField('持续时间', validators=[DataRequired()])
     weight = IntegerField('权重', validators=[DataRequired()])
     max_submit_attempts = IntegerField('最大提交次数', validators=[DataRequired()])
+
+
+class UploadResourceForm(FlaskForm):
+    up = FileField(validators=[
+        FileAllowed(upsr, u'xls, xlsx, pdf, doc, docx, txt, zip, 7z, rar'),
+        FileRequired(u'文件未选择!')])
+    submit = SubmitField(u'上传')
+
+
+class UploadCorrected(FlaskForm):
+    up_corrected = FileField(validators=[FileAllowed(up_corrected, u'zip and rar only'),
+                                         FileRequired(u'文件未选择!')])
+    submit = SubmitField(u'上传')
+
+
+class AcceptTeam(FlaskForm):
+    id = IntegerField(validators=[InputRequired()])
+    # button = SubmitField('通过')
+
+
+class RejectTeam(FlaskForm):
+    id = IntegerField(validators=[InputRequired()])
+    # button = SubmitField('拒绝')
+    reason = TextAreaField('拒绝理由', validators=[InputRequired()])
