@@ -115,7 +115,7 @@ class TeamMember(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
     team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
-
+    grade = db.Column(db.Float)
     def __repr__(self):
         return '<TeamMember %r>' % self.id
 
