@@ -67,6 +67,10 @@ def show_resource(course_id):
         return redirect(url_for('student.show_resource', course_id=course_id, path='/'))
     expand_path = os.path.join(current_app.config['UPLOADED_FILES_DEST'], 'resource', course_id, path[1:])
 
+    if not os.path.exists(expand_path):
+        # 没有文件夹？赶紧新建一个，真鸡儿丢人
+        os.mkdir(expand_path)
+
     if request.args.get('download'):
         # 下载
         filedir = os.path.join(
