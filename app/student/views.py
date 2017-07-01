@@ -11,12 +11,23 @@ from openpyxl.utils.exceptions import InvalidFileException
 import uuid
 from config import basedir
 
+@student.route('/student')
+@UserAuth.student_course_access
+def index():
+    return render_template('index.html')
+
 
 @student.route('/student/<course_id>/<file_name>', methods=['GET'])
 @UserAuth.student_course_access
 def download_resource(course_id, file_name):
     # 这里提供的是样例路径，具体根据实际路径修改
-    response = make_response(send_file(os.getcwd() + '/uploads/' + str(file_name)))
+
+    # 文件是否存在
+    if os.path.isfile(os.path.join(os.getcwd(), 'uploads', str(file_name))):
+        response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(file_name)))
+    else:
+        flash('选择的文件不存在')
+        return redirect(url_for('index'))
     response.headers["Content-Disposition"] = "attachment; filename="+str(file_name)+";";
     return response
 
@@ -54,16 +65,18 @@ def submit_homework(course_id, homework_id):
                 db.session.add(submission)
 
                 if form.homework_up.data:
-                    # 删除原来的作业
-                    os.remove(attachment_previous.file_name)
-                    # 保存到uploads/<course-id>/<homework-id>/homework
+                    # 删除原来的作业附件
+                    if attachment_previous:
+                        os.remove(os.path.join(basedir, 'uploads', str(course_id),
+                                               str(homework_id), attachment_previous.guid))
+                    # 保存到uploads/<course-id>/<homework-id>
                     guid = uuid.uuid4()
                     try:
                         (name, ext) = os.path.splitext(form.up.data.filename)
                         filename = homework_ups.save(form.homework_up.data,
                                                      folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                                     str(homework_id), 'homework'),
-                                                     name=str(guid)+'.'+ext)
+                                                                     str(homework_id)),
+                                                     name=str(guid) + ext)
                     except UploadNotAllowed:
                         flash('附件上传不允许！', 'danger')
                         return redirect(request.args.get('next') or url_for('student.submit_homework'))
@@ -91,14 +104,14 @@ def submit_homework(course_id, homework_id):
                 db.session.commit()   # 提交更改 生成submission_1.id
 
                 if form.homework_up.data:
-                    # 保存到uploads/<course-id>/<homework-id>/homework
+                    # 保存到uploads/<course-id>/<homework-id>
                     guid = uuid.uuid4()
                     try:
                         (name, ext) = os.path.splitext(form.up.data.filename)
                         filename = homework_ups.save(form.homework_up.data,
                                                      folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                                     str(homework_id), 'homework'),
-                                                     name=str(guid)+'.'+ext)
+                                                                     str(homework_id)),
+                                                     name=str(guid) + ext)
                     except UploadNotAllowed:
                         flash('附件上传不允许！', 'danger')
                         return redirect(request.args.get('next') or url_for('main.submit_homework'))
