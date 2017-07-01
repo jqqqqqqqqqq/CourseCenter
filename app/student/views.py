@@ -118,3 +118,13 @@ def submit_homework(course_id, homework_id):
                 flash('提交成功!')
             return redirect(url_for('main.submit_homework', submission=submission, attachment=attachment))
     return render_template('/student/submit.html', submission=submission, attachment=attachment_previous)
+
+
+@student.route('/student/team/teams', methods=['GET', 'POST'])
+def team_view():
+    return
+
+
+@student.route('/student/team/my_team', methods=['GET', 'POST'])
+def team_view():
+    return
