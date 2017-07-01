@@ -275,7 +275,7 @@ def givegrade_tea( homework_id):
     # course = Course.query.filter_by(id=course_id).first()
     # homework = Homework.query.filter_by(id=homework_id).first()
     #显示学生已提交的作业，显示附件
-    submission = Submission.query.filter_by(homework_id=homework_id).all()
+    submission = Submission.query.filter_by(homework_id=homework_id).filter_by(commit_status=1).all()
     homework_list = []
     for i in submission:
         attachment = Attachment.query.filter_by(submission_id=submission.id)
