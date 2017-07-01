@@ -92,7 +92,7 @@ desired effect
 {#                                        <a href="#" class="btn btn-default btn-flat">个人信息</a>#}
 {#                                    </div>#}
                                     <div class="pull-right">
-                                        <a href="/logout" class="btn btn-default btn-flat">登出</a>
+                                        <a href="{{ url_for('auth.logout') }}" class="btn btn-default btn-flat">登出</a>
                                     </div>
                                 </li>
                             </ul>
@@ -108,20 +108,20 @@ desired effect
             <section class="sidebar">
                 <ul class="sidebar-menu">
                     {% if current_user.user_type() == 0 %}
-                        <li><a href="{{ url_for('main.manage_semester') }}"><i class="fa fa-calendar"></i> <span>学期管理</span></a></li>
-                        <li><a href="{{ url_for('main.manage_course') }}"><i class="fa fa-book"></i> <span>课程管理</span></a></li>
+                        <li><a href="{{ url_for('dean.manage_semester') }}"><i class="fa fa-calendar"></i> <span>学期管理</span></a></li>
+                        <li><a href="{{ url_for('dean.manage_course') }}"><i class="fa fa-book"></i> <span>课程管理</span></a></li>
                     {% elif current_user.user_type() == 1 and course_id %}
-                        <li><a href="{{ url_for('main.set_course_info', course_id=course_id) }}">
+                        <li><a href="{{ url_for('teacher.set_course_info', course_id=course_id) }}">
                             <i class="fa fa-info"></i> <span>课程信息</span></a>
                         </li>
 {#                        <li><a href="{{ url_for('main.manage_resource', course_id=course_id) }}">#}
 {#                            <i class="fa fa-folder"></i> <span>课程资源</span></a>#}
 {#                        </li>#}
-                        <li><a href="{{ url_for('main.set_homework', course_id=course_id) }}">
+                        <li><a href="{{ url_for('teacher.set_homework', course_id=course_id) }}">
                             <i class="fa fa-book"></i> <span>课程作业</span></a>
                         </li>
                     {% elif current_user.user_type() == 2 and course_id %}
-                        <li><a href="{{ url_for('main.show_course_info', course_id=course_id) }}">
+                        <li><a href="{{ url_for('student.show_course_info', course_id=course_id) }}">
                             <i class="fa fa-info"></i> <span>课程信息</span></a>
                         </li>
                     {% endif %}

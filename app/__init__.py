@@ -32,7 +32,16 @@ def create_app(config_name):
     app.register_blueprint(main_blueprint)
 
     from .auth import auth as auth_blueprint
-    app.register_blueprint(auth_blueprint)
+    app.register_blueprint(auth_blueprint, url_prefix='/auth')
+
+    from .dean import dean as dean_blueprint
+    app.register_blueprint(dean_blueprint, url_prefix='/dean')
+
+    from .teacher import teacher as teacher_blueprint
+    app.register_blueprint(teacher_blueprint, url_prefix='/teacher')
+
+    from .student import student as student_blueprint
+    app.register_blueprint(student_blueprint, url_prefix='/student')
 
     return app
 
