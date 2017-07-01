@@ -54,16 +54,18 @@ def submit_homework(course_id, homework_id):
                 db.session.add(submission)
 
                 if form.homework_up.data:
-                    # 删除原来的作业
-                    os.remove(attachment_previous.file_name)
-                    # 保存到uploads/<course-id>/<homework-id>/homework
+                    # 删除原来的作业附件
+                    if attachment_previous:
+                        os.remove(os.path.join(basedir, 'uploads', str(course_id),
+                                               str(homework_id), attachment_previous.guid))
+                    # 保存到uploads/<course-id>/<homework-id>
                     guid = uuid.uuid4()
                     try:
                         (name, ext) = os.path.splitext(form.up.data.filename)
                         filename = homework_ups.save(form.homework_up.data,
                                                      folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                                     str(homework_id), 'homework'),
-                                                     name=str(guid)+'.'+ext)
+                                                                     str(homework_id)),
+                                                     name=str(guid) + ext)
                     except UploadNotAllowed:
                         flash('附件上传不允许！', 'danger')
                         return redirect(request.args.get('next') or url_for('student.submit_homework'))
@@ -91,14 +93,14 @@ def submit_homework(course_id, homework_id):
                 db.session.commit()   # 提交更改 生成submission_1.id
 
                 if form.homework_up.data:
-                    # 保存到uploads/<course-id>/<homework-id>/homework
+                    # 保存到uploads/<course-id>/<homework-id>
                     guid = uuid.uuid4()
                     try:
                         (name, ext) = os.path.splitext(form.up.data.filename)
                         filename = homework_ups.save(form.homework_up.data,
                                                      folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                                     str(homework_id), 'homework'),
-                                                     name=str(guid)+'.'+ext)
+                                                                     str(homework_id)),
+                                                     name=str(guid) + ext)
                     except UploadNotAllowed:
                         flash('附件上传不允许！', 'danger')
                         return redirect(request.args.get('next') or url_for('main.submit_homework'))
