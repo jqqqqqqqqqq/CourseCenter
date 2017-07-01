@@ -1,22 +1,20 @@
-import os
 import shutil
-from flask import flash, redirect, render_template, url_for, request, current_app, send_from_directory
+from flask import flash, redirect, render_template, url_for, request,\
+    current_app, send_from_directory, make_response, send_file
 from datetime import datetime
 from flask_login import login_required
 from ..upload_utils import secure_filename
 from . import teacher
 from .. import db
 from ..auths import UserAuth
-from .forms import CourseForm, HomeworkForm, UploadResourceForm, upsr, up_corrected, UploadCorrected
-from ..models.models import Course, Homework
-import uuid, os
-from .forms import CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
-from ..models.models import Course, Homework, Team, TeamMember, Student
+from .forms import GradeFromTeacherForm
+from .forms import up_corrected, UploadCorrected,\
+    CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
+from ..models.models import Course, Homework, Team, TeamMember, Student, Submission, Attachment
 import uuid
 from flask_uploads import UploadNotAllowed
-from config import basedir
+import os, zipfile
 from openpyxl.utils.exceptions import InvalidFileException
-import os
 from config import basedir
 
 
@@ -271,3 +269,56 @@ def teacher_teammanagement():
         team.reject_form.id.data = team.id
     return render_template('auth_teacher/teacher_teammanagement.html',
                            team_list=team_list)
+
+@teacher.route('<homework_id>/givegrade_tea', methods=['GET', 'POST'])
+def givegrade_tea( homework_id):
+    # course = Course.query.filter_by(id=course_id).first()
+    # homework = Homework.query.filter_by(id=homework_id).first()
+    #显示学生已提交的作业，显示附件
+    submission = Submission.query.filter_by(homework_id=homework_id).all()
+    homework_list = []
+    for i in submission:
+        attachment = Attachment.query.filter_by(submission_id=submission.id)
+        #attachment_url不确定怎么写
+        homework_list.append({'team_id': i.team_id, 'text_content': i.text_content, 'attachment_url': attachment.file_name,
+                        'grade': i.grade, 'comments': i.comments})
+
+    form = GradeFromTeacherForm()
+    for i in homework_list:
+        #一次提交一个分数与评论
+        if request.form.get('action') == 'submit':
+            if form.validate_on_submit():
+                i['grade'] = form.grade.data
+                i['comments'] = form.comments.data
+                submission_1 = submission.query.filter_by(team_id=i['team_id'])
+                submission_1.grade = form.grade.data
+                submission_1.comments = form.comments.data
+                db.session.add(submission_1)
+                db.session.commit()
+                return redirect(request.args.get('next') or url_for('teacher/homework/givegrade_tea.html'))
+            #评论或者分数为空
+            else:
+                flash('请输入分数以及评论', 'danger')
+                return redirect(url_for('teacher/homework/givegrade_tea.html'))
+        #单个作业下载
+        else:
+            if request.form.get('action') == 'download':
+                # 文件是否存在 attachment_url不确定是不是对的
+                if os.path.isfile(os.path.join(os.getcwd(), 'uploads', str(i['attachment_url']))):
+                    response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(i['attachment_url']))))
+                else:
+                    flash('选择的文件不存在')
+                    return redirect(url_for('index'))
+                response.headers["Content-Disposition"] = "attachment; filename=" + str(i['attachment_url']) + ";"
+                return response
+    #打包下载
+    if request.form.get('action') == 'multidownload':
+        filelist = request.args.get('filelist')
+        output_filename = request.args.get('output_filename')
+        zipf = zipfile.ZipFile(output_filename, 'w')
+        [zipf.write(filename, filename.rsplit(os.path.sep, 1)[-1]) for filename in filelist]
+        zipf.close()
+        response = make_response(send_file(os.path.join(os.getcwd(), output_filename)))
+        response.headers["Content-Disposition"] = "attachment; filename=" + output_filename + ";"
+        return response
+    return render_template('teacher/homework/givegrade_tea.html', homework_list=homework_list)

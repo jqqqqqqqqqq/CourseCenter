@@ -44,3 +44,9 @@ class RejectTeam(FlaskForm):
     id = IntegerField(validators=[InputRequired()])
     # button = SubmitField('拒绝')
     reason = TextAreaField('拒绝理由', validators=[InputRequired()])
+
+class GradeFromTeacherForm(FlaskForm):
+    grade = IntegerField('分数', validators=[DataRequired()])
+    comments = TextAreaField('评语', validators=[InputRequired()])
+    submit = SubmitField('提交分数')
+    submit_download = SubmitField('下载作业')
