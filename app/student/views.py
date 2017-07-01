@@ -1,5 +1,5 @@
 import os
-from flask import render_template, flash, request, redirect, url_for
+from flask import render_template, flash, request, redirect, url_for, make_response, send_file
 from flask_login import current_user
 from . import student
 from .. import db
@@ -10,6 +10,15 @@ from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
 import uuid
 from config import basedir
+
+
+@student.route('/student/<course_id>/<file_name>', methods=['GET'])
+@UserAuth.student_course_access
+def download_resource(course_id, file_name):
+    # 这里提供的是样例路径，具体根据实际路径修改
+    response = make_response(send_file(os.getcwd() + '/uploads/' + str(file_name)))
+    response.headers["Content-Disposition"] = "attachment; filename="+str(file_name)+";";
+    return response
 
 
 @student.route('/student/<course_id>/course', methods=['GET'])
