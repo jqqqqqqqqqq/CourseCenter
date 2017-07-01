@@ -4,7 +4,7 @@ from flask_login import current_user
 from . import student
 from ..auths import UserAuth
 from ..models.models import *
-from .forms import HomeworkForm, homework_ups, CreateTeamForm, MemberForm
+from .forms import *
 from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
 import uuid
@@ -172,33 +172,56 @@ def my_team(course_id):
         for member in teammate_list:
             member.real_name = Student.query.filter_by(id=member.student_id).first().name  # 通过member里的status在前端做通过/拒绝
         member_form = MemberForm()
+        edit_team = EditTeam()
         if member.validate_on_submit():
             if request.args.get('action') == 'accept':
-                member = TeamMember.query.filter_by(student_id=member_form.member_id.data)
+                member = TeamMember.query.filter_by(student_id=member_form.member_id.data).first()
                 member.status = 1  # 1: Accepted
                 db.session.add(member)
                 db.session.commit()
                 flash('接受成功', 'success')
             elif request.args.get('action') == 'reject':
-                member = TeamMember.query.filter_by(student_id=member_form.member_id.data)
+                member = TeamMember.query.filter_by(student_id=member_form.member_id.data).first()
                 member.status = 2  # 2: Rejected
                 db.session.add(member)
                 db.session.commit()
                 flash('拒绝成功', 'success')
-        elif request.args.get('action') == 'dismiss':
-            team.status = 4  # 4: dismiss
+        elif edit_team.validate_on_submit():
+            team.team_name = edit_team.new_name.data
             db.session.add(team)
             db.session.commit()
-
+            flash('修改成功', 'success')
+        elif request.args.get('action') == 'submit':
+            team.status = 1  # 1: pending
+            for member in teammate_list:
+                if member.status == 0:  # 0: Pending
+                    member.status = 2  # 2: Rejected
+                    db.session.add(member)
+            db.session.add(team)
+            db.session.commit()
+            flash('已提交申请', 'success')
+        elif request.args.get('action') == 'dismiss':
+            team.status = 4  # 4: dismiss
+            for member in teammate_list:
+                member.status = 2  # 2: Rejected
+                db.session.add(member)
+            db.session.add(team)
+            db.session.commit()
+            flash('队伍已解散', 'success')
         return render_template('/student/team_manage.html', teammate_list=teammate_list)
     else:
         member = TeamMember.query.filter_by(student_id=student_id).first()
         if member:
-            # 如果是队员，则展示团队信息
-            teammate_list = TeamMember.query.filter_by(team_id=member.team_id)
-            team = Team.query.filter_by(id=member.team_id).first()
-            for member in teammate_list:
-                member.real_name = Student.query.filter_by(id=member.student_id).first().name
+            if member.status == 0:  # 等待申请
+                team = Team.query.filter_by(owner_id=student_id).first()
+                pass
+            elif member.status == 1:  #申请通过，展示团队
+                teammate_list = TeamMember.query.filter_by(team_id=member.team_id)
+                team = Team.query.filter_by(id=member.team_id).first()
+                for member in teammate_list:
+                    member.real_name = Student.query.filter_by(id=member.student_id).first().name
+            elif member.status == 2:  #被拒绝
+                pass
             return render_template('/student/team_info.html', teammate_list=teammate_list, team=team)
         else:
             # 啥都不是，直接返回没有团队

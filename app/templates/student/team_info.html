@@ -32,11 +32,9 @@
                     {{ team.owner_id }}
                 </div>
                 <dl class="dl-horizontal">
-                    <dd>昵称</dd>
                     <dt>id</dt>
                     <dt>真实姓名</dt>
                     {% for member in teammate_list%}
-                        <dd>{{ member.team_name }}</dd>
                         <dd>{{ member.student_id }}</dd>
                         <dd>{{ member.real_name }}</dd>
                     {% endfor %}

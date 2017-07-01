@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import TextAreaField, IntegerField
+from wtforms import TextAreaField, IntegerField, StringField
 from wtforms.validators import DataRequired, InputRequired, Length
 from flask_uploads import UploadSet
 
@@ -23,3 +23,7 @@ class CreateTeamForm(FlaskForm):
 
 class MemberForm(FlaskForm):
     member_id = IntegerField(validators=[InputRequired])
+
+
+class EditTeam(FlaskForm):
+    new_name = StringField('队伍名称', validators=[DataRequired()])
