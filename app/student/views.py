@@ -1,4 +1,4 @@
-import os
+import os, zipfile
 from flask import render_template, flash, request, redirect, url_for, make_response, send_file
 from flask_login import current_user
 from . import student
@@ -17,6 +17,22 @@ def index():
     return render_template('index.html')
 
 
+# 提供打包的功能,需要根据实际情况修改
+# 提供一个filelist，是一个list，包含的是目标多个文件的绝对路径
+# output_filename是目标zip的名字
+@student.route('/student/*****'), methods=['GET'])
+@UserAuth.student_course_access
+def multi_download():
+    filelist = request.args.get('filelist')
+    output_filename = request.args.get('output_filename')
+    zipf = zipfile.ZipFile(output_filename, 'w')
+    [zipf.write(filename, filename.rsplit(os.path.sep, 1)[-1]) for filename in filelist]
+    zipf.close()
+    response = make_response(send_file(os.path.join(os.getcwd(), output_filename)))
+    response.headers["Content-Disposition"] = "attachment; filename="+output_filename+";"
+    return response
+
+
 @student.route('/student/<course_id>/<file_name>', methods=['GET'])
 @UserAuth.student_course_access
 def download_resource(course_id, file_name):
@@ -28,7 +44,7 @@ def download_resource(course_id, file_name):
     else:
         flash('选择的文件不存在')
         return redirect(url_for('index'))
-    response.headers["Content-Disposition"] = "attachment; filename="+str(file_name)+";";
+    response.headers["Content-Disposition"] = "attachment; filename="+str(file_name)+";"
     return response
 
 
