@@ -11,12 +11,23 @@ from openpyxl.utils.exceptions import InvalidFileException
 import uuid
 from config import basedir
 
+@student.route('/student')
+@UserAuth.student_course_access
+def index():
+    return render_template('index.html')
+
 
 @student.route('/student/<course_id>/<file_name>', methods=['GET'])
 @UserAuth.student_course_access
 def download_resource(course_id, file_name):
     # 这里提供的是样例路径，具体根据实际路径修改
-    response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(file_name)))
+
+    # 文件是否存在
+    if os.path.isfile(os.path.join(os.getcwd(), 'uploads', str(file_name))):
+        response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(file_name)))
+    else:
+        flash('选择的文件不存在')
+        return redirect(url_for('index'))
     response.headers["Content-Disposition"] = "attachment; filename="+str(file_name)+";";
     return response
 
