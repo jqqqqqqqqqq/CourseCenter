@@ -2,15 +2,13 @@ import os
 from flask import render_template, flash, request, redirect, url_for, make_response, send_file
 from flask_login import current_user
 from . import student
-from .. import db
 from ..auths import UserAuth
-from ..models.models import Course, TeamMember, Team, Homework, Submission, Attachment, Team, TeamMember
+from ..models.models import *
 from .forms import HomeworkForm, homework_ups, CreateTeamForm
 from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
 import uuid
 from config import basedir
-from app.models import models
 
 
 @student.route('/<course_id>/file/<file_name>', methods=['GET'])
@@ -170,18 +168,22 @@ def my_team(course_id):
     owner = Team.query.filter_by(owner_id=student_id).first()  # 测试是不是队长
     if owner:
         # 如果是队长，则展示团队管理页面
-        # TODO: 团队管理
-        pass
+        teammate_list = TeamMember.query.filter_by(team_id=owner.id)
+        for member in teammate_list:
+            member.real_name = Student.query.filter_by(id=member.student_id).first().name
+
+        return render_template('/student/team_manage.html', teammate_list=teammate_list)
     else:
         member = TeamMember.query.filter_by(student_id=student_id).first()
         if member:
             # 如果是队员，则展示团队信息
-            # TODO：团队信息
-
-            pass
+            teammate_list = TeamMember.query.filter_by(team_id=member.team_id)
+            team = Team.query.filter_by(id=member.team_id).first()
+            for member in teammate_list:
+                member.real_name = Student.query.filter_by(id=member.student_id).first().name
+            return render_template('/student/team_info.html', teammate_list=teammate_list, team=team)
         else:
             # 啥都不是，直接返回没有团队
-            # TODO: 没有团队
             return render_template('/student/no_team.html')
 
     return

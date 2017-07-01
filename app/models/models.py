@@ -100,8 +100,8 @@ class Team(db.Model):
     __tablename__ = 'teams'
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('students.id'))
-    team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
-    status = db.Column(db.Integer)  # 0: pending 1: accepted 2: rejected
+    team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))  # 此team_name是团队名称
+    status = db.Column(db.Integer)  # 0: building 1: pending 2: accepted 3: rejected
     reject_reason = db.Column(db.Text)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
 
@@ -114,7 +114,8 @@ class TeamMember(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
-    team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
+    team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))  # 此team_name是学生的昵称
+    status = db.Column(db.Integer)
 
     def __repr__(self):
         return '<TeamMember %r>' % self.id
