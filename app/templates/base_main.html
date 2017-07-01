@@ -124,6 +124,9 @@ desired effect
                         <li><a href="{{ url_for('student.show_course_info', course_id=course_id) }}">
                             <i class="fa fa-info"></i> <span>课程信息</span></a>
                         </li>
+                        <li><a href="{{ url_for('student.show_resource', course_id=course_id) }}">
+                            <i class="fa fa-folder"></i> <span>课程资源</span></a>
+                        </li>
                     {% endif %}
                 </ul>
             </section>
@@ -187,8 +190,8 @@ desired effect
         jQuery(function ($) {
             $.extend({
                 form: function (url, data, method) {
-                    if (method == null) method = 'POST';
-                    if (data == null) data = {};
+                    if (method === null) method = 'POST';
+                    if (data === null) data = {};
 
                     var form = $('<form>').attr({
                         method: method,

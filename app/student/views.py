@@ -1,5 +1,6 @@
 import os, zipfile
-from flask import render_template, flash, request, redirect, url_for, make_response, send_file
+from flask import render_template, flash, request, redirect, url_for, make_response, send_file, current_app, \
+    send_from_directory
 from flask_login import current_user
 from . import student
 from .. import db
@@ -48,11 +49,42 @@ def download_resource(course_id, file_name):
     return response
 
 
-@student.route('/student/<course_id>/course', methods=['GET'])
+@student.route('/<course_id>/course', methods=['GET'])
 @UserAuth.student_course_access
 def show_course_info(course_id):
+    # 学生查看课程信息
     course = Course.query.filter_by(id=course_id).first()
     return render_template('student/course.html', course_id=course_id, course=course)
+
+
+@student.route('/<course_id>/resource', methods=['GET'])
+@UserAuth.student_course_access
+def show_resource(course_id):
+    # 学生查看课程资源
+    course = Course.query.filter_by(id=course_id).first()
+    path = request.args.get('path')
+    if not path:
+        return redirect(url_for('student.show_resource', course_id=course_id, path='/'))
+    expand_path = os.path.join(current_app.config['UPLOADED_FILES_DEST'], 'resource', course_id, path[1:])
+
+    if request.args.get('download'):
+        # 下载
+        filedir = os.path.join(
+            current_app.config['UPLOADED_FILES_DEST'],
+            'resource',
+            course_id,
+            path[1:])
+        filename = request.args.get('filename')
+        print(filename)
+        if os.path.exists(os.path.join(filedir, filename)):
+            return send_from_directory(filedir, filename, as_attachment=True)
+        else:
+            flash('文件不存在！', 'danger')
+            redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+
+
+    files = list(os.scandir(expand_path))
+    return render_template('student/resource.html', course_id=course_id, course=course, path=path, files=files)
 
 
 @student.route('/student/<course_id>/<homework_id>/submit', methods=['GET', 'POST'])
