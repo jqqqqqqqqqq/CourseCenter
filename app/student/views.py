@@ -85,103 +85,73 @@ def show_resource(course_id):
             flash('文件不存在！', 'danger')
             redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
 
-
     files = list(os.scandir(expand_path))
     return render_template('student/resource.html', course_id=course_id, course=course, path=path, files=files)
 
 
-@student.route('/student/<course_id>/<homework_id>/submit', methods=['GET', 'POST'])
+@student.route('/student/<course_id>/submit/<homework_id>', methods=['GET', 'POST'])
 def submit_homework(course_id, homework_id):
     form = HomeworkForm()
     team_member = TeamMember.query.filter_by(student_id=current_user.id).first()
     team = Team.query.filter_by(team_id=team_member.team_id).first()
     homework = Homework.query.filter_by(course_id=team.course_id).first()
 
-    # 取最新的submission记录 attachment记录
-    submission = Submission.query.filter_by(team_id=team_member.team_id).filter_by(homework_id=homework.id).first()
-    attachment_previous = Attachment.query.filter_by(submission_id=submission.id).first()
+    # 取这次提交前最新的submission记录 attachment记录
+    submission_previous = Submission.query.filter_by(team_id=team_member.team_id).filter_by(homework_id=homework.id)[-1]
+    attachment_previous = Attachment.query.filter_by(submission_id=submission_previous.id).first()
 
     if form.validate_on_submit():
         # 无法提交情况
         if current_user.id != team.owner_id:
             flash('权限不足，只有组长可以管理作业', 'danger')
             return redirect(request.args.get('next') or url_for('student.submit_homework'))
-        elif submission.submit_attempts >= homework.max_submit_attempts:
+        elif submission_previous.submit_attempts >= homework.max_submit_attempts:
             flash('提交已达最大次数，无法提交', 'danger')
             return redirect(request.args.get('next') or url_for('student.submit_homework'))
         # 可以提交情况
         else:
+            # 新建提交
+            submission_1 = Submission()
+            # 可能是edit或者add
             if request.args.get('action') == 'edit':
-                submission.submit_attempts += 1
-                submission.text_content = form.text.data
-                submission.submitter_id = current_user.id
-                db.session.add(submission)
-
-                if form.homework_up.data:
-                    # 删除原来的作业附件
-                    if attachment_previous:
-                        os.remove(os.path.join(basedir, 'uploads', str(course_id),
-                                               str(homework_id), attachment_previous.guid))
-                    # 保存到uploads/<course-id>/<homework-id>
-                    guid = uuid.uuid4()
-                    try:
-                        (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
-                        name = homework_ups.save(form.homework_up.data,
-                                                 folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                                     str(homework_id)),
-                                                 name=str(guid) + ext)
-                    except UploadNotAllowed:
-                        flash('附件上传不允许！', 'danger')
-                        return redirect(request.args.get('next') or url_for('student.submit_homework'))
-                    except InvalidFileException:
-                        flash('附件类型不正确，请使用txt、doc、docx', 'danger')
-                        return redirect(request.args.get('next') or url_for('student.submit_homework'))
-                    attachment_previous.guid = guid
-                    # 保存绝对路径
-                    attachment_previous.file_name = str(name)
-                    db.ssession.add(attachment_previous)
-                    flash('更改成功!')
-                db.session.commit()
-                return redirect(url_for('student.submit_homework', submission=submission, attachment=attachment_previous))
+                submission_1 = submission_previous.submit_attempts + 1
             else:
-                # 新建提交
-                submission = Submission()
+                submission_1.submit_attempts = 1
 
-                submission.submit_attempts = 1
-                submission.homework_id = homework.id
-                submission.team_id = team.id
-                submission.text_content = form.text_content.data
-                submission.submitter_id = current_user.id
-                submission.submit_status = 1  # 提交状态 1 已提交
-                db.session.add(submission)
-                db.session.commit()   # 提交更改 生成submission_1.id
+            submission_1.homework_id = homework.id
+            submission_1.team_id = team.id
+            submission_1.text_content = form.text_content.data
+            submission_1.submitter_id = current_user.id
+            submission_1.submit_status = 1  # 提交状态 1 已提交
+            db.session.add(submission_1)
+            db.session.commit()   # 提交更改 生成submission_1.id
 
-                if form.homework_up.data:
-                    # 保存到uploads/<course-id>/<homework-id>
-                    guid = uuid.uuid4()
-                    try:
-                        (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
-                        name = homework_ups.save(form.homework_up.data,
-                                                     folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                                         str(homework_id)),
-                                                     name=str(guid) + ext)
-                    except UploadNotAllowed:
-                        flash('附件上传不允许！', 'danger')
-                        return redirect(request.args.get('next') or url_for('main.submit_homework'))
-                    except InvalidFileException:
-                        flash('附件类型不正确，请使用txt、doc、docx', 'danger')
-                        return redirect(request.args.get('next') or url_for('main.submit_homework'))
-                    attachment = Attachment()
-                    attachment.submission_id = submission.id
-                    attachment.guid = guid
-                    attachment.status = False
-                    # 保存文件名
-                    attachment.file_name = str(name)
-                    db.ssession.add(attachment)
-                    flash('提交成功!')
+            if form.homework_up.data:
+                # 保存到uploads/<course-id>/<homework-id><team-id>
+                guid = uuid.uuid4()
+                try:
+                    (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
+                    homework_ups.save(form.homework_up.data,
+                                      folder=os.path.join(basedir, 'uploads', str(course_id),
+                                                          str(homework_id), str(team.id)),
+                                      name=str(guid) + ext)
+                except UploadNotAllowed:
+                    flash('附件上传不允许！', 'danger')
+                    return redirect(request.args.get('next') or url_for('main.submit_homework'))
+                except InvalidFileException:
+                    flash('附件类型不正确，请使用txt、doc、docx', 'danger')
+                    return redirect(request.args.get('next') or url_for('main.submit_homework'))
+                attachment = Attachment()
+                attachment.submission_id = submission_1.id
+                attachment.guid = guid
+                attachment.status = False
+                # 保存原文件名
+                attachment.file_name = str(name_temp)
+                db.ssession.add(attachment)
                 db.session.commit()
-                return redirect(url_for('main.submit_homework', submission=submission, attachment=attachment))
-    return render_template('/student/submit.html', submission=submission, attachment=attachment_previous)
+                flash('提交成功!', 'success')
+            return redirect(url_for('student.submit_homework', submission=submission_1, attachment=attachment, form=form))
+    return render_template('/student/submit.html', submission=submission_previous, attachment=attachment_previous, form=form)
 
 
 @student.route('/student/<course_id>/givegrade_stu', methods=['GET', 'POST'])

@@ -190,10 +190,8 @@ def teacher_resource():
     return render_template('uploadresource.html', form=form, file_url=file_url)
 
 
-@teacher.route('/teacher/<course_id>/<homework_id>/upload', methods=['GET', 'POST'])
-@UserAuth.teacher_course_access
+#上传老师批改后的作业
 def teacher_corrected(course_id, homework_id):
-    #上传老师批改后的作业
     form = UploadCorrected()
     if form.validate_on_submit():
         if form.up_corrected:
@@ -269,6 +267,7 @@ def teacher_teammanagement():
         team.reject_form.id.data = team.id
     return render_template('auth_teacher/teacher_teammanagement.html',
                            team_list=team_list)
+
 
 @teacher.route('<homework_id>/givegrade_tea', methods=['GET', 'POST'])
 def givegrade_tea( homework_id):
