@@ -4,8 +4,10 @@ from flask_login import login_required
 from . import teacher
 from .. import db
 from ..auths import UserAuth
-from .forms import CourseForm, HomeworkForm
+from .forms import CourseForm, HomeworkForm, UploadResourceForm, upsr
 from ..models.models import Course, Homework
+import uuid
+from flask_uploads import UploadNotAllowed
 
 
 @teacher.before_request
@@ -92,3 +94,19 @@ def set_homework(course_id):
                                homework=homework)
     homework_list = Homework.query.filter_by(course_id=course_id).all()
     return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form, course=course)
+
+
+@teacher.route('/uploadresource', methods=['GET', 'POST'])
+def teacher_resource():
+    form = UploadResourceForm()
+    if form.validate_on_submit():
+        try:
+            (name, ext) = os.path.splitext(form.up.data.filename)
+            filename = upsr.save(form.up.data, basedir + '/uploads/teacher_resources', name=str(uuid.uuid4())+ext)
+            file_url = upsr.url(filename)
+        except UploadNotAllowed:
+            flash('附件上传不允许！', 'danger')
+            return redirect(request.args.get('next') or url_for('uploadresource.html'))
+    else:
+        file_url = None
+    return render_template('uploadresource.html', form=form, file_url=file_url)
