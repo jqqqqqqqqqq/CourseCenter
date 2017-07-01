@@ -10,6 +10,7 @@ from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
 import uuid
 from config import basedir
+from sqlalchemy import or_
 
 @student.route('/student')
 @UserAuth.student_course_access
@@ -48,7 +49,7 @@ def download_resource(course_id, file_name):
     return response
 
 
-@student.route('/student/<course_id>/course', methods=['GET'])
+@student.route('/<course_id>/course', methods=['GET'])
 @UserAuth.student_course_access
 def show_course_info(course_id):
     # 学生查看课程信息
@@ -188,60 +189,82 @@ def givegrade_stu():
 @student.route('/<course_id>/teams', methods=['GET', 'POST'])
 def team_view(course_id):
     form = CreateTeamForm()
-    team_owner = Team.query.filter_by(owner_id=current_user.id).filter_by(status=[0, 1, 2, 3]).first()
+    # 是不是团队队长
+    team_owner = Team.query.filter_by(owner_id=current_user.id, course_id=course_id).first()
+    # 是不是加入了团队
     team_joined = TeamMember.query.filter_by(student_id=current_user.id).filter_by(status=1).first()
-    if request.args.get('action') == 'join':
+    # 是不是在提交申请状态
+    team_pending = TeamMember.query.filter_by(student_id=current_user.id).filter_by(status=0).first()
+    if request.form.get('action') == 'join':
         # 加入团队
-        member_list = TeamMember.query.filter_by(team_id=request.args['course_id']).filter_by(status=1).all()
+        member_list = TeamMember.query.filter_by(team_id=request.form.get('team_id')).filter_by(status=1).all()
         number_of_member = len(member_list)
-        _course = Course.query.filter_by(id=request.args['course_id']).first()
+        _course = Course.query.filter_by(id=course_id).first()
         if team_owner:
             flash('已创建团队，拒绝申请!', 'danger')
         elif team_joined:
             flash('已加入团队，拒绝申请!', 'danger')
-        elif number_of_member == _course.teamsize-1:
+        elif number_of_member == _course.teamsize_max - 1:
             flash('人数已满，拒绝申请！', 'danger')
-        elif TeamMember.query.filter_by(student_id=current_user.id).filter_by(status=0).first():
+        elif team_pending:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             teammember = TeamMember()
-            teammember.team_id = request.args['team_id'].data
-            teammember.student_id = current_user.id.data
+            teammember.team_id = request.form.get('team_id')
+            teammember.student_id = current_user.id
             teammember.status = 0
             db.session.add(teammember)
-            delete_list = TeamMember.query.filter_by(status=2).filter_by(student_id=current_user.id).all()
-            for a in delete_list:
-                db.session.delete(a)
+            # delete_list = TeamMember.query.filter_by(status=2).filter_by(student_id=current_user.id).all()
+            # for a in delete_list:
+            #     db.session.delete(a)
             db.session.commit()
             flash('加入成功！', 'success')
-        return redirect(url_for('student.team_view'))
-    elif request.args.get('action') == 'cancel':
+        return redirect(url_for('student.team_view', course_id=course_id))
+    elif request.form.get('action') == 'cancel':
         # 取消申请
         delete_teammember = TeamMember.query.filter_by(student_id=current_user.id).first()
         db.session.delete(delete_teammember)
         db.session.commit()
-        return redirect(url_for('student.team_view'))
+        flash('取消成功！', 'success')
+        return redirect(url_for('student.team_view', course_id=course_id))
+
     if form.validate_on_submit():
         # 创建团队
         if team_owner:
             flash('已创建团队，无法再次创建!', 'danger')
         elif team_joined:
             flash('已加入团队，无法再次创建!', 'danger')
-        elif TeamMember.query.filter_by(student_id=current_user.id).filter_by(status=0).first():
+        elif team_pending:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             team = Team()
             team.status = 0
-            team.course_id = form.course_id.data
-            team.owner_id = current_user.id.data
+            team.course_id = course_id
+            team.owner_id = current_user.id
             team.team_name = form.team_name.data
-            team.rejection_reason = ''
             db.session.add(team)
             db.session.commit()
             flash('创建团队成功!', 'success')
-            return redirect(url_for('student.team_view'))
-    team_list = Team.query.filter_by(course_id=course_id).filter_by(status=[0, 3]).all()
-    return render_template('/student/teams.html', teams=team_list)
+            return redirect(url_for('student.team_view', course_id=course_id))
+    team_list_raw = Team.query.filter_by(course_id=course_id).filter(or_(Team.status == 0, Team.status == 3)).all()
+    team_list = []
+    for team in team_list_raw:
+        # 计算团队人数
+        member_list = TeamMember.query.filter_by(team_id=team.id).filter_by(status=1).all()
+        number_of_member = len(member_list) + 1
+        team_list.append({
+            'id': team.id,
+            'owner_id': team.owner_id,
+            'team_name': team.team_name,
+            'status': team.status,
+            'number_of_member': number_of_member
+        })
+    return render_template('student/team.html',
+                           teams=team_list,
+                           form=form,
+                           course_id=course_id,
+                           unjoinable=team_owner or team_joined or team_pending,
+                           pending=team_pending)
 
 
 @student.route('/<course_id>/my_team', methods=['GET', 'POST'])
@@ -255,7 +278,7 @@ def my_team(course_id):
             member.real_name = Student.query.filter_by(id=member.student_id).first().name  # 通过member里的status在前端做通过/拒绝
         member_form = MemberForm()
         edit_team = EditTeam()
-        if member.validate_on_submit():
+        if member_form.validate_on_submit():
             if request.args.get('action') == 'accept':
                 member = TeamMember.query.filter_by(student_id=member_form.member_id.data).first()
                 member.status = 1  # 1: Accepted
@@ -290,24 +313,24 @@ def my_team(course_id):
             db.session.add(team)
             db.session.commit()
             flash('队伍已解散', 'success')
-        return render_template('/student/team_manage.html', teammate_list=teammate_list)
+        return render_template('student/team_manage.html', teammate_list=teammate_list, team=team)
     else:
         member = TeamMember.query.filter_by(student_id=student_id).first()
         if member:
             if member.status == 0:  # 等待申请
                 team = Team.query.filter_by(owner_id=student_id).first()
-                return render_template('/student/pending.html')
+                return render_template('student/pending.html')
             elif member.status == 1:  # 申请通过，展示团队
                 team = Team.query.filter_by(id=member.team_id).first()
                 if team.status == 4:  # 团队解散
-                    return render_template('/student/team_dismiss.html')
+                    return render_template('student/team_dismiss.html')
                 teammate_list = TeamMember.query.filter_by(team_id=member.team_id)
                 for member in teammate_list:
                     member.real_name = Student.query.filter_by(id=member.student_id).first().name
-                    return render_template('/student/team_info.html', teammate_list=teammate_list, team=team)
+                    return render_template('student/team_info.html', teammate_list=teammate_list, team=team)
             elif member.status == 2:  # 被拒绝
-                return render_template('/student/reject.html')
+                return render_template('student/reject.html')
         else:
             # 啥都不是，直接返回没有团队
-            return render_template('/student/no_team.html')
+            return render_template('student/no_team.html', course_id=course_id)
     return

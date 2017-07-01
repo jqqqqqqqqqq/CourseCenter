@@ -14,11 +14,8 @@ class HomeworkForm(FlaskForm):
 
 
 class CreateTeamForm(FlaskForm):
-    owner_id = IntegerField('团队负责人', validators=[DataRequired()])
-    team_name = TextAreaField('团队名称', validators=[DataRequired()])
+    team_name = StringField('团队名称', validators=[DataRequired()])
     status = IntegerField('队伍状态')
-    course_id = IntegerField('所属课程', validators=[DataRequired()])
-    rejection_reason = TextAreaField('拒绝理由')
 
 
 class MemberForm(FlaskForm):

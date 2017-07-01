@@ -13,12 +13,6 @@
 {% endblock %}
 
 {% block content_main %}
-    {% for message in get_flashed_messages(with_categories=True) %}
-        <div class="alert alert-{{ message[0] }} alert-dismissible">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-            {{ message[1] }}
-        </div>
-    {% endfor  %}
     <article>
         <div class="box box-primary course-box" data-href="#">
             <div class="box-header with-border">
@@ -27,24 +21,6 @@
                 </h3>
             </div>
             <div class="box-body">
-{#                <form action="" method="post">#}
-{#                    {{ form.hidden_tag() }}#}
-{#                    {{ wtf.form_field(form.outline) }}#}
-{#                    <p class="form-data">{{ form.outline.data }}</p>#}
-{#                    <div class="form-group">#}
-{#                        <div class="row">#}
-{#                            <div class="col-xs-6">#}
-{#                                {{ wtf.form_field(form.teamsize_min, placeholder="下限") }}#}
-{#                                <p class="form-data">{{ form.teamsize_min.data }}</p>#}
-{#                            </div>#}
-{#                            <div class="col-xs-6">#}
-{#                                {{ wtf.form_field(form.teamsize_max, placeholder="上限") }}#}
-{#                                <p class="form-data">{{ form.teamsize_max.data }}</p>#}
-{#                            </div>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                    <input type="submit" class="form-control btn btn-primary btn-block">#}
-{#                </form>#}
                 <dl class="dl-horizontal">
                     <dt>课程大纲</dt>
                     <dd>{{ course.outline }}</dd>

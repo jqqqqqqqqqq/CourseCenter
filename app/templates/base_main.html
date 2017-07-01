@@ -127,6 +127,26 @@ desired effect
                         <li><a href="{{ url_for('student.show_resource', course_id=course_id) }}">
                             <i class="fa fa-folder"></i> <span>课程资源</span></a>
                         </li>
+                        <li class="tree-view">
+                            <a href="#">
+                                <i class="fa fa-group"></i> <span>团队</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-left pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li>
+                                    <a href="{{ url_for('student.team_view', course_id=course_id) }}">
+                                        <i class="fa fa-circle-o"></i> 团队组建</a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('student.my_team', course_id=course_id) }}">
+                                        <i class="fa fa-circle"></i> 我的团队
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
                     {% endif %}
                 </ul>
             </section>

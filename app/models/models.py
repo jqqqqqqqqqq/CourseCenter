@@ -80,7 +80,6 @@ class Student(UserMixin, db.Model):
 
     @staticmethod
     def init_student():
-        """野兽先辈学生说"""
         student = Student.query.first()
         if student is None:
             student = Student(id=666)
@@ -101,7 +100,7 @@ class Team(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
-    status = db.Column(db.Integer)  # 0: building 1: pending 2: accepted 3: rejected 4: dismiss
+    status = db.Column(db.Integer, default=0)  # 0: building 1: pending 2: accepted 3: rejected 4: dismiss
     reject_reason = db.Column(db.Text)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
 
@@ -114,7 +113,7 @@ class TeamMember(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
-    status = db.Column(db.Integer)  # 0: pending 1: accepted 2: rejected
+    status = db.Column(db.Integer, default=0)  # 0: pending 1: accepted 2: rejected
     grade = db.Column(db.Float)
 
     def __repr__(self):
@@ -224,7 +223,6 @@ class Teacher(UserMixin, db.Model):
 
     @staticmethod
     def init_teacher():
-        """野兽先辈老师说"""
         teacher = Teacher.query.first()
         if teacher is None:
             teacher = Teacher(id=777)
