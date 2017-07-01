@@ -158,14 +158,15 @@ def givegrade_stu(team_id):
         student_list.append({student.name: team_member.grade})
     team = Team.query.filter_by(team_id=team_id)
     #无法打分情况
-    if current_user.id != team.owner_id:
-        flash('权限不足，只有组长可以打分', 'danger')
-        return redirect(request.args.get('next') or url_for('student.give_grade'))
-    else:
-        for key, value in request.form.items():
-            for i in team_member:
-                if i.student_id == key:
-                    i.grade = value
-                    db.session.add(i)
-        db.session.commit()
-    return render_template('/student/<course_id>/givegrade_stu/<team_id>', student_list=student_list)
+    if request.method == 'POST':
+        if current_user.id != team.owner_id:
+            flash('权限不足，只有组长可以打分', 'danger')
+            return redirect(request.args.get('next') or url_for('student.give_grade'))
+        else:
+            for key, value in request.form.items():
+                for i in team_member:
+                    if i.student_id == key:
+                        i.grade = value
+                        db.session.add(i)
+            db.session.commit()
+    return render_template('/student/givegrade_stu.html', student_list=student_list)
