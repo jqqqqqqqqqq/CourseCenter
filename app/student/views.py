@@ -230,15 +230,17 @@ def my_team(course_id):
         if member:
             if member.status == 0:  # 等待申请
                 team = Team.query.filter_by(owner_id=student_id).first()
-                pass
-            elif member.status == 1:  #申请通过，展示团队
-                teammate_list = TeamMember.query.filter_by(team_id=member.team_id)
+                return render_template('/student/pending.html')
+            elif member.status == 1:  # 申请通过，展示团队
                 team = Team.query.filter_by(id=member.team_id).first()
+                if team.status == 4:  # 团队解散
+                    return render_template('/student/team_dismiss.html')
+                teammate_list = TeamMember.query.filter_by(team_id=member.team_id)
                 for member in teammate_list:
                     member.real_name = Student.query.filter_by(id=member.student_id).first().name
-            elif member.status == 2:  #被拒绝
-                pass
-            return render_template('/student/team_info.html', teammate_list=teammate_list, team=team)
+                    return render_template('/student/team_info.html', teammate_list=teammate_list, team=team)
+            elif member.status == 2:  # 被拒绝
+                return render_template('/student/reject.html')
         else:
             # 啥都不是，直接返回没有团队
             return render_template('/student/no_team.html')
