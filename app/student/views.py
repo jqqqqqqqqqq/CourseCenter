@@ -144,7 +144,8 @@ def team_view(course_id):
             teammember.status = 0
             db.session.add(teammember)
             delete_list = TeamMember.query.filter_by(status=2).all()
-            db.session.delete(delete_list)
+            for a in delete_list:
+                db.session.delete(a)
             db.session.commit()
             flash('加入成功！', 'success')
         return redirect(url_for('student.team_view'))
