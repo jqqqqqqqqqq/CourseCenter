@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
-from .forms import LoginForm
+from .forms import LoginForm, ChangePasswordForm
 from . import auth
 from ..models.models import DeanInfo, Student, Teacher
 
@@ -34,3 +34,18 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('auth.login'))
+
+
+@auth.route('/change-password')
+@login_required
+def change_password():
+    form = ChangePasswordform()
+    if form.validate_on_submit():
+        if current_user.verify_password(form.old_password.data):
+            current_user.password = form.new_password.data
+            db.session.add(current_user)
+            flash("密码修改成功")
+            return redirect(url_for('auth.login'))
+        else:
+            flash('旧密码错误')
+    return render_template('auth/change_password.html', form=form)

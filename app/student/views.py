@@ -1,23 +1,50 @@
-import os
+import os, zipfile
 from flask import render_template, flash, request, redirect, url_for, make_response, send_file
 from flask_login import current_user
 from . import student
 from .. import db
 from ..auths import UserAuth
-from ..models.models import Course, TeamMember, Team, Homework, Submission, Attachment
+from ..models.models import Student, Course, TeamMember, Team, Homework, Submission, Attachment
 from .forms import HomeworkForm, homework_ups
 from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
 import uuid
 from config import basedir
 
+@student.route('/student')
+@UserAuth.student_course_access
+def index():
+    return render_template('index.html')
+
+
+# 提供打包的功能,需要根据实际情况修改
+# 提供一个filelist，是一个list，包含的是目标多个文件的绝对路径
+# output_filename是目标zip的名字
+@student.route('/student/*****', methods=['GET'])
+@UserAuth.student_course_access
+def multi_download():
+    filelist = request.args.get('filelist')
+    output_filename = request.args.get('output_filename')
+    zipf = zipfile.ZipFile(output_filename, 'w')
+    [zipf.write(filename, filename.rsplit(os.path.sep, 1)[-1]) for filename in filelist]
+    zipf.close()
+    response = make_response(send_file(os.path.join(os.getcwd(), output_filename)))
+    response.headers["Content-Disposition"] = "attachment; filename="+output_filename+";"
+    return response
+
 
 @student.route('/student/<course_id>/<file_name>', methods=['GET'])
 @UserAuth.student_course_access
 def download_resource(course_id, file_name):
     # 这里提供的是样例路径，具体根据实际路径修改
-    response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(file_name)))
-    response.headers["Content-Disposition"] = "attachment; filename="+str(file_name)+";";
+
+    # 文件是否存在
+    if os.path.isfile(os.path.join(os.getcwd(), 'uploads', str(file_name))):
+        response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str(file_name))))
+    else:
+        flash('选择的文件不存在')
+        return redirect(url_for('index'))
+    response.headers["Content-Disposition"] = "attachment; filename="+str(file_name)+";"
     return response
 
 
@@ -118,3 +145,24 @@ def submit_homework(course_id, homework_id):
                 flash('提交成功!')
             return redirect(url_for('main.submit_homework', submission=submission, attachment=attachment))
     return render_template('/student/submit.html', submission=submission, attachment=attachment_previous)
+
+
+@student.route('/student/<course_id>/<team_id>/givegrade', methods=['GET', 'POST'])
+def givegrade(team_id):
+    team_member = TeamMember.query.filter_by(team_id=team_id).all()
+    student_list = []
+    for i in team_member:
+        student = Student.query.filter_by(id=i.student_id).first()
+        student_list.append({student.name : team_member.grade})
+    team = Team.query.filter_by(team_id=team_id)
+    #无法打分情况
+    if current_user.id != team.owner_id:
+        flash('权限不足，只有组长可以打分', 'danger')
+    else:
+        for key, value in request.form.items():
+            for i in team_member:
+                if i.student_id == key:
+                    i.grade = value
+                    db.session.add(i)
+        db.session.commit()
+    return render_template('student/group/givegrade.html', student_list=student_list)
