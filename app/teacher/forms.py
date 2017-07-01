@@ -1,6 +1,10 @@
 from flask_wtf import FlaskForm
-from wtforms import TextAreaField, IntegerField, StringField
+from wtforms import TextAreaField, IntegerField, StringField, SubmitField
 from wtforms.validators import InputRequired, DataRequired
+from flask_uploads import UploadSet
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+
+upsr = UploadSet('files', extensions=('xls', 'xlsx', 'pdf', 'doc', 'docx', 'txt', 'zip', '7z', 'rar'))
 
 
 class CourseForm(FlaskForm):
@@ -15,3 +19,10 @@ class HomeworkForm(FlaskForm):
     time = StringField('持续时间', validators=[DataRequired()])
     weight = IntegerField('权重', validators=[DataRequired()])
     max_submit_attempts = IntegerField('最大提交次数', validators=[DataRequired()])
+
+
+class UploadResourceForm(FlaskForm):
+    up = FileField(validators=[
+        FileAllowed(upsr, u'xls, xlsx, pdf, doc, docx, txt, zip, 7z, rar'),
+        FileRequired(u'文件未选择!')])
+    submit = SubmitField(u'上传')
