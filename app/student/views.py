@@ -143,7 +143,7 @@ def team_view(course_id):
             teammember.student_id = current_user.id.data
             teammember.status = 0
             db.session.add(teammember)
-            delete_list = TeamMember.query.filter_by(status=2).all()
+            delete_list = TeamMember.query.filter_by(status=2).filter_by(student_id=current_user.id).all()
             for a in delete_list:
                 db.session.delete(a)
             db.session.commit()
@@ -242,5 +242,4 @@ def my_team(course_id):
         else:
             # 啥都不是，直接返回没有团队
             return render_template('/student/no_team.html')
-
     return
