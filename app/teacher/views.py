@@ -15,6 +15,7 @@ from flask_uploads import UploadNotAllowed
 import os, zipfile
 from openpyxl.utils.exceptions import InvalidFileException
 from config import basedir
+from openpyxl import Workbook
 
 
 @teacher.before_request
@@ -212,21 +213,21 @@ def teacher_corrected(course_id, homework_id):
     return render_template('teacher/upload_corrected.html', form=form)
 
 
-@teacher.route('/index-teacher/teacher-teammanagement', methods=['GET', 'POST'])
-def teacher_teammanagement():
-    if "accept" in request.form.values():
+@teacher.route('/index-teacher/<course_id>/teacher-teammanagement', methods=['GET', 'POST'])
+def teacher_teammanagement(course_id):
+    if 'accept' in request.form.values():
         form = AcceptTeam()
         _team = Team.query.filter_by(id=int(form.id.data)).first()
         if _team:
             _team.status = 1  # 1是通过
             db.session.add(_team)
             db.session.commit()
-            flash("通过成功", "success")
+            flash('通过成功', 'success')
             return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
         else:
-            flash("找不到此团队", "danger")
+            flash('找不到此团队', 'danger')
             return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-    elif "reject" in request.form.values():
+    elif 'reject' in request.form.values():
         form = RejectTeam()
         _team = Team.query.filter_by(id=int(form.id.data)).first()
         if _team:
@@ -234,18 +235,57 @@ def teacher_teammanagement():
             _team.reason = form.reason.data
             db.session.add(_team)
             db.session.commit()
-            flash("拒绝成功", "success")
+            flash('拒绝成功', 'success')
             return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
         else:
-            flash("找不到此团队", "danger")
+            flash('找不到此团队', 'danger')
             return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+
+    # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+    elif 'teamtable' in request.form.values():
+        down_list = Team.query.filter_by(course_id=course_id).all()
+        if down_list is None:
+            flash('没有团队，请等待申请并批准！', 'danger')
+        else:
+            workbook = Workbook()
+            worksheet = workbook.active
+            worksheet.title = '团队信息'
+            worksheet.append(['team_name', 'team_id', 'member_name', 'member_id', 'member_role'])
+            # i = 0 表示队伍数量
+            input_info = []
+            for ateam in down_list:
+                member_list = TeamMember.query.filter_by(team_id=ateam.id).all()
+                input_list = {'team_name': ateam.team_name,
+                              'team_id': ateam.id,
+                              'member_name': Student.query.filter_by(id=ateam.owner_id).name,
+                              'member_id': ateam.owner_id,
+                              'member_role': 'manager'}
+                input_info.append(input_list)
+                # num_of_member = len(member_list)+1 表示每支队伍人员数量
+                # i += 1
+                for aaa in member_list:
+                    input_list = {'team_name': ateam.team_name,
+                                  'team_id': ateam.id,
+                                  'member_name': Student.query.filter_by(id=aaa.student_id).name,
+                                  'member_id': aaa.student_id,
+                                  'member_role': 'member'}
+                    input_info.append(input_list)
+            worksheet.append(input_info)
+            worksheet.save('team_table.xlsx')
+            if os.path.isfile(os.path.join(os.getcwd(), 'uploads', str('team_table.xlsx'))):
+                response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str('team_table.xlsx'))))
+            else:
+                flash('文件创建失败！', 'danger')
+            response.headers["Content-Disposition"] = "attachment; filename=" + str('team_table.xlsx') + ";"
+            return response
+        # PudgeG负责:团队报表输出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
     _team_list = Team.query.all()
 
     class TeamList:
         id = 0
         status = 0
-        team_name = ""
+        team_name = ''
 
         def __init__(self, id, status, team_name):
             self.id = id
@@ -255,10 +295,10 @@ def teacher_teammanagement():
     team_list = [TeamList(a.id, a.status, a.team_name) for a in _team_list]
     for team in team_list:
         _team_members = TeamMember.query.filter_by(team_id=team.id).all()
-        member_name = ""
+        member_name = ''
         for member in _team_members:
             real_name = Student.query.filter_by(id=member.student_id).first().name
-            member_name += member.team_name + "(" + real_name + "), "
+            member_name += member.team_name + '(' + real_name + '), '
         team.member_name = member_name  # 把所有人名字构造成一个字符串
         team.accept_form = AcceptTeam()
         team.accept_form.id.data = team.id
@@ -313,7 +353,7 @@ def givegrade_teacher(course_id, homework_id): # TODO：完成老师给分
     #             else:
     #                 flash('选择的文件不存在')
     #                 return redirect(url_for('index'))
-    #             response.headers["Content-Disposition"] = "attachment; filename=" + str(i['attachment_url']) + ";"
+    #             response.headers['Content-Disposition'] = 'attachment; filename=' + str(i['attachment_url']) + ';'
     #             return response
     # #打包下载
     # if request.form.get('action') == 'multidownload':
@@ -323,6 +363,6 @@ def givegrade_teacher(course_id, homework_id): # TODO：完成老师给分
     #     [zipf.write(filename, filename.rsplit(os.path.sep, 1)[-1]) for filename in filelist]
     #     zipf.close()
     #     response = make_response(send_file(os.path.join(os.getcwd(), output_filename)))
-    #     response.headers["Content-Disposition"] = "attachment; filename=" + output_filename + ";"
+    #     response.headers['Content-Disposition'] = 'attachment; filename=' + output_filename + ';'
     #     return response
     return render_template('teacher/homework/givegrade_tea.html', homework_list=homework_list)
