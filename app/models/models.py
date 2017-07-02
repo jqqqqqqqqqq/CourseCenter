@@ -111,7 +111,7 @@ class Team(db.Model):
         teams = self.query.filter_by(course_id=course_id).all()
         order = 1
         for team in teams:
-            team.order = order
+            team.order = order  #为返回的 team 增加 order (顺序) 属性
             order += 1
         return teams
 
