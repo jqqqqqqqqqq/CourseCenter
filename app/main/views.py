@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, session, R
 from . import main
 from .. import db
 import os
-from ..models.models import SCRelationship, TCRelationship, Course
+from ..models.models import SCRelationship, TCRelationship, Course, ChatMessage
 from flask_login import current_user, login_required
 from flask import request
 from config import basedir
