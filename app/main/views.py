@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, session
+from flask import render_template, redirect, url_for, flash, request, session, Response
 from . import main
 from .. import db
 import os
@@ -8,7 +8,8 @@ from flask import request
 from config import basedir
 from flask_uploads import UploadNotAllowed
 import uuid
-
+import redis
+import datetime
 
 @main.before_request
 @login_required
@@ -36,3 +37,70 @@ def index():
         return render_template('student/index.html', courses=courses)
 
     return render_template('index.html')
+
+
+red = redis.StrictRedis()
+
+def event_stream():
+    pubsub = red.pubsub()
+    pubsub.subscribe('chat')
+    # TODO: handle client disconnection.
+    for message in pubsub.listen():
+        print(message)
+        yield 'data: %s\n\n' % message['data']
+
+
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        session['user'] = request.form['user']
+        return redirect(url_for('index'))
+    return '<form action="" method="post">user: <input name="user">'
+
+
+@main.route('/post', methods=['GET', 'POST'])
+def post():
+    message = request.form['message']
+    user = str(current_user.id)
+    now = datetime.datetime.now().replace(microsecond=0).time()
+    red.publish('chat', u'[%s] %s: %s' % (now.isoformat(), user, message))
+    return Response(status=204)
+
+
+@main.route('/stream')
+def stream():
+    return Response(event_stream(),
+                          mimetype="text/event-stream")
+
+
+@main.route('/chat', methods=['GET', 'POST'])
+def chat():
+    return """
+        <!doctype html>
+        <title>chat</title>
+        <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+        <style>body { max-width: 500px; margin: auto; padding: 1em; background: white; color: #000; font: 16px/1.6 menlo, monospace; }</style>
+        <p><b>Hello!</b></p>
+        <p>Message: <input id="in" /></p>
+        <pre id="out"></pre>
+        <script>
+            function sse() {
+                var source = new EventSource('/stream');
+                var out = document.getElementById('out');
+                source.onmessage = function(e) {
+                    // XSS in chat is fun
+                    out.innerHTML =  e.data + '\\n' + out.innerHTML;
+                };
+            }
+            $('#in').keyup(function(e){
+                if (e.keyCode == 13) {
+                    $.post('/post', {'message': $(this).val()});
+                    $(this).val('');
+                }
+            });
+            sse();
+        </script>
+
+    """
+
+
