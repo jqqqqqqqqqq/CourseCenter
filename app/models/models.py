@@ -107,6 +107,15 @@ class Team(db.Model):
     def __repr__(self):
         return '<Team %r>' % self.id
 
+    @staticmethod
+    def team_list(course_id):
+        teams = Team.query.filter_by(course_id=course_id).all()
+        order = 1
+        for team in teams:
+            team.order = order  #为返回的 team 增加 order (顺序) 属性
+            order += 1
+        return teams
+
 
 class TeamMember(db.Model):
     __tablename__ = 'team_members'
@@ -145,7 +154,7 @@ class Submission(db.Model):                       # 学生提交作业信息
     score = db.Column(db.Integer)
     comments = db.Column(db.Text)
     submit_attempts = db.Column(db.Integer)
-    submit_status = db.Column(db.Integer)
+    submit_status = db.Column(db.Integer)  # 0: 提交未批改  1: 已批改
 
     def __repr__(self):
         return '<Submission %r>' % self.id
