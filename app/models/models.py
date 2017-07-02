@@ -254,8 +254,8 @@ class ChatMessage(db.Model):
     __tablename__ = 'chat_message'
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))  # 0 表示 invalid
-    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'))  # >0 表示发言者
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))  # 0 表示 invalid， 即不是学生发言，>0 表示发言者，即为学生发言
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'))  # 同理，老师发言
     time = db.Column(db.DateTime)
     content = db.Column(db.String(256))  # 暂定256字
     markdown = db.Column(db.Boolean)
