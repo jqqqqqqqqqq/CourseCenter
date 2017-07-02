@@ -247,3 +247,17 @@ def load_user(user_id):
     if temp:
         return temp
     return Student.query.get(int(user_id))
+
+
+class ChatMessage(db.Model):
+    __tablename__ = 'chat_message'
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))  # 0 表示 invalid
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'))  # >0 表示发言者
+    time = db.Column(db.DateTime)
+    content = db.Column(db.String(256))  # 暂定256字
+    markdown = db.Column(db.Boolean)
+
+    def __repr__(self):
+        return '<Course %r>' % self.id
