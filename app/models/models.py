@@ -154,7 +154,7 @@ class Submission(db.Model):                       # 学生提交作业信息
     score = db.Column(db.Integer)
     comments = db.Column(db.Text)
     submit_attempts = db.Column(db.Integer)
-    submit_status = db.Column(db.Integer)
+    submit_status = db.Column(db.Integer)  # 0: 提交未批改  1: 已批改
 
     def __repr__(self):
         return '<Submission %r>' % self.id
