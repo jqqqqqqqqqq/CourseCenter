@@ -191,18 +191,30 @@ def team_view(course_id):
             db.session.commit()
             flash('创建团队成功!', 'success')
             return redirect(url_for('student.team_view', course_id=course_id))
-    team_list_raw = Team.query.filter_by(course_id=course_id).filter(or_(Team.status == 0, Team.status == 3)).all()
+    team_list_raw = Team\
+        .query.filter_by(course_id=course_id)\
+        .filter(or_(Team.status == 0, Team.status == 3))\
+        .join(Student)\
+        .add_columns(Student.name)\
+        .all()
     team_list = []
     for team in team_list_raw:
         # 计算团队人数
-        member_list = TeamMember.query.filter_by(team_id=team.id).filter_by(status=1).all()
+        member_list = TeamMember\
+            .query\
+            .filter_by(team_id=team.Team.id, status=1)\
+            .join(Student)\
+            .add_columns(Student.name)\
+            .all()
         number_of_member = len(member_list) + 1
         team_list.append({
-            'id': team.id,
-            'owner_id': team.owner_id,
-            'team_name': team.team_name,
-            'status': team.status,
-            'number_of_member': number_of_member
+            'id': team.Team.id,
+            'owner_id': team.Team.owner_id,
+            'owner_name': team.name,
+            'team_name': team.Team.team_name,
+            'status': team.Team.status,
+            'number_of_member': number_of_member,
+            'members': member_list
         })
     return render_template('student/team.html',
                            teams=team_list,
@@ -273,11 +285,14 @@ def my_team(course_id):
             flash('队伍已解散', 'success')
         return redirect(url_for('student.my_team', course_id=course_id))
 
+    owner_name = Student.query.filter_by(id=team.owner_id).first().name
+
     return render_template('student/team_manage.html',
                            teammate_list=teammate_list,
                            team=team,
                            course_id=course_id,
-                           member_status=member_status)
+                           member_status=member_status,
+                           owner_name=owner_name)
 
 
 @student.route('/<int:course_id>/homework')
