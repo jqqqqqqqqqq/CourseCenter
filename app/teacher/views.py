@@ -9,7 +9,8 @@ from .. import db
 from ..auths import UserAuth
 from .forms import up_corrected, UploadCorrected,\
     CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
-from ..models.models import Course, Homework, Team, TeamMember, Student, Submission, Attachment
+from ..models.models import Course, Homework, Team,\
+    TeamMember, Student, Submission, Attachment, SCRelationship
 import uuid
 from flask_uploads import UploadNotAllowed
 import os, zipfile
@@ -362,3 +363,21 @@ def givegrade_teacher(course_id, homework_id):
         make_zip(file_path, save_path)
         return send_from_directory(directory=file_path, filename='download.zip', as_attachment=True)
     return render_template('teacher/homework/givegrade_teacher.html', homework_list=homework_list)
+
+
+#教师查看往期课程：
+@teacher.route('/<semester_id>/see_class_before', method=['GET'])
+def see_class_before(semester_id):
+    course = Course.query.filter_by(semester_id=semester_id).all()
+    course_info_list = []
+    if course is None:
+        flash('该学期没有任何课程', 'danger')
+        return redirect(url_for('teacher/see_class_before.html', course_info_list=course_info_list))
+
+    else:
+        for i in course:
+            screl = SCRelationship.query.filter_by(course_id=request.args.get('course_id')).first()
+            course_info_list.append({'course_name': i.name, 'course_credit': i.credit,
+                         'course_student_number': len(screl), 'course_info': i.course_info})
+        return redirect(url_for('teacher/seeclassbefore.html', course_info_list=course_info_list))
+    return render_template('teacher/see_class_before.html', course_info_list=course_info_list)
