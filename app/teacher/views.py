@@ -366,7 +366,7 @@ def givegrade_teacher(course_id, homework_id):
 
 
 #教师查看往期课程：
-@teacher.route('/<semester_id>/see_class_before', method=['GET'])
+@teacher.route('/<semester_id>/see_class_before', methods=['GET'])
 def see_class_before(semester_id):
     course = Course.query.filter_by(semester_id=semester_id).all()
     course_info_list = []
