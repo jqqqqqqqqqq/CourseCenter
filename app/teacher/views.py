@@ -212,6 +212,18 @@ def teacher_corrected(course_id, homework_id):
     return render_template('teacher/upload_corrected.html', form=form)
 
 
+def add_member(student_id, team_id):
+    team_member = TeamMember()
+    team_member.team_id = team_id
+    team_member.student_id = student_id
+    team_member.status = 0
+    db.session.add(team_member)
+    delete_list = TeamMember.query.filter_by(status=2).filter_by(student_id=student_id).all()
+    for a in delete_list:
+        db.session.delete(a)
+    db.session.commit()
+
+
 @teacher.route('/index-teacher/teacher-teammanagement', methods=['GET', 'POST'])
 def teacher_teammanagement():
     if "accept" in request.form.values():
