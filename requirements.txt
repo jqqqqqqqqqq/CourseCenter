@@ -19,6 +19,7 @@ MarkupSafe==1.0
 openpyxl==2.4.8
 python-dateutil==2.6.0
 python-editor==1.0.3
+redis==2.10.5
 six==1.10.0
 SQLAlchemy==1.1.11
 visitor==0.1.3
