@@ -112,7 +112,7 @@ def givegrade_stu(course_id):
     if request.method == 'POST':
         if current_user.id != team.owner_id:
             flash('权限不足，只有组长可以打分', 'danger')
-            return redirect(request.args.get('next') or url_for('student.givegrade_stu', student_list=student_list))
+            return redirect(url_for('student.givegrade_stu', course_id=course_id))
         else:
             # request.form: {student_id, grade}
             sum_total = 0
@@ -124,10 +124,10 @@ def givegrade_stu(course_id):
             if sum_total == len(student_list):
                 db.session.commit()
                 flash('设置成功', 'success')
-                return redirect(url_for('student.givegrade_stu', student_list=student_list))
+                return redirect(url_for('student.givegrade_stu', course_id=course_id))
             else:
                 flash('所有人的得分系数平均为1', 'danger')
-                return redirect(url_for('student.givegrade_stu', student_list=student_list))
+                return redirect(url_for('student.givegrade_stu', course_id=course_id))
     return render_template('/student/givegrade_stu.html', student_list=student_list)
 
 
@@ -330,7 +330,7 @@ def homework_detail(course_id, homework_id):
 
         if attempts >= homework.max_submit_attempts:
             flash('提交已达最大次数，无法提交', 'danger')
-            return redirect(request.args.get('next') or url_for('student.homework_detail', course_id=course_id, homework_id=homework_id))
+            return redirect(url_for('student.homework_detail', course_id=course_id, homework_id=homework_id))
         submission = Submission()
         submission.homework_id = homework.id
         submission.homework_id = homework.id
@@ -359,16 +359,16 @@ def homework_detail(course_id, homework_id):
                                   name=str(guid) + ext)
             except UploadNotAllowed:
                 flash('附件上传不允许！', 'danger')
-                return redirect(request.args.get('next') or url_for('main.submit_homework'))
+                return redirect(url_for('student.homework_detail', course_id=course_id, homework_id=homework_id))
             except InvalidFileException:
-                flash('附件类型不正确，请使用txt、doc、docx', 'danger')
-                return redirect(request.args.get('next') or url_for('main.submit_homework'))
+                flash('附件类型不正确!', 'danger')
+                return redirect(url_for('main.submit_homework', course_id=course_id, homework_id=homework_id))
             attachment = Attachment()
             attachment.submission_id = submission.id
             attachment.guid = str(guid)
             attachment.upload_time = datetime.now()
             # 保存原文件名和扩展名
-            attachment.file_name = str(name_temp + ext)
+            attachment.file_name = str(name_temp) + ext
             db.session.add(attachment)
             db.session.commit()
             flash('提交成功!', 'success')
