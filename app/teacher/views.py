@@ -191,6 +191,51 @@ def homework_detail(course_id, homework_id):
                            homework=homework)
 
 
+# PudgeG负责：得到本次作业报表↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+def get_homework_report(homework_id):
+    # 得到本次作业报表
+    submission_list = Submission.query.filter_by(homework_id=homework_id).all()
+    homework = Homework.query.filter_by(id=request.args.get('homework_id')).first()
+    team_this_course = Team.query.filter_by(course_id=homework.course_id).filter_by(status=2).all()
+    Team.team_list(homework.course_id)
+    if submission_list is None:
+        flash('无提交记录，请先催交！', 'danger')
+        return redirect(request.args.get('next') or url_for('main.set_homework'))
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = homework.name + ' 提交情况'
+    worksheet.append(['团队名称', '团队ID', '本次作业是否提交', '本次作业分数'])
+    input_info = []
+    i = 0
+    for team in team_this_course:
+        finished = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=team.id).first()
+
+        def convert_status(status):
+            switcher = {
+                0: '作业未批改',
+                1: '作业已批改'
+            }
+            return switcher.get(status, '其他')
+
+        if Submission.query.filter_by(team_id=team.id).first():
+        homework_record = {'团队名称': team.team_name,
+                        '团队ID': team.order,
+                        '本次作业是否提交': convert_status(team.status),
+                        '本次作业分数': finished.score}
+        input_info.append(homework_record)
+    worksheet.append(input_info)
+    worksheet.save('homework_report.xlsx')
+    if os.path.isfile(os.path.join(os.getcwd(), 'homework', 'homework_report.xlsx')):
+        response = make_response(send_file(os.path.join(os.getcwd(), 'homework', 'homework_report.xlsx')))
+    else:
+        flash('文件创建失败！', 'danger')
+        return redirect(url_for('teacher/teacher_teammanagement'))
+    response.headers["Content-Disposition"] = "attachment; filename=" + 'homework_report.xlsx' + ";"
+    return response
+# PudgeG负责：得到本次作业报表↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+
+
 @teacher.route('/uploadresource', methods=['GET', 'POST'])
 def teacher_resource():
     form = UploadResourceForm()
