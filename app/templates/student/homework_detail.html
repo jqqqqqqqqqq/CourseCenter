@@ -44,8 +44,9 @@
                     </dd>
                     <dt>权重</dt>
                     <dd>{{ homework.weight }}</dd>
-                    <dt>最大提交次数</dt>
-                    <dd>{{ homework.max_submit_attempts }}</dd>
+                    <dt>提交次数</dt>
+                    <dd><span {% if attempts >= homework.max_submit_attempts %}class="text-danger bg-danger"{% endif %}>
+                        {{ attempts }}</span>/{{ homework.max_submit_attempts }}</dd>
                 </dl>
             </div>
         </div>

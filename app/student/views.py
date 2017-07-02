@@ -305,20 +305,17 @@ def homework_detail(course_id, homework_id):
                         .filter(and_(TeamMember.student_id == current_user.id, Team.course_id == course_id))\
                         .first()
         team = Team.query.filter_by(id=teammember.team_id, course_id=course_id).first()
-
+    attempts = len(Submission.query.filter_by(team_id=team.id, homework_id=homework_id).all())
 
     if form.validate_on_submit():
         # 无法提交情况
         if current_user.id != team.owner_id:
             flash('权限不足，只有组长可以管理作业', 'danger')
-            return redirect(url_for('student.submit_homework'))
+            return redirect(url_for('student.homework_detail', course_id=course_id, homework_id=homework_id))
 
-
-        # 取这次提交前最新的attachment记录
-        attempts = len(Submission.query.filter_by(team_id=team.id, homework_id=homework_id).all())
-        if attempts + 1 >= homework.max_submit_attempts:
+        if attempts >= homework.max_submit_attempts:
             flash('提交已达最大次数，无法提交', 'danger')
-            return redirect(request.args.get('next') or url_for('student.submit_homework'))
+            return redirect(request.args.get('next') or url_for('student.homework_detail', course_id=course_id, homework_id=homework_id))
         submission = Submission()
         submission.homework_id = homework.id
         submission.homework_id = homework.id
@@ -381,4 +378,5 @@ def homework_detail(course_id, homework_id):
                            submission_previous=submission_previous,
                            attachment_previous=attachment_previous,
                            form=form,
-                           team=team)
+                           team=team,
+                           attempts=attempts)
