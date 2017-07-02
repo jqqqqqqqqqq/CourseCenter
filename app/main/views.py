@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, session, R
 from . import main
 from .. import db
 import os
-from ..models.models import SCRelationship, TCRelationship, Course
+from ..models.models import SCRelationship, TCRelationship, Course, ChatMessage
 from flask_login import current_user, login_required
 from flask import request
 from config import basedir
@@ -47,6 +47,8 @@ def event_stream():
     # TODO: handle client disconnection.
     for message in pubsub.listen():
         print(message)
+        if not type(message['data']) == int:
+            message['data'] = message['data'].decode('utf-8')
         yield 'data: %s\n\n' % message['data']
 
 
@@ -62,8 +64,27 @@ def login():
 def post():
     message = request.form['message']
     user = str(current_user.id)
-    now = datetime.datetime.now().replace(microsecond=0).time()
-    red.publish('chat', u'[%s] %s: %s' % (now.isoformat(), user, message))
+    # now = datetime.datetime.now().replace(microsecond=0).time()
+    time = str(datetime.datetime.now()).split('.')[0]
+
+    # 写入数据库
+    cm = ChatMessage()
+    cm.course_id = request.form['course-id']
+    # 当前用户是老师
+    if current_user.user_type() == 1:
+        cm.student_id = 0
+        cm.teacher_id = current_user.id
+    # 当前用户是学生
+    else:
+        cm.student_id = current_user.id
+        cm.teacher_id = 0
+    cm.time = datetime.datetime.now()
+    cm.content = message
+
+    db.session.add(cm)
+    db.session.commit()
+
+    red.publish('chat', u'[%s] %s: %s' % (time, user, message))
     return Response(status=204)
 
 
@@ -73,8 +94,14 @@ def stream():
                           mimetype="text/event-stream")
 
 
-@main.route('/chat', methods=['GET', 'POST'])
-def chat():
+@main.route('/<course_id>/chat', methods=['GET', 'POST'])
+def chat(course_id):
+    cm_list = ChatMessage.query.filter_by(course_id=course_id).order_by(ChatMessage.id.desc()).all()[:10]
+    return render_template('chat.html', course_id=course_id, cm_list=cm_list)
+
+    # 下面的代码只是作为具体的template/chat.html的一个参考
+    # 注：/post想要获得message和course_id两个参数
+    '''
     return """
         <!doctype html>
         <title>chat</title>
@@ -102,5 +129,6 @@ def chat():
         </script>
 
     """
+    '''
 
 
