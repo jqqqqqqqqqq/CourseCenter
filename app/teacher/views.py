@@ -272,11 +272,12 @@ def teacher_teammanagement(course_id):
                     input_info.append(input_list)
             worksheet.append(input_info)
             worksheet.save('team_table.xlsx')
-            if os.path.isfile(os.path.join(os.getcwd(), 'uploads', str('team_table.xlsx'))):
-                response = make_response(send_file(os.path.join(os.getcwd(), 'uploads', str('team_table.xlsx'))))
+            if os.path.isfile(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')):
+                response = make_response(send_file(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')))
             else:
                 flash('文件创建失败！', 'danger')
-            response.headers["Content-Disposition"] = "attachment; filename=" + str('team_table.xlsx') + ";"
+                return redirect(url_for('teacher/teacher_teammanagement'))
+            response.headers["Content-Disposition"] = "attachment; filename=" + 'team_table.xlsx' + ";"
             return response
         # PudgeG负责:团队报表输出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
