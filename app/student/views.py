@@ -412,3 +412,25 @@ def my_team(course_id):
                            team=team,
                            course_id=course_id,
                            member_status=member_status)
+
+
+@student.route('/<int:course_id>/homework')
+@UserAuth.student_course_access
+def homework(course_id):
+    # 学生查看作业列表
+    course = Course.query.filter_by(id=course_id).first()
+
+    homework_list = Homework.query.filter_by(course_id=course_id).all()
+    return render_template('student/homework.html', course_id=course_id, homeworks=homework_list, course=course)
+
+
+@student.route('/<int:course_id>/homework/<int:homework_id>')
+@UserAuth.student_course_access
+def homework_detail(course_id, homework_id):
+    # 详细作业信息
+    course = Course.query.filter_by(id=course_id).first()
+    homework = Homework.query.filter_by(id=homework_id).first()
+    return render_template('student/homework_detail.html',
+                           course_id=course_id,
+                           course=course,
+                           homework=homework)
