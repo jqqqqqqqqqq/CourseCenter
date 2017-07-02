@@ -218,10 +218,10 @@ def get_homework_report(homework_id):
             return switcher.get(status, '其他')
 
         if Submission.query.filter_by(team_id=team.id).first():
-        homework_record = {'团队名称': team.team_name,
-                        '团队ID': team.order,
-                        '本次作业是否提交': convert_status(team.status),
-                        '本次作业分数': finished.score}
+            homework_record = {'团队名称': team.team_name,
+                            '团队ID': team.order,
+                            '本次作业是否提交': convert_status(team.status),
+                            '本次作业分数': finished.score}
         input_info.append(homework_record)
     worksheet.append(input_info)
     worksheet.save('homework_report.xlsx')
