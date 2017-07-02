@@ -324,6 +324,11 @@ def rename(source_dir, rename_dic):
 def givegrade_teacher(course_id, homework_id):
     # 显示学生已提交的作业(显示最新的提交记录)
     submission = Submission.query.filter_by(homework_id=homework_id).filter_by(submit_status=1).all()
+
+    #寻找semester_id
+    course = Course.query.filter_by(id=course_id).first()
+    semester_id = course.semester_id
+
     homework_list = []
     for i in submission:
         team = Team.query.filter_by(id=i.team_id).first()
@@ -348,6 +353,7 @@ def givegrade_teacher(course_id, homework_id):
 
         team_id = request.form.get('team_id')
         file_dir = os.path.join(current_app.config['UPLOADED_FILES_DEST'],
+                                str(semester_id),
                                 str(course_id),
                                 str(homework_id),
                                 str(team_id))
@@ -382,16 +388,16 @@ def givegrade_teacher(course_id, homework_id):
     # 批量下载学生作业
     if request.method == 'POST' and request.form.get('action') == 'multi_download':
 
-        file_path = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
+        file_path = os.path.join(basedir, 'uploads', str(semester_id), str(course_id), str(homework_id))
         save_path = os.path.join(basedir, 'temp', 'download.zip')
 
-        # 建立 uuid与 上传时file_name的 键值对关系{uuid: file_name}
         submission_all = Submission \
             .query \
             .filter_by(homework_id=homework_id) \
             .order_by(Submission.id.desc()) \
             .all()
 
+        # 建立 uuid与 上传时file_name的 键值对关系{uuid: file_name}
         rename_list = {}
         for submission_temp in submission_all:
             attachment_temp = Attachment.query.filter_by(submission_id=submission_temp.id).first()
