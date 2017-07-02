@@ -85,7 +85,7 @@ def show_resource(course_id):
             return send_from_directory(filedir, filename, as_attachment=True)
         else:
             flash('文件不存在！', 'danger')
-            redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+            return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
 
     files = list(os.scandir(expand_path))
     return render_template('student/resource.html', course_id=course_id, course=course, path=path, files=files)
@@ -129,6 +129,12 @@ def submit_homework(course_id, homework_id):
             db.session.add(submission_previous)
             db.session.commit()   # 提交更改 生成submission_1.id
 
+            # 每次提交新的作业 都会删除原来的作业附件
+            path = os.path.join(basedir, 'uploads', str(course_id),
+                                str(homework_id), str(team.id))
+            for i in os.listdir(path=path):
+                os.remove(os.path.join(path + '\\' + str(i)))
+
             if form.homework_up.data:
                 # 保存到uploads/<course-id>/<homework-id>/<team-id>
                 guid = uuid.uuid4()
@@ -149,8 +155,8 @@ def submit_homework(course_id, homework_id):
                 attachment.guid = guid
                 attachment.upload_time = datetime.now()
                 attachment.status = False
-                # 保存原文件名
-                attachment.file_name = str(name_temp)
+                # 保存原文件名和扩展名
+                attachment.file_name = str(name_temp + ext)
                 db.ssession.add(attachment)
                 db.session.commit()
                 flash('提交成功!', 'success')
@@ -177,22 +183,21 @@ def givegrade_stu(course_id):
     if request.method == 'POST':
         if current_user.id != team.owner_id:
             flash('权限不足，只有组长可以打分', 'danger')
-            return redirect(request.args.get('next') or url_for('student.give_grade'))
+            return redirect(request.args.get('next') or url_for('student.givegrade_stu', student_list=student_list))
         else:
-            # key = student_id value = team_member.grade
+            # request.form: {student_id, grade}
             sum_total = 0
-            for grade in request.form:
-                sum_total += float(grade[-1])
-            # 所有人的得分系数合应为1
-            if sum_total > 1:
-                flash('所有人的得分系数合应为1', 'danger')
-                return redirect(url_for('student.givegrade_stu', student_list=student_list))
-            else:
-                for student_t in team_member:
-                    student_t.grade = float(request.form.get[str(student_t.student_id)])
-                    db.session.add(student_t)
+
+            for student_t in team_member:
+                student_t.grade = float(request.form.get(student_t.student_id))
+                sum_total = sum_total + float(student_t.grade)
+                db.session.add(student_t)
+            if sum_total == len(student_list):
                 db.session.commit()
                 flash('设置成功', 'success')
+                return redirect(url_for('student.givegrade_stu', student_list=student_list))
+            else:
+                flash('所有人的得分系数平均为1', 'danger')
                 return redirect(url_for('student.givegrade_stu', student_list=student_list))
     return render_template('/student/givegrade_stu.html', student_list=student_list)
 
