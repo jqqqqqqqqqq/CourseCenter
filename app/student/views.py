@@ -1,4 +1,6 @@
-import os, zipfile
+import os
+import zipfile
+import shutil
 from flask import render_template, flash, request, redirect, url_for, make_response, send_file, current_app, \
     send_from_directory
 from flask_login import current_user
@@ -89,79 +91,6 @@ def show_resource(course_id):
 
     files = list(os.scandir(expand_path))
     return render_template('student/resource.html', course_id=course_id, course=course, path=path, files=files)
-
-
-@student.route('/student/<course_id>/submit/<homework_id>', methods=['GET', 'POST'])
-def submit_homework(course_id, homework_id):
-    form = HomeworkForm()
-    team_member = TeamMember.query.filter_by(student_id=current_user.id).first()
-    team = Team.query.filter_by(team_id=team_member.team_id).first()
-    homework = Homework.query.filter_by(course_id=team.course_id).first()
-
-    # 取这次提交前最新的submission记录 attachment记录
-    submission_previous = Submission.query.filter_by(team_id=team_member.team_id).filter_by(homework_id=homework.id)[-1]
-    attachment_previous = Attachment.query.filter_by(submission_id=submission_previous.id).first()
-
-    if form.validate_on_submit():
-        # 无法提交情况
-        if current_user.id != team.owner_id:
-            flash('权限不足，只有组长可以管理作业', 'danger')
-            return redirect(request.args.get('next') or url_for('student.submit_homework'))
-        elif submission_previous.submit_attempts >= homework.max_submit_attempts:
-            flash('提交已达最大次数，无法提交', 'danger')
-            return redirect(request.args.get('next') or url_for('student.submit_homework'))
-        # 可以提交情况
-        else:
-            # 新建提交
-            submission_1 = Submission()
-            # 可能是edit或者add
-            if request.args.get('action') == 'edit':
-                submission_1 = submission_previous.submit_attempts + 1
-            else:
-                submission_1.submit_attempts = 1
-            submission_previous.submit_status = 0
-            submission_1.homework_id = homework.id
-            submission_1.team_id = team.id
-            submission_1.text_content = form.text_content.data
-            submission_1.submitter_id = current_user.id
-            submission_1.submit_status = 1  # 提交状态 1 已提交
-            db.session.add(submission_1)
-            db.session.add(submission_previous)
-            db.session.commit()   # 提交更改 生成submission_1.id
-
-            # 每次提交新的作业 都会删除原来的作业附件
-            path = os.path.join(basedir, 'uploads', str(course_id),
-                                str(homework_id), str(team.id))
-            for i in os.listdir(path=path):
-                os.remove(os.path.join(path + '\\' + str(i)))
-
-            if form.homework_up.data:
-                # 保存到uploads/<course-id>/<homework-id>/<team-id>
-                guid = uuid.uuid4()
-                try:
-                    (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
-                    homework_ups.save(form.homework_up.data,
-                                      folder=os.path.join(basedir, 'uploads', str(course_id),
-                                                          str(homework_id), str(team.id)),
-                                      name=str(guid) + ext)
-                except UploadNotAllowed:
-                    flash('附件上传不允许！', 'danger')
-                    return redirect(request.args.get('next') or url_for('main.submit_homework'))
-                except InvalidFileException:
-                    flash('附件类型不正确，请使用txt、doc、docx', 'danger')
-                    return redirect(request.args.get('next') or url_for('main.submit_homework'))
-                attachment = Attachment()
-                attachment.submission_id = submission_1.id
-                attachment.guid = guid
-                attachment.upload_time = datetime.now()
-                attachment.status = False
-                # 保存原文件名和扩展名
-                attachment.file_name = str(name_temp + ext)
-                db.ssession.add(attachment)
-                db.session.commit()
-                flash('提交成功!', 'success')
-            return redirect(url_for('student.submit_homework', submission=submission_1, attachment=attachment, form=form))
-    return render_template('/student/submit.html', submission=submission_previous, attachment=attachment_previous, form=form)
 
 
 @student.route('/student/<course_id>/givegrade_stu', methods=['GET', 'POST'])
@@ -344,69 +273,6 @@ def my_team(course_id):
             flash('队伍已解散', 'success')
         return redirect(url_for('student.my_team', course_id=course_id))
 
-
-
-    # if team:
-    #     # 如果是队长，则展示团队管理页面
-    #     member_form = MemberForm()
-    #     edit_team = EditTeam()
-    #     if member_form.validate_on_submit():
-    #         if request.args.get('action') == 'accept':
-    #             member = TeamMember.query.filter_by(student_id=member_form.member_id.data).first()
-    #             member.status = 1  # 1: Accepted
-    #             db.session.add(member)
-    #             db.session.commit()
-    #             flash('接受成功', 'success')
-    #         elif request.args.get('action') == 'reject':
-    #             member = TeamMember.query.filter_by(student_id=member_form.member_id.data).first()
-    #             member.status = 2  # 2: Rejected
-    #             db.session.add(member)
-    #             db.session.commit()
-    #             flash('拒绝成功', 'success')
-    #     elif edit_team.validate_on_submit():
-    #         team.team_name = edit_team.new_name.data
-    #         db.session.add(team)
-    #         db.session.commit()
-    #         flash('修改成功', 'success')
-    #     elif request.args.get('action') == 'submit':
-    #         team.status = 1  # 1: pending
-    #         for member in teammate_list:
-    #             if member.status == 0:  # 0: Pending
-    #                 member.status = 2  # 2: Rejected
-    #                 db.session.add(member)
-    #         db.session.add(team)
-    #         db.session.commit()
-    #         flash('已提交申请', 'success')
-    #     elif request.args.get('action') == 'dismiss':
-    #         team.status = 4  # 4: dismiss
-    #         for member in teammate_list:
-    #             member.status = 2  # 2: Rejected
-    #             db.session.add(member)
-    #         db.session.add(team)
-    #         db.session.commit()
-    #         flash('队伍已解散', 'success')
-    #     # return render_template('student/team_manage.html', teammate_list=teammate_list, team=team, course_id=course_id)
-    #     return redirect(url_for('student.my_team', course_id=course_id))
-    # else:
-    #     member = TeamMember.query.filter_by(student_id=student_id).first()
-    #     if member:
-    #         if member.status == 0:  # 等待申请
-    #             team = Team.query.filter_by(owner_id=student_id).first()
-    #             return render_template('student/pending.html')
-    #         elif member.status == 1:  # 申请通过，展示团队
-    #             team = Team.query.filter_by(id=member.team_id).first()
-    #             if team.status == 4:  # 团队解散
-    #                 return render_template('student/team_dismiss.html')
-    #             teammate_list = TeamMember.query.filter_by(team_id=member.team_id)
-    #             for member in teammate_list:
-    #                 member.real_name = Student.query.filter_by(id=member.student_id).first().name
-    #                 return render_template('student/team_info.html', teammate_list=teammate_list, team=team)
-    #         elif member.status == 2:  # 被拒绝
-    #             return render_template('student/reject.html')
-    #     else:
-    #         # 啥都不是，直接返回没有团队
-    #         return render_template('student/no_team.html', course_id=course_id)
-
     return render_template('student/team_manage.html',
                            teammate_list=teammate_list,
                            team=team,
@@ -424,13 +290,95 @@ def homework(course_id):
     return render_template('student/homework.html', course_id=course_id, homeworks=homework_list, course=course)
 
 
-@student.route('/<int:course_id>/homework/<int:homework_id>')
+@student.route('/<int:course_id>/homework/<int:homework_id>', methods=['GET', 'POST'])
 @UserAuth.student_course_access
 def homework_detail(course_id, homework_id):
     # 详细作业信息
+    form = HomeworkForm()
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
+    team = Team.query.filter_by(owner_id=current_user.id, course_id=course_id).first()
+    if not team:
+        teammember = TeamMember\
+                        .query\
+                        .join(Team, Team.id == TeamMember.team_id)\
+                        .filter(and_(TeamMember.student_id == current_user.id, Team.course_id == course_id))\
+                        .first()
+        team = Team.query.filter_by(id=teammember.team_id, course_id=course_id).first()
+
+
+    if form.validate_on_submit():
+        # 无法提交情况
+        if current_user.id != team.owner_id:
+            flash('权限不足，只有组长可以管理作业', 'danger')
+            return redirect(url_for('student.submit_homework'))
+
+
+        # 取这次提交前最新的attachment记录
+        attempts = len(Submission.query.filter_by(team_id=team.id, homework_id=homework_id).all())
+        if attempts + 1 >= homework.max_submit_attempts:
+            flash('提交已达最大次数，无法提交', 'danger')
+            return redirect(request.args.get('next') or url_for('student.submit_homework'))
+        submission = Submission()
+        submission.homework_id = homework.id
+        submission.homework_id = homework.id
+        submission.team_id = team.id
+        submission.text_content = form.text.data
+        submission.submitter_id = current_user.id
+        db.session.add(submission)
+        db.session.commit()   # 提交更改 生成submission_1.id
+
+        # 每次提交新的作业 都会删除原来的作业附件
+        path = os.path.join(basedir, 'uploads', str(course_id),
+                            str(homework_id), str(team.id))
+        # for i in os.listdir(path=path):
+        #     os.remove(os.path.join(path + '\\' + str(i)))
+        if os.path.exists(path):
+            shutil.rmtree(path)
+
+        if form.homework_up.data:
+            # 保存到uploads/<course-id>/<homework-id>/<team-id>
+            guid = uuid.uuid4()
+            try:
+                (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
+                homework_ups.save(form.homework_up.data,
+                                  folder=os.path.join(basedir, 'uploads', str(course_id),
+                                                      str(homework_id), str(team.id)),
+                                  name=str(guid) + ext)
+            except UploadNotAllowed:
+                flash('附件上传不允许！', 'danger')
+                return redirect(request.args.get('next') or url_for('main.submit_homework'))
+            except InvalidFileException:
+                flash('附件类型不正确，请使用txt、doc、docx', 'danger')
+                return redirect(request.args.get('next') or url_for('main.submit_homework'))
+            attachment = Attachment()
+            attachment.submission_id = submission.id
+            attachment.guid = str(guid)
+            attachment.upload_time = datetime.now()
+            # 保存原文件名和扩展名
+            attachment.file_name = str(name_temp + ext)
+            db.session.add(attachment)
+            db.session.commit()
+            flash('提交成功!', 'success')
+        return redirect(url_for('student.homework_detail', course_id=course_id, homework_id=homework_id))
+
+    # 查找上一次提交
+    submission_previous = Submission\
+        .query\
+        .filter_by(team_id=team.id,
+                   homework_id=homework_id)\
+        .order_by(Submission.id.desc())\
+        .first()
+
+    attachment_previous = None
+    if submission_previous:
+        attachment_previous = Attachment.query.filter_by(submission_id=submission_previous.id).first()
+
     return render_template('student/homework_detail.html',
                            course_id=course_id,
                            course=course,
-                           homework=homework)
+                           homework=homework,
+                           submission_previous=submission_previous,
+                           attachment_previous=attachment_previous,
+                           form=form,
+                           team=team)

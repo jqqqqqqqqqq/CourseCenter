@@ -4,13 +4,13 @@ from wtforms import TextAreaField, IntegerField, StringField
 from wtforms.validators import DataRequired, InputRequired, Length
 from flask_uploads import UploadSet
 
-homework_ups = UploadSet('files', extensions=('txt', 'doc', 'docx'))   # 只允许提交三种作业文件 提交作业ups
+homework_ups = UploadSet('files')
 
 
 class HomeworkForm(FlaskForm):
     text = TextAreaField('作业')
-    homework_up = FileField(validators=[
-        FileAllowed(homework_ups, u'只接受txt和doc(docx)文件!')])
+    homework_up = FileField('作业附件', validators=[
+        FileAllowed(homework_ups, '爷爷你上传了什么？')])
 
 
 class CreateTeamForm(FlaskForm):

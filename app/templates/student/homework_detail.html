@@ -50,6 +50,34 @@
             </div>
         </div>
     </article>
+    <div class="box box-default" data-href="#">
+        <div class="box-header with-border">
+            <h3 class="box-title">
+                提交状况
+            </h3>
+            <div class="box-body">
+                {% if submission_previous %}
+                    <div class="well">{{ submission_previous.text_content }}</div>
+                    {% if attachment_previous %}
+                        <h4>附件</h4>
+                        <a href="#"><i class="fa fa-file"></i> {{ attachment_previous.file_name }}</a>
+                    {% endif %}
+                {% else %}
+                    你什么都没交，你是傻逼吗
+                {% endif %}
+            </div>
+            {% if team.owner_id == current_user.id %}
+                <div class="box-footer">
+                    <form method="post" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        {{ wtf.form_field(form.text) }}
+                        {{ wtf.form_field(form.homework_up) }}
+                        <input type="submit" value="提交" class="btn btn-primary btn-block">
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 {% endblock %}
 
 {% block scripts %}

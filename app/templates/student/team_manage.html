@@ -43,26 +43,28 @@
                         <span class="label label-danger">被拒绝</span>
                     {% endif %}
                 </h3>
-                <div class="box-tools pull-right">
-                    <div class="btn-group">
-                        <button  type="button"
-                                 class="btn btn-sm btn-primary"
-                                 data-toggle="tooltip"
-                                 title="提交团队"
-                                 onclick="submit()"
-                                 {% if team.status == 1 %}disabled{% endif %} >
-                            <i class="fa fa-check-circle-o"></i>
-                        </button>
-                        <button  type="button"
-                                 class="btn btn-sm btn-danger"
-                                 data-toggle="tooltip"
-                                 title="解散团队"
-                                 onclick="dismiss()"
-                                 {% if team.status == 1 %}disabled{% endif %}>
-                            <i class="fa fa-trash"></i>
-                        </button>
+                {% if team.owner_id == current_user.id %}
+                    <div class="box-tools pull-right">
+                        <div class="btn-group">
+                            <button  type="button"
+                                     class="btn btn-sm btn-primary"
+                                     data-toggle="tooltip"
+                                     title="提交团队"
+                                     onclick="submit()"
+                                     {% if team.status == 1 %}disabled{% endif %} >
+                                <i class="fa fa-check-circle-o"></i>
+                            </button>
+                            <button  type="button"
+                                     class="btn btn-sm btn-danger"
+                                     data-toggle="tooltip"
+                                     title="解散团队"
+                                     onclick="dismiss()"
+                                     {% if team.status == 1 %}disabled{% endif %}>
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                {% endif %}
             </div>
             <div class="box-body no-padding">
                 <table class="table table-striped table-hover">
