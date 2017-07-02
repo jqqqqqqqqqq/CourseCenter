@@ -47,6 +47,8 @@ def event_stream():
     # TODO: handle client disconnection.
     for message in pubsub.listen():
         print(message)
+        if not type(message['data']) == int:
+            message['data'] = message['data'].decode('utf-8')
         yield 'data: %s\n\n' % message['data']
 
 
@@ -63,6 +65,7 @@ def post():
     message = request.form['message']
     user = str(current_user.id)
     now = datetime.datetime.now().replace(microsecond=0).time()
+    print(user)
     red.publish('chat', u'[%s] %s: %s' % (now.isoformat(), user, message))
     return Response(status=204)
 
