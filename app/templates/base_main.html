@@ -117,7 +117,7 @@ desired effect
                         <li><a href="{{ url_for('teacher.manage_resource', course_id=course_id) }}">
                             <i class="fa fa-folder"></i> <span>课程资源</span></a>
                         </li>
-                        <li><a href="{{ url_for('teacher.set_homework', course_id=course_id) }}">
+                        <li><a href="{{ url_for('teacher.homework', course_id=course_id) }}">
                             <i class="fa fa-book"></i> <span>课程作业</span></a>
                         </li>
                     {% elif current_user.user_type() == 2 and course_id %}
@@ -126,6 +126,9 @@ desired effect
                         </li>
                         <li><a href="{{ url_for('student.show_resource', course_id=course_id) }}">
                             <i class="fa fa-folder"></i> <span>课程资源</span></a>
+                        </li>
+                        <li><a href="{{ url_for('student.homework', course_id=course_id) }}">
+                            <i class="fa fa-book"></i> <span>课程作业</span></a>
                         </li>
                         <li class="tree-view">
                             <a href="#">

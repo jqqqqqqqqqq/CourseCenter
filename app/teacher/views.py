@@ -120,7 +120,7 @@ def manage_resource(course_id):
 
 @teacher.route('/<course_id>/homework', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
-def set_homework(course_id):
+def homework(course_id):
 
     form = HomeworkForm()
     if form.validate_on_submit():
@@ -142,7 +142,7 @@ def set_homework(course_id):
         db.session.commit()
 
         flash('发布成功！', 'success')
-        return redirect(url_for('teacher.set_homework', course_id=course_id))
+        return redirect(url_for('teacher.homework', course_id=course_id))
     course = Course.query.filter_by(id=course_id).first()
 
     homework_list = Homework.query.filter_by(course_id=course_id).all()
