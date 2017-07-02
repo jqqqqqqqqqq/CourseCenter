@@ -107,6 +107,14 @@ class Team(db.Model):
     def __repr__(self):
         return '<Team %r>' % self.id
 
+    def team_list(self, course_id):
+        teams = self.query.filter_by(course_id=course_id).all()
+        order = 1
+        for team in teams:
+            team.order = order
+            order += 1
+        return teams
+
 
 class TeamMember(db.Model):
     __tablename__ = 'team_members'
