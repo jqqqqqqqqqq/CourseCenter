@@ -11,6 +11,7 @@ from openpyxl.utils.exceptions import InvalidFileException
 import uuid
 from config import basedir
 from sqlalchemy import or_
+from datetime import datetime
 
 @student.route('/student')
 @UserAuth.student_course_access
@@ -146,6 +147,7 @@ def submit_homework(course_id, homework_id):
                 attachment = Attachment()
                 attachment.submission_id = submission_1.id
                 attachment.guid = guid
+                attachment.upload_time = datetime.now()
                 attachment.status = False
                 # 保存原文件名
                 attachment.file_name = str(name_temp)

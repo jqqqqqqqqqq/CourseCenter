@@ -157,6 +157,7 @@ class Attachment(db.Model):                       # 学生提交作业附件信�
     submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'))
     guid = db.Column(db.Text)
     file_name = db.Column(db.String(128))
+    upload_time = db.Column(db.DateTime)
     status = db.Column(db.Boolean)
 
     def __repr__(self):
