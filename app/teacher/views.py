@@ -246,6 +246,7 @@ def teacher_teammanagement(course_id):
         down_list = Team.query.filter_by(course_id=course_id).all()
         if down_list is None:
             flash('没有团队，请等待申请并批准！', 'danger')
+            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
         else:
             workbook = Workbook()
             worksheet = workbook.active

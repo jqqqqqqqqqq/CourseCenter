@@ -254,7 +254,7 @@ def team_view(course_id):
             db.session.add(team)
             db.session.commit()
             flash('创建团队成功!', 'success')
-            return redirect(url_for('student.team_view', course_id=course_id))
+        return redirect(url_for('student.team_view', course_id=course_id))
     team_list_raw = Team.query.filter_by(course_id=course_id).filter(or_(Team.status == 0, Team.status == 3)).all()
     team_list = []
     for team in team_list_raw:
