@@ -107,6 +107,14 @@ class Team(db.Model):
     def __repr__(self):
         return '<Team %r>' % self.id
 
+    def team_list(self, course_id):
+        teams = self.query.filter_by(course_id=course_id).all()
+        order = 1
+        for team in teams:
+            team.order = order
+            order += 1
+        return teams
+
 
 class TeamMember(db.Model):
     __tablename__ = 'team_members'
@@ -157,6 +165,7 @@ class Attachment(db.Model):                       # 学生提交作业附件信�
     submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'))
     guid = db.Column(db.Text)
     file_name = db.Column(db.String(128))
+    upload_time = db.Column(db.DateTime)
     status = db.Column(db.Boolean)
 
     def __repr__(self):
@@ -247,3 +256,17 @@ def load_user(user_id):
     if temp:
         return temp
     return Student.query.get(int(user_id))
+
+
+class ChatMessage(db.Model):
+    __tablename__ = 'chat_message'
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))  # 0 表示 invalid， 即不是学生发言，>0 表示发言者，即为学生发言
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'))  # 同理，老师发言
+    time = db.Column(db.DateTime)
+    content = db.Column(db.String(256))  # 暂定256字
+    markdown = db.Column(db.Boolean)
+
+    def __repr__(self):
+        return '<Course %r>' % self.id

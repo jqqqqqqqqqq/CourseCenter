@@ -17,7 +17,7 @@
 
 {% block breadcrumb %}
     <li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
-    <li><a href="{{ url_for('teacher.homework', course_id=course_id) }}"> 作业信息</a></li>
+    <li><a href="{{ url_for('student.homework', course_id=course_id) }}"> 作业信息</a></li>
     <li class="active"> 作业详情</li>
 {% endblock %}
 
@@ -28,16 +28,6 @@
                 <h3 class="box-title">
                     {{ homework.name }}
                 </h3>
-                <div class="box-tools pull-right">
-                    <span data-toggle="modal" data-target="#homeworkModal">
-                        <button type="button"
-                                class="btn btn-sm btn-primary"
-                                data-toggle="tooltip"
-                                title="编辑">
-                            <i class="fa fa-edit"></i>
-                        </button>
-                    </span>
-                </div>
             </div>
             <div class="box-body">
                 {{ homework.base_requirement }}
@@ -60,31 +50,6 @@
             </div>
         </div>
     </article>
-    <!-- Modal -->
-    <div class="modal fade" id="homeworkModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="homeworkModalLabel">
-                        编辑作业
-                    </h4>
-                </div>
-                <div class="modal-body">
-                    <form method="post" id="form" action="?action=edit&homework_id={{ homework.id }}">
-                        {{ form.hidden_tag() }}
-                        {{ wtf.form_field(form.name) }}
-                        {{ wtf.form_field(form.base_requirement) }}
-                        {{ wtf.form_field(form.time) }}
-                        {{ wtf.form_field(form.weight, type="number") }}
-                        {{ wtf.form_field(form.max_submit_attempts, type="number") }}
-                        <input type="submit" value="提交" class="btn btn-primary btn-block">
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 {% endblock %}
 
 {% block scripts %}
