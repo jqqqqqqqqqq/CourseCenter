@@ -296,6 +296,17 @@ def teacher_teammanagement():
     return render_template('auth_teacher/teacher_teammanagement.html',
                            team_list=team_list)
 
+# 用于生成zip文件
+def make_zip(source_dir, output_filename):
+  zipf = zipfile.ZipFile(output_filename, 'w')
+  pre_len = len(os.path.dirname(source_dir))
+  for parent, dirnames, filenames in os.walk(source_dir):
+    for filename in filenames:
+      pathfile = os.path.join(parent, filename)
+      arcname = pathfile[pre_len:].strip(os.path.sep)   #相对路径
+      zipf.write(pathfile, arcname)
+  zipf.close()
+
 
 @teacher.route('/teacher/<course_id>/givegrade_team/<homework_id>', methods=['GET', 'POST'])
 def givegrade_teacher(course_id, homework_id):
@@ -318,7 +329,7 @@ def givegrade_teacher(course_id, homework_id):
                     submission_temp.comments = dic['comments']
                     db.session.add(submission_temp)
         db.session.commit()
-        return redirect(request.args.get('next') or url_for('teacher.givegrade_teacher', homework_list=homework_list))
+        return redirect(url_for('teacher.givegrade_teacher', course_id=course_id, homework_id=homework_id))
 
     # 单个下载学生作业
     if request.method == 'POST' and request.form.get('action') == 'download':
@@ -337,36 +348,17 @@ def givegrade_teacher(course_id, homework_id):
         for i in os.listdir(file_dir):
             if i.startswith(str(file_uuid)):
                 os.rename(i, filename_upload)
-
         # 无附件
         if not attachment_temp:
             flash('该组没有上传作业')
             return redirect(url_for('teacher.givegrade_teacher', homework_list=homework_list))
         elif os.path.exists(os.path.join(file_dir, filename_upload)):
-            return send_from_directory(file_dir, filename_upload, as_attachment=True)
+            return send_from_directory(directory=file_dir, filename=filename_upload, as_attachment=True)
+
     # 批量下载学生作业
     if request.method == 'POST' and request.form.get('action') == 'multi_download':
         file_path = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
-
-        return send_from_directory()
-    # if request.form.get('action') == 'multidownload':
-    #     filelist = request.args.get('filelist')
-    #     output_filename = request.args.get('output_filename')
-    #     zipf = zipfile.ZipFile(output_filename, 'w')
-    #     [zipf.write(filename, filename.rsplit(os.path.sep, 1)[-1]) for filename in filelist]
-    #     zipf.close()
-    #     response = make_response(send_file(os.path.join(os.getcwd(), output_filename)))
-    #     response.headers["Content-Disposition"] = "attachment; filename=" + output_filename + ";"
-    #     return response
+        save_path = os.path.join(basedir, 'temp', 'download.zip')
+        make_zip(file_path, save_path)
+        return send_from_directory(directory=file_path, filename='download.zip', as_attachment=True)
     return render_template('teacher/homework/givegrade_teacher.html', homework_list=homework_list)
-
-
-def make_zip(source_dir, output_filename):
-  zipf = zipfile.ZipFile(output_filename, 'w')
-  pre_len = len(os.path.dirname(source_dir))
-  for parent, dirnames, filenames in os.walk(source_dir):
-    for filename in filenames:
-      pathfile = os.path.join(parent, filename)
-      arcname = pathfile[pre_len:].strip(os.path.sep)   #相对路径
-      zipf.write(pathfile, arcname)
-  zipf.close()

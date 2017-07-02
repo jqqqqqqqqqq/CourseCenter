@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, session, R
 from . import main
 from .. import db
 import os
-from ..models.models import SCRelationship, TCRelationship, Course
+from ..models.models import SCRelationship, TCRelationship, Course, ChatMessage
 from flask_login import current_user, login_required
 from flask import request
 from config import basedir
@@ -94,10 +94,9 @@ def stream():
                           mimetype="text/event-stream")
 
 
-@main.route('/<course_name>/chat', methods=['GET', 'POST'])
-def chat(course_name):
-    course = Course.query.filter_by(name=course_name).first()
-    cm_list = ChatMessage.query.filter_by(course_id=course.id).order_by(ChatMessage.id.desc()).all()[:10]
+@main.route('/<course_id>/chat', methods=['GET', 'POST'])
+def chat(course_id):
+    cm_list = ChatMessage.query.filter_by(course_id=course_id).order_by(ChatMessage.id.desc()).all()[:10]
     return render_template('chat.html', course_id=course_id, cm_list=cm_list)
 
     # 下面的代码只是作为具体的template/chat.html的一个参考
