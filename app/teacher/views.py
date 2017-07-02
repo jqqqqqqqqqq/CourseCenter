@@ -423,3 +423,20 @@ def see_class_before(semester_id):
         course_info_list.append({'course_name': i.name, 'course_credit': i.credit,
                                  'course_student_number': len(screl), 'course_info': i.course_info})
     return render_template('teacher/see_class_before.html', course_info_list=course_info_list)
+
+
+@teacher.route('/<course_id>/team', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def team_manage(course_id):
+    course = Course.query.filter_by(id=course_id).first()
+    teams_origin = Team.query.filter_by(course_id=course_id).all()
+    teams = []
+    for team in teams_origin:
+        members = TeamMember.query.filter_by(team_id=team.id).join(Student).add_column(Student.name).all()
+        teams.append({
+            'id': team.id,
+            'owner_id': team.owner_id,
+            'status': team.status,
+            'members': members
+        })
+    return render_template('teacher/team.html', course_id=course_id, course=course)

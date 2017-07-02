@@ -103,6 +103,12 @@ class Team(db.Model):
     status = db.Column(db.Integer, default=0)  # 0: building 1: pending 2: accepted 3: rejected 4: dismiss
     reject_reason = db.Column(db.Text)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+    members = db.relationship('TeamMember', backref='team')
+    owner = db.relationship('Student', uselist=False)
+
+    @property
+    def number_of_members(self):
+        return len(self.members) + 1
 
     def __repr__(self):
         return '<Team %r>' % self.id
@@ -124,6 +130,7 @@ class TeamMember(db.Model):
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
     status = db.Column(db.Integer, default=0)  # 0: pending 1: accepted 2: rejected
     grade = db.Column(db.Float)
+    student = db.relationship('Student', uselist=False)
 
     def __repr__(self):
         return '<TeamMember %r>' % self.id

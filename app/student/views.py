@@ -191,31 +191,7 @@ def team_view(course_id):
             db.session.commit()
             flash('创建团队成功!', 'success')
             return redirect(url_for('student.team_view', course_id=course_id))
-    team_list_raw = Team\
-        .query.filter_by(course_id=course_id)\
-        .filter(or_(Team.status == 0, Team.status == 3))\
-        .join(Student)\
-        .add_columns(Student.name)\
-        .all()
-    team_list = []
-    for team in team_list_raw:
-        # 计算团队人数
-        member_list = TeamMember\
-            .query\
-            .filter_by(team_id=team.Team.id, status=1)\
-            .join(Student)\
-            .add_columns(Student.name)\
-            .all()
-        number_of_member = len(member_list) + 1
-        team_list.append({
-            'id': team.Team.id,
-            'owner_id': team.Team.owner_id,
-            'owner_name': team.name,
-            'team_name': team.Team.team_name,
-            'status': team.Team.status,
-            'number_of_member': number_of_member,
-            'members': member_list
-        })
+    team_list = Team.query.filter_by(course_id=course_id).filter(or_(Team.status == 0, Team.status == 3)).all()
     return render_template('student/team.html',
                            teams=team_list,
                            form=form,

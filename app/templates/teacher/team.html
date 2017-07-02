@@ -1,0 +1,35 @@
+{% extends "base_main.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - 团队管理{% endblock %}
+
+{% block content_header %}
+    <h1>{{ course.name }}：团队管理</h1>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
+    <li class="active">团队管理</li>
+{% endblock %}
+
+{% block content_main %}
+    <article>
+        <div class="box box-primary">
+            <div class="box-header with-border">
+                <h3 class="box-title">
+
+                </h3>
+            </div>
+            <div class="box-body">
+
+            </div>
+        </div>
+        <!-- /.box-primary -->
+    </article>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+</script>
+{% endblock %}

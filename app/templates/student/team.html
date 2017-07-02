@@ -51,7 +51,7 @@
                                     {{ team.owner_id }}
                                 </td>
                                 <td>
-                                    {{ team.number_of_member }}
+                                    {{ team.number_of_members }}
                                 </td>
                                 <td>
                                     <div class="btn-group">
@@ -76,9 +76,9 @@
                             <tr id="members-{{ team.id }}" style="display:none">
                                 <td colspan="4">
                                     成员：
-                                    <span class="text-warning">{{ team.owner_name }}</span>
+                                    <span class="text-warning">{{ team.owner.name }}</span>
                                     {% for member in team.members %}
-                                        {{ member.name }}
+                                        {{ member.student.name }}
                                     {% endfor %}
                                 </td>
                             </tr>
