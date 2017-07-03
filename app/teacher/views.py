@@ -158,6 +158,10 @@ def homework_detail(course_id, homework_id):
     form = HomeworkForm()
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
+
+    if request.args.get['homework_report']:
+        return get_homework_report(homework_id)
+
     if form.validate_on_submit():
         # 修改作业
         begin_time, end_time = form.time.data.split(' - ')
@@ -193,7 +197,7 @@ def homework_detail(course_id, homework_id):
 
 # PudgeG负责：得到本次作业报表↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 def get_homework_report(homework_id):
-    # 得到本次作业报表,尚未被引用，等待中
+    # 得到本次作业报表
     submission_list = Submission.query.filter_by(homework_id=homework_id).all()
     homework = Homework.query.filter_by(id=request.args.get('homework_id')).first()
     team_this_course = Team.query.filter_by(course_id=homework.course_id).filter_by(status=2).all()
