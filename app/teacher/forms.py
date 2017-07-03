@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import TextAreaField, IntegerField, StringField, SubmitField
+from wtforms import TextAreaField, IntegerField, StringField, SubmitField, SelectField
 from wtforms.validators import InputRequired, DataRequired
 from flask_uploads import UploadSet
 from flask_wtf.file import FileField, FileAllowed, FileRequired
@@ -44,3 +44,10 @@ class RejectTeam(FlaskForm):
     id = IntegerField(validators=[InputRequired()])
     # button = SubmitField('拒绝')
     reason = TextAreaField('拒绝理由', validators=[InputRequired()])
+
+
+class MoveForm(FlaskForm):
+    student = IntegerField('学生id', validators=[DataRequired()])
+    pending_teams = SelectField('可以加入的组',
+                                choices=[],
+                                coerce=int)

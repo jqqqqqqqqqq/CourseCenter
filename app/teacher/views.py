@@ -1,4 +1,8 @@
 import shutil
+import os
+import zipfile
+import json
+import uuid
 from flask import flash, redirect, render_template, url_for, request,\
     current_app, send_from_directory, make_response, send_file
 from datetime import datetime
@@ -8,16 +12,14 @@ from . import teacher
 from .. import db
 from ..auths import UserAuth
 from .forms import up_corrected, UploadCorrected,\
-    CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
+    CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam, MoveForm
 from ..models.models import Course, Homework, Team,\
-    TeamMember, Student, Submission, Attachment, SCRelationship, TCRelationship, Teacher
-import uuid
+    TeamMember, Student, Submission, Attachment, Teacher
 from flask_uploads import UploadNotAllowed
-import os, zipfile
 from openpyxl.utils.exceptions import InvalidFileException
 from config import basedir
-import json
 from openpyxl import Workbook
+from sqlalchemy import not_
 
 
 @teacher.before_request
@@ -127,7 +129,7 @@ def homework(course_id):
 
     form = HomeworkForm()
 
-    if request.args.get['get_homework_all']:
+    if request.args.get('get_homework_all'):
         return get_homework_all(course_id)
 
     if form.validate_on_submit():
@@ -336,7 +338,7 @@ def add_member(student_id, team_id):
     team_member = TeamMember()
     team_member.team_id = team_id
     team_member.student_id = student_id
-    team_member.status = 0
+    team_member.status = 1
     db.session.add(team_member)
     delete_list = TeamMember.query.filter_by(status=2).filter_by(student_id=student_id).all()
     for a in delete_list:
@@ -383,7 +385,6 @@ def teacher_team_management(course_id):
         team.reject_form.id.data = team.id
     return render_template('auth_teacher/teacher_teammanagement.html',
                            team_list=team_list)
-db.Table
 
 # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 def get_team_report(course_id):
@@ -572,6 +573,7 @@ def team_manage(course_id):
     # 教师管理团队
     course = Course.query.filter_by(id=course_id).first()
     teams = Team.query.filter_by(course_id=course_id).all()
+    form = MoveForm()
     if request.form.get('action') == 'accept':
         team = Team.query.filter_by(id=request.form.get('team_id')).first()
         if team:
@@ -596,4 +598,34 @@ def team_manage(course_id):
             flash("找不到此团队", "danger")
             return redirect(url_for('teacher.team_manage', course_id=course_id))
 
-    return render_template('teacher/team.html', course_id=course_id, course=course, teams=teams)
+    unteamed_group = list(course.students)
+    for team in teams:
+        unteamed_group.remove(team.owner)
+
+    members = TeamMember.query.filter(not_(TeamMember.status == 2)).filter(TeamMember.team.has(course_id=course_id)).all()
+
+    for member in members:
+        unteamed_group.remove(member.student)
+
+    pending_teams = Team\
+        .query\
+        .filter_by(course_id=course_id)\
+        .filter(not_(Team.status == 2))\
+        .all()
+
+    form.pending_teams.choices = [(r.id, r.team_name) for r in pending_teams]
+
+    if form.validate_on_submit():
+        print(2333)
+        add_member(form.student.data, form.pending_teams.data)
+        flash('移动成功！', 'success')
+        return redirect(url_for('teacher.team_manage', course_id=course_id))
+
+
+
+    return render_template('teacher/team.html',
+                           course_id=course_id,
+                           course=course,
+                           teams=teams,
+                           unteamed_group=unteamed_group,
+                           form=form)
