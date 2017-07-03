@@ -316,12 +316,16 @@ def homework_detail(course_id, homework_id):
     homework = Homework.query.filter_by(id=homework_id).first()
     team = Team.query.filter_by(owner_id=current_user.id, course_id=course_id).first()
     if not team:
+        flash('没有团队，不能查看详细信息', 'danger')
+        return redirect(url_for('student.homework', course_id=course_id))
+        '''
         teammember = TeamMember\
                         .query\
                         .join(Team, Team.id == TeamMember.team_id)\
                         .filter(and_(TeamMember.student_id == current_user.id, Team.course_id == course_id))\
                         .first()
         team = Team.query.filter_by(id=teammember.team_id, course_id=course_id).first()
+        '''
     attempts = len(Submission.query.filter_by(team_id=team.id, homework_id=homework_id).all())
 
     if form.validate_on_submit():
