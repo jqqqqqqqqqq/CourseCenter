@@ -294,4 +294,27 @@ class ChatMessage(db.Model):
     markdown = db.Column(db.Boolean)
 
     def __repr__(self):
-        return '<Course %r>' % self.id
+        return '<ChatMessage %r>' % self.id
+
+
+class Attendance(db.Model):
+    __tablename__ = 'attendance'
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+    time_begin = db.Column(db.DateTime)  # 老师发布签到时间
+    time_end = db.Column(db.DateTime)  # 在此时间内可以签到
+    info = db.Column(db.Text)  # 写点啥
+
+    def __repr__(self):
+        return '<Attendance %r>' % self.id
+
+
+class AttendanceStats(db.Model):
+    __tablename__ = 'attendance_stats'
+    id = db.Column(db.Integer, primary_key=True)
+    attendance_id = db.Column(db.Integer, db.ForeignKey('attendance.id'))
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
+    time = db.Column(db.DateTime)  # 学生签到时间点
+
+    def __repr__(self):
+        return '<AttendanceStats %r>' % self.id
