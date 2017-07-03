@@ -126,6 +126,10 @@ def manage_resource(course_id):
 def homework(course_id):
 
     form = HomeworkForm()
+
+    if request.args.get['get_homework_all']:
+        return get_homework_all(course_id)
+
     if form.validate_on_submit():
         begin_time, end_time = form.time.data.split(' - ')
         begin_time = datetime.strptime(begin_time, '%m/%d/%Y %H:%M')
@@ -153,7 +157,7 @@ def homework(course_id):
 
 
 # PudgeG负责：总成绩表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-def get_homework_history(course_id):
+def get_homework_all(course_id):
     # 得到这门课历次作业提交信息
     workbook = Workbook()
     worksheet = workbook.active
