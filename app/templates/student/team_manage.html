@@ -94,20 +94,22 @@
                             <td>{{ team.owner.name }}</td>
                             <td></td>
                         </tr>
-                        {% for member in team.members if member.status == 1  %}
-                            <td></td>
-                            <td>{{ member.student_id }}</td>
-                            <td>{{ member.student.name }}</td>
-                            <td>
-                                {% if team.status == 0 or team.status == 3 %}
-                                <button class="btn btn-danger btn-sm"
-                                        data-toggle="tooltip"
-                                        title="从本群中移除"
-                                        onclick="rejectMember({{ member.student_id }})">
-                                    <i class="fa fa-times-circle"></i>
-                                </button>
-                            {% endif %}
-                            </td>
+                        {% for member in team.members  %}
+                            <tr>
+                                <td></td>
+                                <td>{{ member.student_id }}</td>
+                                <td>{{ member.student.name }}</td>
+                                <td>
+                                    {% if team.status == 0 or team.status == 3 %}
+                                    <button class="btn btn-danger btn-sm"
+                                            data-toggle="tooltip"
+                                            title="从本群中移除"
+                                            onclick="rejectMember({{ member.student_id }})">
+                                        <i class="fa fa-times-circle"></i>
+                                    </button>
+                                {% endif %}
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>

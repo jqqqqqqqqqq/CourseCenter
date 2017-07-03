@@ -78,7 +78,7 @@
                         {{ wtf.form_field(form.name) }}
                         {{ wtf.form_field(form.base_requirement) }}
                         {{ wtf.form_field(form.time) }}
-                        {{ wtf.form_field(form.weight, type="number") }}
+                        {{ wtf.form_field(form.weight, type="number", min="0", max="100") }}
                         {{ wtf.form_field(form.max_submit_attempts, type="number") }}
                         <input type="submit" value="提交" class="btn btn-primary btn-block">
                     </form>

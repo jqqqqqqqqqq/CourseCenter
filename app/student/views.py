@@ -99,12 +99,19 @@ def show_resource(course_id):
     return render_template('student/resource.html', course_id=course_id, course=course, path=path, files=files)
 
 
-@student.route('/student/<course_id>/givegrade_stu', methods=['GET', 'POST'])
-def givegrade_stu(course_id):
+@student.route('/<course_id>/grade', methods=['GET', 'POST'])
+def team_grade(course_id):
+    # 给团队打分
 
-    team_member_1 = TeamMember.query.filter_by(student_id=current_user.id).first()
-    team = Team.query.filter_by(id=team_member_1.team_id).first()
-    team_member = TeamMember.query.filter_by(team_id=team.id).all()
+    team = Team.query.filter_by(owner_id=current_user.id, course_id=course_id).first()
+
+    if not team:
+        team = Team.query.filter_by(course_id=course_id).filter(Team.members.any(student_id=current_user.id)).first()
+
+    if not team or not team.status == 2:
+        flash('你还没有加组/你的组还没通过审批！', 'danger')
+        return redirect(url_for('student.team_view', course_id=course_id))
+
 
     # TeamMember.student 用于显示的成绩
     student_list = []
@@ -115,7 +122,7 @@ def givegrade_stu(course_id):
                          'student_grade': team.owner_grade})
 
     # student_list用于在打分页面显示分数
-    for i in team_member:
+    for i in team.members:
         student_temp = Student.query.filter_by(id=i.student_id).first()
         # student_list.append({student_temp.name: i.grade})
         student_list.append({'student_id': student_temp.id,
@@ -125,26 +132,32 @@ def givegrade_stu(course_id):
     if request.method == 'POST':
         if current_user.id != team.owner_id:
             flash('权限不足，只有组长可以打分', 'danger')
-            return redirect(url_for('student.givegrade_stu', course_id=course_id))
+            return redirect(url_for('student.team_grade', course_id=course_id))
         else:
-            # request.form: {student_id: grade}
-            sum_total = 0
-            # 设置队长grade
-            team.owner_grade = float(request.form.get(str(team.owner_id)))
-            db.session.add(team)
-            # 设置队员成绩
-            for student_t in team_member:
-                student_t.grade = float(request.form.get(str(student_t.student_id)))
-                sum_total = sum_total + float(student_t.grade)
-                db.session.add(student_t)
-            if sum_total == len(student_list):
-                db.session.commit()
-                flash('设置成功', 'success')
-                return redirect(url_for('student.givegrade_stu', course_id=course_id))
-            else:
-                flash('所有人的得分系数平均为1', 'danger')
-                return redirect(url_for('student.givegrade_stu', course_id=course_id))
-    return render_template('/student/givegrade_stu.html', student_list=student_list)
+            try:
+                # request.form: {student_id: grade}
+                sum_total = 0
+                # 设置队长grade
+                sum_total += float(request.form.get(str(team.owner_id)))
+                # 设置队员成绩
+                for student_t in team.members:
+                    sum_total = sum_total + float(request.form.get(str(student_t.student_id)))
+                if sum_total == len(student_list):
+                    team.owner_grade = float(request.form.get(str(team.owner_id)))
+                    db.session.add(team)
+                    for student_t in team.members:
+                        student_t.grade = float(request.form.get(str(student_t.student_id)))
+                        db.session.add(student_t)
+                    db.session.commit()
+                    flash('设置成功', 'success')
+                    return redirect(url_for('student.team_grade', course_id=course_id))
+                else:
+                    flash('所有人的得分系数平均为1', 'danger')
+                    return redirect(url_for('student.team_grade', course_id=course_id))
+            except ValueError:
+                flash('不能为空', 'danger')
+                return redirect(url_for('student.team_grade', course_id=course_id))
+    return render_template('student/team_score.html', student_list=student_list, course_id=course_id, team=team)
 
 
 @student.route('/<course_id>/teams', methods=['GET', 'POST'])
