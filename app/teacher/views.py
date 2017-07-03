@@ -2,7 +2,7 @@ import shutil
 from flask import flash, redirect, render_template, url_for, request,\
     current_app, send_from_directory, make_response, send_file
 from datetime import datetime
-from flask_login import login_required
+from flask_login import login_required, current_user
 from ..upload_utils import secure_filename
 from . import teacher
 from .. import db
@@ -10,7 +10,7 @@ from ..auths import UserAuth
 from .forms import up_corrected, UploadCorrected,\
     CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
 from ..models.models import Course, Homework, Team,\
-    TeamMember, Student, Submission, Attachment, SCRelationship
+    TeamMember, Student, Submission, Attachment, SCRelationship, TCRelationship, Teacher
 import uuid
 from flask_uploads import UploadNotAllowed
 import os, zipfile
@@ -407,19 +407,37 @@ def givegrade_teacher(course_id, homework_id):
         rename(file_path, rename_list)
         make_zip(file_path, save_path)
         return send_from_directory(directory=file_path, filename='download.zip', as_attachment=True)
-    return render_template('teacher/homework/givegrade_teacher.html', homework_list=homework_list)
+    return render_template('teacher/givegrade_teacher.html', homework_list=homework_list)
 
 
-#教师查看往期课程：
-@teacher.route('/<semester_id>/see_class_before', methods=['GET'])
-def see_class_before(semester_id):
-    course = Course.query.filter_by(semester_id=semester_id).all()
-    course_info_list = []
-    if course is None:
-        flash('该学期没有任何课程', 'danger')
-        return redirect(url_for('teacher/see_class_before.html', semester_id=semester_id))
-    for i in course:
-        screl = SCRelationship.query.filter_by(course_id=request.args.get('course_id')).first()
-        course_info_list.append({'course_name': i.name, 'course_credit': i.credit,
-                                 'course_student_number': len(screl), 'course_info': i.course_info})
-    return render_template('teacher/see_class_before.html', course_info_list=course_info_list)
+# # 教师查看往期课程和往期课程作业
+# @teacher.route('/see_class_before', methods=['GET', 'POST'])
+# def see_class_before():
+#
+#     #取出当前老师参加的所有课程
+#     # teacher = Teacher.query.filter_by(id=current_user.id).first()
+#     # tcrel = TCRelationship.query.filter_by(teacher_id=teacher.id).all()
+#     # course = []
+#     # for i in tcrel:
+#     #     course_temp = Course.query.filter_by(id=i.course_id)
+#     #     course.append(course_temp)
+#     # course_detail_info_list = []
+#
+#     # 显示往期课程信息
+#     for i in course:
+#         screl = SCRelationship.query.filter_by(course_id=request.args.get('course_id')).all()
+#         course_detail_info_list.append({'course_name': i.name, 'course_credit': i.credit,
+#                                         'course_student_number': len(screl), 'course_info': i.course_info})
+#
+#     # 下载往期课程作业
+#     if request.method == 'POST' and request.form.get('action') == 'download':
+#
+#         course_id = request.args.get('course_id')
+#         file_path = os.path.join(basedir, 'uploads', str(semester_id), str(course_id))
+#         save_path = os.path.join(basedir, 'temp', 'download.zip')
+#
+#         if os.path.exists(file_path):
+#
+#         make_zip(file_path, save_path)
+#         return send_from_directory(directory=file_path, filename='download.zip', as_attachement=True)
+#     return render_template('teacher/see_class_before.html', course=course, course_detail_info_list=course_detail_info_list)
