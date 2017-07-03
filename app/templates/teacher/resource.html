@@ -66,7 +66,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for file in files if file.is_dir() %}
+                            {% for file in files if file.is_dir %}
                                 <tr>
                                     <td><i class="fa fa-folder"></i></td>
                                     <td>
@@ -74,8 +74,8 @@
                                             {{ file.name }}
                                         </a>
                                     </td>
-                                    <td>{{ file.stat().st_size }}B</td>
-                                    <td>{{ file.stat().st_mtime }}</td>
+                                    <td>{{ file.size }}</td>
+                                    <td>{{ file.create_time }}</td>
                                     <td>
                                         <div class="btn-group">
                                             <button class="btn btn-danger btn-sm" onclick="delFile('{{ file.name }}')">
@@ -85,7 +85,7 @@
                                     </td>
                                 </tr>
                             {% endfor %}
-                            {% for file in files if file.is_file() %}
+                            {% for file in files if file.is_file %}
                                 <tr>
                                     <td><i class="fa fa-file"></i></td>
                                     <td>
@@ -93,8 +93,8 @@
                                             {{ file.name }}
                                         </a>
                                     </td>
-                                    <td>{{ file.stat().st_size }}B</td>
-                                    <td>{{ file.stat().st_mtime }}</td>
+                                    <td>{{ file.size }}</td>
+                                    <td>{{ file.create_time }}</td>
                                     <td>
                                         <div class="btn-group">
                                             <button class="btn btn-danger btn-sm" onclick="delFile('{{ file.name }}')">

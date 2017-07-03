@@ -94,8 +94,32 @@ def show_resource(course_id):
         else:
             flash('文件不存在！', 'danger')
             return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+    files = []
 
-    files = list(os.scandir(expand_path))
+    def sizeof_fmt(num, suffix='B'):
+        for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+            if abs(num) < 1024.0:
+                return "%3.1f%s%s" % (num, unit, suffix)
+            num /= 1024.0
+        return "%.1f%s%s" % (num, 'Y', suffix)
+
+    class file_attributes:
+        name = ""
+        size = ""
+        create_time = datetime.min
+        is_dir = False
+        is_file = False
+
+        def __init__(self, name, size, create_time, is_dir, is_file):
+            self.name = name
+            self.size = size
+            self.create_time = create_time
+            self.is_dir = is_dir
+            self.is_file = is_file
+
+    for file in os.scandir(expand_path):
+        time = datetime.fromtimestamp(file.stat().st_mtime)
+        files.append(file_attributes(file.name, sizeof_fmt(file.stat().st_size), time, file.is_dir(), file.is_file()))
     return render_template('student/resource.html', course_id=course_id, course=course, path=path, files=files)
 
 
