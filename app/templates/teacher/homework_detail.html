@@ -1,5 +1,4 @@
 {% extends "base_main.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
 
 {% block title %}{{ super() }} - 作业详情{% endblock %}
 
@@ -59,6 +58,86 @@
                 </dl>
             </div>
         </div>
+        <!-- /.box-primary -->
+        {% if teams %}
+            <div class="box box-solid">
+                <div class="box-header with-border">
+                    <h3 class="box-title">学生作业</h3>
+                </div>
+                <div class="box-body">
+                    {% for team in teams %}
+                        <div class="post">
+                            <h4>
+                                <i class="fa fa-group"></i>
+                                {{ team.team_name }}
+                                <a href="{{ url_for('teacher.download_attachment',
+                                                    course_id=course_id,
+                                                    homework_id=homework.id,
+                                                    team_id=team.id,
+                                                    filename=team.submissions[-1].attachment[-1].file_name) }}"
+                                   class="badge bg-green">
+                                    <i class="fa fa-file"></i>
+                                    {{ team.submissions[-1].attachment[-1].file_name }}
+                                </a>
+                            </h4>
+                            {% set sub = team.submissions[-1] %}
+                            <div class="well">
+                                {{ sub.text_content }}
+                                {% if sub.score %}
+                                    <dl class="dl-horizontal">
+                                        <dt>分数</dt>
+                                        <dd>{{ sub.score }}</dd>
+                                        <dt>教师评论</dt>
+                                        <dd>{{ sub.comments }}</dd>
+                                    </dl>
+                                {% endif %}
+                            </div>
+                            <form action="" class="form-horizontal">
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">写个评语</label>
+                                    <div class="col-sm-10 ">
+                                        <textarea
+                                                required
+                                                class="form-control"
+                                                type="text"
+                                                data-team-id="{{ team.id }}"
+                                                data-for="comments"
+                                                placeholder="评语">{% if sub.comments %}{{ sub.comments }}{% endif %}</textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">打分</label>
+                                    <div class="col-sm-10">
+                                        <input type="number"
+                                               class="form-control"
+                                               min="0"
+                                               max="100"
+                                               data-team-id="{{ team.id }}"
+                                               data-for="score"
+                                               required {% if sub.score %}value="{{ sub.score }}"{% endif %}>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    {% endfor %}
+                    <hr>
+                    <button class="btn btn-primary" onclick="submitAll()">全部提交</button>
+                    <a href="?action=multi_download" class="btn btn-success">下载全部附件</a>
+                    <button class="btn btn-info" onclick="$('#file').click()">上传批改后的作业</button>
+                    {% if teacher_corrected %}
+                        <a href="?action=download_corrected" class="badge bg-blue">
+                            <i class="fa fa-file">
+                                批改详情.zip
+                            </i>
+                        </a>
+                    {% endif %}
+                    <form id="fileForm" method="post" enctype="multipart/form-data" style="display: none">
+                        <input type="text" name="action" value="multi_upload">
+                        <input type="file" name="file" id="file">
+                    </form>
+                </div>
+            </div>
+        {% endif %}
     </article>
     <!-- Modal -->
     <div class="modal fade" id="homeworkModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -100,5 +179,26 @@
                 format: 'MM/DD/YYYY HH:mm'
             }
         });
+        function submitAll() {
+            if(confirm('确定要全部提交吗？')){
+                var res = {};
+                var inputs = $('[data-team-id]');
+                for(var i=0; i<inputs.length; i++){
+                    var input = $(inputs[i]);
+                    if(!res[input.data('team-id')])
+                        res[input.data('team-id')] = {};
+                    res[input.data('team-id')][input.data('for')] = input.val()
+                    if(!input.val()){
+                        alert('请不要留空！')
+                        return;
+                    }
+                }
+                // console.log(res);
+                $.form('', {action: 'submit', data: JSON.stringify(res)}, 'POST').submit();
+            }
+        }
+        $('#file').change(function () {
+            $('#fileForm').submit();
+        })
     </script>
 {% endblock %}

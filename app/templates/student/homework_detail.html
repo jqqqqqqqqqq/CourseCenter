@@ -54,19 +54,39 @@
         <div class="box-header with-border">
             <h3 class="box-title">
                 提交状况
+                {% if attachment_previous %}
+                    <a href="{{ url_for('student.download_attachment',
+                    course_id=course_id,
+                    homework_id=homework.id,
+                    team_id=team.id,
+                    filename=attachment_previous.file_name) }}" class="badge bg-green">
+                        <i class="fa fa-file"></i> {{ attachment_previous.file_name }}
+                    </a>
+                {% endif %}
+                {% if teacher_corrected %}
+                    <a href="?action=download_corrected" class="badge bg-blue">
+                        <i class="fa fa-file"></i> 批改详情.zip
+                    </a>
+                {% endif %}
             </h3>
             <div class="box-body">
                 {% if submission_previous %}
-                    <div class="well">{{ submission_previous.text_content }}</div>
-                    {% if attachment_previous %}
-                        <h4>附件</h4>
-                        <a href="#"><i class="fa fa-file"></i> {{ attachment_previous.file_name }}</a>
+                    <div class="well">
+                        {{ submission_previous.text_content }}
+                    {% if submission_previous.score %}
+                        <dl class="dl-horizontal">
+                            <dt>分数</dt>
+                            <dd>{{ submission_previous.score }}</dd>
+                            <dt>教师评论</dt>
+                            <dd>{{ submission_previous.comments }}</dd>
+                        </dl>
                     {% endif %}
+                    </div>
                 {% else %}
-                    你什么都没交，你是傻逼吗
+                    尚未提交
                 {% endif %}
             </div>
-            {% if team.owner_id == current_user.id %}
+            {% if team.owner_id == current_user.id and not submission_previous.score %}
                 <div class="box-footer">
                     <form method="post" enctype="multipart/form-data">
                         {{ form.hidden_tag() }}
