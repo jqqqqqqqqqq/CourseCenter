@@ -101,11 +101,18 @@ def show_resource(course_id):
 
 @student.route('/student/<course_id>/givegrade_stu', methods=['GET', 'POST'])
 def givegrade_stu(course_id):
+
     team_member_1 = TeamMember.query.filter_by(student_id=current_user.id).first()
-    team = Team.query.filter_by(id=team_member_1.team_id)
+    team = Team.query.filter_by(id=team_member_1.team_id).first()
     team_member = TeamMember.query.filter_by(team_id=team.id).all()
 
+    # TeamMember.student 用于显示的成绩
     student_list = []
+
+    # 加入队长ID和队长成绩
+    student_list.append({'student_id': team.owner_id,
+                         'student_name': team.owner.name,
+                         'student_grade': team.owner_grade})
 
     # student_list用于在打分页面显示分数
     for i in team_member:
@@ -120,11 +127,14 @@ def givegrade_stu(course_id):
             flash('权限不足，只有组长可以打分', 'danger')
             return redirect(url_for('student.givegrade_stu', course_id=course_id))
         else:
-            # request.form: {student_id, grade}
+            # request.form: {student_id: grade}
             sum_total = 0
-
+            # 设置队长grade
+            team.owner_grade = float(request.form.get(str(team.owner_id)))
+            db.session.add(team)
+            # 设置队员成绩
             for student_t in team_member:
-                student_t.grade = float(request.form.get(student_t.student_id))
+                student_t.grade = float(request.form.get(str(student_t.student_id)))
                 sum_total = sum_total + float(student_t.grade)
                 db.session.add(student_t)
             if sum_total == len(student_list):
