@@ -211,18 +211,22 @@ def team_view(course_id):
     team_joined = TeamMember.query.filter_by(student_id=current_user.id).filter_by(status=1).first()
     # 是不是在提交申请状态
     team_pending = TeamMember.query.filter_by(student_id=current_user.id).filter_by(status=0).first()
+
+    Team.team_list(course_id)
+    # 新添加的函数方法，team.order表示本课程当前审核通过团队排序后队伍编号
+
     if request.form.get('action') == 'join':
         # 加入团队
         member_list = TeamMember.query.filter_by(team_id=request.form.get('team_id')).filter_by(status=1).all()
         number_of_member = len(member_list)
         _course = Course.query.filter_by(id=course_id).first()
-        if team_owner:
+        if len(team_owner) != 0:
             flash('已创建团队，拒绝申请!', 'danger')
-        elif team_joined:
+        elif len(team_joined) != 0:
             flash('已加入团队，拒绝申请!', 'danger')
         elif number_of_member == _course.teamsize_max - 1:
             flash('人数已满，拒绝申请！', 'danger')
-        elif team_pending:
+        elif len(team_pending) != 0:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             teammember = TeamMember()
@@ -230,10 +234,13 @@ def team_view(course_id):
             teammember.student_id = current_user.id
             teammember.status = 0
             db.session.add(teammember)
+
+            # 学生团队管理要求删除被驳回记录
             delete_list = TeamMember.query.filter_by(status=2).filter_by(student_id=current_user.id).all()
-            for a in delete_list:
-                db.session.delete(a)
+            for record in delete_list:
+                db.session.delete(record)
             db.session.commit()
+
             flash('加入成功！', 'success')
         return redirect(url_for('student.team_view', course_id=course_id))
     elif request.form.get('action') == 'cancel':
@@ -246,11 +253,11 @@ def team_view(course_id):
 
     if form.validate_on_submit():
         # 创建团队
-        if team_owner:
+        if len(team_owner) != 0:
             flash('已创建团队，无法再次创建!', 'danger')
-        elif team_joined:
+        elif len(team_joined) != 0:
             flash('已加入团队，无法再次创建!', 'danger')
-        elif team_pending:
+        elif len(team_pending) != 0:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             team = Team()
