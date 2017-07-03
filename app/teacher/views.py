@@ -2,7 +2,7 @@ import shutil
 from flask import flash, redirect, render_template, url_for, request,\
     current_app, send_from_directory, make_response, send_file
 from datetime import datetime
-from flask_login import login_required
+from flask_login import login_required, current_user
 from ..upload_utils import secure_filename
 from . import teacher
 from .. import db
@@ -10,7 +10,7 @@ from ..auths import UserAuth
 from .forms import up_corrected, UploadCorrected,\
     CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
 from ..models.models import Course, Homework, Team,\
-    TeamMember, Student, Submission, Attachment, SCRelationship
+    TeamMember, Student, Submission, Attachment, SCRelationship, TCRelationship, Teacher
 import uuid
 from flask_uploads import UploadNotAllowed
 import os, zipfile
@@ -49,7 +49,7 @@ def set_course_info(course_id):
 @teacher.route('/<course_id>/resource', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def manage_resource(course_id):
-    # 教师课程资源
+    # 教师查看修改课程资源
     path = request.args.get('path')
     if not path:
         return redirect(url_for('teacher.manage_resource', course_id=course_id, path='/'))
@@ -195,7 +195,7 @@ def get_homework_history(course_id):
 @teacher.route('/<course_id>/homework/<homework_id>', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def homework_detail(course_id, homework_id):
-    # 作业详情
+    # 教师查看作业详情&团队提交状况
     form = HomeworkForm()
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
@@ -305,7 +305,7 @@ def teacher_resource():
     return render_template('uploadresource.html', form=form, file_url=file_url)
 
 
-# 上传老师批改后的作业
+#上传老师批改后的作业
 def teacher_corrected(course_id, homework_id):
     form = UploadCorrected()
     if form.validate_on_submit():
@@ -373,16 +373,13 @@ def teacher_team_management(course_id):
 
     team_list = Team.team_list(course_id)
     for team in team_list:
-        _team_members = TeamMember.query.filter_by(team_id=team.id).all()
-        for member in _team_members:
-            member.real_name = Student.query.filter_by(id=member.student_id).first().name
         team.accept_form = AcceptTeam()
         team.accept_form.id.data = team.id
         team.reject_form = RejectTeam()
         team.reject_form.id.data = team.id
     return render_template('auth_teacher/teacher_teammanagement.html',
                            team_list=team_list)
-
+db.Table
 
 # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 def get_team_report(course_id):
@@ -535,36 +532,64 @@ def givegrade_teacher(course_id, homework_id):
         rename(file_path, rename_list)
         make_zip(file_path, save_path)
         return send_from_directory(directory=file_path, filename='download.zip', as_attachment=True)
-    return render_template('teacher/homework/givegrade_teacher.html', homework_list=homework_list)
+    return render_template('teacher/givegrade_teacher.html', homework_list=homework_list)
 
 
-#教师查看往期课程：
-@teacher.route('/<semester_id>/see_class_before', methods=['GET'])
-def see_class_before(semester_id):
-    course = Course.query.filter_by(semester_id=semester_id).all()
-    course_info_list = []
-    if course is None:
-        flash('该学期没有任何课程', 'danger')
-        return redirect(url_for('teacher/see_class_before.html', semester_id=semester_id))
+# 教师查看往期课程和往期课程作业
+@teacher.route('/see_class_before', methods=['GET', 'POST'])
+def see_class_before():
+    #取出当前老师参加的所有课程
+    course = Teacher.query.filter_by(id=current_user.id).course
+
+    course_detail_info_list = []
+    # 显示往期课程信息
     for i in course:
-        screl = SCRelationship.query.filter_by(course_id=request.args.get('course_id')).first()
-        course_info_list.append({'course_name': i.name, 'course_credit': i.credit,
-                                 'course_student_number': len(screl), 'course_info': i.course_info})
-    return render_template('teacher/see_class_before.html', course_info_list=course_info_list)
+        course_detail_info_list.append({'course_id':i.id, 'course_name': i.name, 'course_credit': i.credit,
+                                        'course_student_number': len(i.student), 'course_info': i.course_info})
+
+    # 下载往期课程作业
+    if request.method == 'POST' and request.form.get('action') == 'download':
+
+        course_id = request.args.get('course_id')
+        file_path = os.path.join(basedir, 'uploads', str(course_id))
+        save_path = os.path.join(basedir, 'temp', 'download.zip')
+
+        if os.path.exists(file_path):
+            make_zip(file_path, save_path)
+            return send_from_directory(directory=file_path, filename='download.zip', as_attachement=True)
+        else:
+            flash('这个课程没有附件作业保存！', 'danger')
+    return render_template('teacher/see_class_before.html', course_detail_info_list=course_detail_info_list)
 
 
 @teacher.route('/<course_id>/team', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def team_manage(course_id):
+    # 教师管理团队
     course = Course.query.filter_by(id=course_id).first()
-    teams_origin = Team.query.filter_by(course_id=course_id).all()
-    teams = []
-    for team in teams_origin:
-        members = TeamMember.query.filter_by(team_id=team.id).join(Student).add_column(Student.name).all()
-        teams.append({
-            'id': team.id,
-            'owner_id': team.owner_id,
-            'status': team.status,
-            'members': members
-        })
-    return render_template('teacher/team.html', course_id=course_id, course=course)
+    teams = Team.query.filter_by(course_id=course_id).all()
+    if request.form.get('action') == 'accept':
+        team = Team.query.filter_by(id=request.form.get('team_id')).first()
+        if team:
+            team.status = 2
+            db.session.add(team)
+            db.session.commit()
+            flash("通过成功", "success")
+            return redirect(url_for('teacher.team_manage', course_id=course_id))
+        else:
+            flash("找不到此团队", "danger")
+            return redirect(url_for('teacher.team_manage', course_id=course_id))
+    elif request.form.get('action') == 'reject':
+        team = Team.query.filter_by(id=request.form.get('team_id')).first()
+        if team:
+            team.status = 3
+            team.reject_reason = request.form.get('reason')
+            db.session.add(team)
+            db.session.commit()
+            flash("拒绝成功", "success")
+            return redirect(url_for('teacher.team_manage', course_id=course_id))
+        else:
+            flash("找不到此团队", "danger")
+            return redirect(url_for('teacher.team_manage', course_id=course_id))
+
+    return render_template('teacher/team.html', course_id=course_id, course=course, teams=teams)

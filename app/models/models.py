@@ -3,6 +3,16 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
+SCRelationship = db.Table('sc_elationship', db.Model.metadata,
+                          db.Column('student_id', db.Integer, db.ForeignKey('students.id')),
+                          db.Column('course_id', db.Integer, db.ForeignKey('courses.id'))
+                          )
+
+TCRelationship = db.Table('tc_relationship', db.Model.metadata,
+                          db.Column('teacher_id', db.Integer, db.ForeignKey('teachers.id')),
+                          db.Column('course_id', db.Integer, db.ForeignKey('courses.id'))
+                          )
+
 class DeanInfo(UserMixin, db.Model):
     __tablename__ = 'deanInfo'
     id = db.Column(db.Integer, primary_key=True)
@@ -51,14 +61,15 @@ class Semester(db.Model):
         return '<Semester %r>' % self.id
 
 
-class SCRelationship(db.Model):     # 学生课程之间的关系 (多对多)
-    __tablename__ = 'sc_elationship'
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+# class SCRelationship(db.Model):     # 学生课程之间的关系 (多对多)
+#     __tablename__ = 'sc_elationship'
+#     id = db.Column(db.Integer, primary_key=True)
+#     student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
+#     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+#
+#     def __repr__(self):
+#         return '<SCRelationship %r>' % self.id
 
-    def __repr__(self):
-        return '<SCRelationship %r>' % self.id
 
 
 class Student(UserMixin, db.Model):
@@ -66,6 +77,7 @@ class Student(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     password_hash = db.Column(db.String(128))
     name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
+    course = db.relationship('Course', secondary=SCRelationship)
 
     @property
     def password(self):
@@ -112,6 +124,10 @@ class Team(db.Model):
 
     def __repr__(self):
         return '<Team %r>' % self.id
+
+    @property
+    def order(self):
+        return Team.query.filter_by(course_id=self.course_id).all().index(self)
 
     @staticmethod
     def team_list(course_id):
@@ -193,6 +209,8 @@ class Course(db.Model):
     teamsize_min = db.Column(db.Integer)
     status = db.Column(db.Boolean)
     upload_time = db.Column(db.String(128))
+    student = db.relationship('Student', secondary=SCRelationship)
+    teacher = db.relationship('Teacher', secondary=TCRelationship)
 
     def __repr__(self):
         return '<Course %r>' % self.id
@@ -210,14 +228,17 @@ class CourseTime(db.Model):
         return '<CourseTime %r>' % self.id
 
 
-class TCRelationship(db.Model):
-    __tablename__ = 'tc_relationship'
-    id = db.Column(db.Integer, primary_key=True)
-    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'))
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+# class TCRelationship(db.Model):
+#     __tablename__ = 'tc_relationship'
+#     # id = db.Column(db.Integer, primary_key=True)
+#     teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'))
+#     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+#
+#     def __repr__(self):
+#         return '<TCRelationship %r>' % self.id
 
-    def __repr__(self):
-        return '<TCRelationship %r>' % self.id
+
+
 
 
 class Teacher(UserMixin, db.Model):
@@ -226,6 +247,7 @@ class Teacher(UserMixin, db.Model):
     name = db.Column(db.String(128))
     password_hash = db.Column(db.String(128))
     teacher_info = db.Column(db.Text)
+    course = db.relationship('Course', secondary=TCRelationship)
 
     @property
     def password(self):
