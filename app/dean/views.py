@@ -130,11 +130,7 @@ def manage_course():
             db.session.add(student)
 
             # 添加学生课程关系
-            screl = SCRelationship.query.filter_by(student_id=student.id, course_id=course.id).first()
-            if screl is None:
-                screl = SCRelationship(student_id=student.id, course_id=course.id)
-            db.session.add(screl)
-
+            course.students.append(student)
         # 添加教师
         for i in teacher_info:
             teacher = Teacher.query.filter_by(id=i.get('id')).first()
@@ -147,11 +143,8 @@ def manage_course():
             db.session.add(teacher)
 
             # 添加老师课程关系
-            tcrel= TCRelationship.query.filter_by(teacher_id=teacher.id, course_id=course.id).first()
-            if tcrel is None:
-                tcrel = TCRelationship(teacher_id=teacher.id, course_id=course.id)
-            db.session.add(tcrel)
-
+            course.teachers.append(teacher)
+        db.session.add(course)
         db.session.commit()
         os.remove(file_path)
 
@@ -161,14 +154,8 @@ def manage_course():
     course_list = Course.query.all()  # 显示课程
     stuff_list = {}
     for course in course_list:
-        sclist = SCRelationship.query.filter_by(course_id=course.id).all()
-        student_list = []
-        for screl in sclist:
-            student_list.extend(Student.query.filter_by(id=screl.student_id).all())
-        tclist = TCRelationship.query.filter_by(course_id=course.id).all()
-        teacher_list = []
-        for tcrel in tclist:
-            teacher_list.extend(Teacher.query.filter_by(id=tcrel.teacher_id).all())
+        student_list = course.students
+        teacher_list = course.teachers
         stuff_list[course.id] = {
             'student_list': student_list,
             'teacher_list': teacher_list

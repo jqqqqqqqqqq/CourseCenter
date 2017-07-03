@@ -3,7 +3,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-SCRelationship = db.Table('sc_elationship', db.Model.metadata,
+SCRelationship = db.Table('sc_relationship', db.Model.metadata,
                           db.Column('student_id', db.Integer, db.ForeignKey('students.id')),
                           db.Column('course_id', db.Integer, db.ForeignKey('courses.id'))
                           )
