@@ -127,8 +127,10 @@ def homework(course_id):
 
     form = HomeworkForm()
 
-    if request.args.get('get_homework_all'):
-        return get_homework_all(course_id)
+    if request.args.get('get_teamhomework_all'):
+        return get_teamhomework_all(course_id)
+    elif request.args.get('get_score_all'):
+        return get_score_all(course_id)
 
     if form.validate_on_submit():
         if form.weight.data > 100 or form.weight.data <= 0:
@@ -158,35 +160,45 @@ def homework(course_id):
     return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form, course=course)
 
 
-# PudgeG负责：总成绩表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-def get_homework_all(course_id):
-    # 得到这门课历次作业提交信息
+# PudgeG负责：提交情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+def get_teamhomework_all(course_id):
+    # 得到所有小队历次作业提交信息
     workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = '累计提交作业情况'
-    worksheet.append('团队名称', '团队编号', '提交作业次数', '总分')
+    worksheet = workbook.create_chartsheet()
+    worksheet.title = '团队累计提交作业情况'
+
     team_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
     Team.team_list(course_id)
     homework_list = Homework.query.filter_by(course_id=course_id).all()
-    input_info = []
-    for team in team_list:
-        # 计算提交了多少次作业
-        times = 0
-        # 计算总分
-        score = 0
-        for every_homework in homework_list:
-            _this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).first()
-            if _this_submission is not None:
-                this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).all()[-1]
-                score += this_submission.score * every_homework.weight
-                times += 1
+    Homework.homework_list(course_id)
 
-        submission_record = {'团队名称': team.team_name,
-                             '团队编号': team.order,
-                             '提交作业次数': times,
-                             '总分': score}
-        input_info.append(submission_record)
-    worksheet.append(input_info)
+    # 总列数
+    column_number = 2
+    # 总行数
+    row_number = 1
+
+    # 第一行输入的内容
+    for every_homework in homework_list:
+        column_number += 1
+        worksheet.cell(row=1, column=column_number).value = '第' + every_homework.order + '次作业成绩'
+        worksheet.cell(row=1, column=1).value = '团队名称'
+        worksheet.cell(row=1, column=2).value = '团队编号'
+
+    # 后续内容循环输入
+    for every_team in team_list:
+        row_number += 1
+        worksheet.cell(row=row_number, column=1).value = every_team.team_name
+        worksheet.cell(row=row_number, column=2).value = every_team.order
+        i = 2
+        for every_homework in homework_list:
+            i += 1
+            _submission = Submission.query.filter_by(homework_id=every_homework.id).filter_by(team_id=every_team.id).all()
+            if _submission is None:
+                worksheet.cell(row=row_number, column=i).value = '0'
+            else:
+                submission = Submission.query.filter_by(homework_id=every_homework.id).filter_by(team_id=every_team.id).all()[-1]
+                worksheet.cell(row=row_number, column=i).value = submission.score
+
     workbook.save('team_homework_all.xlsx')
     if os.path.isfile(os.path.join(os.getcwd(), 'homework', 'team_homework_all.xlsx')):
         response = make_response(send_file(os.path.join(os.getcwd(), 'homework', 'team_homework_all.xlsx')))
@@ -194,6 +206,79 @@ def get_homework_all(course_id):
         flash('文件创建失败！', 'danger')
         return redirect(url_for('teacher.homework', course_id=course_id))
     response.headers["Content-Disposition"] = "attachment; filename=" + 'team_homework_all.xlsx' + ";"
+    return response
+# PudgeG负责：提交情况表导出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+
+# PudgeG负责：总成绩表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+def get_score_all(course_id):
+    # 得到小队总成绩以及个人总成绩
+    workbook = Workbook()
+
+    worksheet_team = workbook.create_chartsheet()
+    worksheet_team.title = '小队总成绩'
+    worksheet_team.append('团队名称', '团队编号', '团队总成绩')
+
+    worksheet_member = workbook.create_chartsheet()
+    worksheet_member.title = '成员成绩'
+    worksheet_member.append('团队名称', '团队编号', '学生姓名', '学生编号', '学生总成绩')
+
+    team_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
+    Team.team_list(course_id)
+    homework_list = Homework.query.filter_by(course_id=course_id).all()
+    Homework.homework_list(course_id)
+    input_info = []
+    for team in team_list:
+        # Team表
+        score = 0
+        for every_homework in homework_list:
+            _this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).first()
+            if _this_submission is not None:
+                this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).all()[-1]
+                score += this_submission.score * every_homework.weight / 100
+        submission_record = {'团队名称': team.team_name,
+                             '团队编号': team.order,
+                             '团队总成绩': score}
+        input_info.append(submission_record)
+    worksheet_team.append(input_info)
+
+    input_info2 = []
+    for team in team_list:
+        # Member表
+        member_list = TeamMember.query.filter_by(team_id=team.id).filter_by(status=1).all()
+
+        # 团队负责人第一行
+        owner = Student.query.filter_by(id=team.owner_id).first()
+        score = 0
+        for every_homework in homework_list:
+            _this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).first()
+            if _this_submission is not None:
+                this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).all()[-1]
+                score += this_submission.score * every_homework.weight / 100
+        submission_record = {'团队名称': team.team_name,
+                             '团队编号': team.order,
+                             '学生姓名': owner.name,
+                             '学生编号': owner.id,
+                             '学生总成绩': score * team.owner_grade}
+        input_info2.append(submission_record)
+
+        for every_member in member_list:
+            _every_member = Student.query.filter_by(id=every_member.student_id).first()
+            submission_record = {'团队名称': team.team_name,
+                                 '团队编号': team.order,
+                                 '学生姓名': _every_member.name,
+                                 '学生编号': _every_member.id,
+                                 '学生总成绩': score * every_member.grade}
+            input_info2.append(submission_record)
+    worksheet_member.append(input_info2)
+
+    workbook.save('score_all.xlsx')
+    if os.path.isfile(os.path.join(os.getcwd(), 'homework', 'score_all.xlsx')):
+        response = make_response(send_file(os.path.join(os.getcwd(), 'homework', 'score_all.xlsx')))
+    else:
+        flash('文件创建失败！', 'danger')
+        return redirect(url_for('teacher.homework', course_id=course_id))
+    response.headers["Content-Disposition"] = "attachment; filename=" + 'score_all.xlsx' + ";"
     return response
 # PudgeG负责：总成绩表导出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -245,9 +330,9 @@ def homework_detail(course_id, homework_id):
 # PudgeG负责：得到本次作业报表↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 def get_homework_report(homework_id):
     # 得到本次作业报表
-    homework = Homework.query.filter_by(id=homework_id).first()
-    team_this_course = Team.query.filter_by(course_id=homework.course_id).filter_by(status=2).all()
-    Team.team_list(homework.course_id)
+    this_homework = Homework.query.filter_by(id=homework_id).first()
+    team_this_course = Team.query.filter_by(course_id=this_homework.course_id).filter_by(status=2).all()
+    Team.team_list(this_homework.course_id)
 
     # submission_list = Submission.query.filter_by(homework_id=homework_id).all()
     # if len(submission_list) == 0:
@@ -255,8 +340,8 @@ def get_homework_report(homework_id):
     #     return redirect(request.args.get('next') or url_for('main.set_homework'))
 
     workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = homework.name + ' 提交情况'
+    worksheet = workbook.create_chartsheet()
+    worksheet.title = this_homework.name + ' 提交情况'
     worksheet.append(['团队名称', '团队ID', '本次作业是否提交', '本次作业分数'])
     input_info = []
     for team in team_this_course:
@@ -387,6 +472,7 @@ def teacher_team_management(course_id):
                            team_list=team_list)
 db.Table
 
+
 # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 def get_team_report(course_id):
     down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
@@ -395,7 +481,7 @@ def get_team_report(course_id):
         flash('没有已接受团队，请等待申请并批准！', 'danger')
         return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
     workbook = Workbook()
-    worksheet = workbook.active
+    worksheet = workbook.create_chartsheet()
     worksheet.title = '已接受团队信息'
     worksheet.append(['队伍名称', '队伍编号', '成员姓名', '成员编号', '成员角色'])
     # i = 0 表示队伍数量
