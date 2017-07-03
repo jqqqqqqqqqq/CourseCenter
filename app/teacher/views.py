@@ -204,7 +204,7 @@ def homework_detail(course_id, homework_id):
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
 
-    if request.args.get['homework_report']:
+    if request.args.get('homework_report'):
         return get_homework_report(homework_id)
 
     if form.validate_on_submit():

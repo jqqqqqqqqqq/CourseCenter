@@ -1,6 +1,6 @@
 from flask import flash, redirect, url_for
 from flask_login import current_user
-from .models.models import TCRelationship, SCRelationship
+from .models.models import Student, Teacher, Course
 from functools import wraps
 
 
@@ -45,7 +45,8 @@ class UserAuth:
     def teacher_course_access(func):
         @wraps(func)
         def decorated(*args, **kwargs):
-            if not TCRelationship.query.filter_by(teacher_id=current_user.id, course_id=kwargs['course_id']).first():
+            if not Course.query.filter_by(id=kwargs['course_id']).filter(
+                    Course.teachers.any(id=current_user.id)).first():
                 flash('无权限！', 'danger')
                 return redirect(url_for('main.index'))
             else:
@@ -56,7 +57,8 @@ class UserAuth:
     def student_course_access(func):
         @wraps(func)
         def decorated(*args, **kwargs):
-            if not SCRelationship.query.filter_by(student_id=current_user.id, course_id=kwargs['course_id']).first():
+            if not Course.query.filter_by(id=kwargs['course_id']).filter(
+                    Course.students.any(id=current_user.id)).first():
                 flash('无权限！', 'danger')
                 return redirect(url_for('main.index'))
             else:
