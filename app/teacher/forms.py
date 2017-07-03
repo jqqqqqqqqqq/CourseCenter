@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import TextAreaField, IntegerField, StringField, SubmitField
-from wtforms.validators import InputRequired, DataRequired
+from wtforms.validators import InputRequired, DataRequired, NumberRange
 from flask_uploads import UploadSet
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
@@ -18,7 +18,7 @@ class HomeworkForm(FlaskForm):
     name = StringField('作业名', validators=[DataRequired()])
     base_requirement = TextAreaField('作业要求', validators=[DataRequired()])
     time = StringField('持续时间', validators=[DataRequired()])
-    weight = IntegerField('权重', validators=[DataRequired()])
+    weight = IntegerField('权重', validators=[DataRequired(), NumberRange(min=1, max=100, message='权重需要在1-100之间')])
     max_submit_attempts = IntegerField('最大提交次数', validators=[DataRequired()])
 
 
