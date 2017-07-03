@@ -49,7 +49,7 @@ def set_course_info(course_id):
 @teacher.route('/<course_id>/resource', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def manage_resource(course_id):
-    # 教师课程资源
+    # 教师查看修改课程资源
     path = request.args.get('path')
     if not path:
         return redirect(url_for('teacher.manage_resource', course_id=course_id, path='/'))
@@ -198,7 +198,7 @@ def homework(course_id):
 @teacher.route('/<course_id>/homework/<homework_id>', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def homework_detail(course_id, homework_id):
-    # 作业详情
+    # 教师查看作业详情&团队提交状况
     form = HomeworkForm()
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
@@ -376,16 +376,13 @@ def teacher_team_management(course_id):
 
     team_list = Team.team_list(course_id)
     for team in team_list:
-        _team_members = TeamMember.query.filter_by(team_id=team.id).all()
-        for member in _team_members:
-            member.real_name = Student.query.filter_by(id=member.student_id).first().name
         team.accept_form = AcceptTeam()
         team.accept_form.id.data = team.id
         team.reject_form = RejectTeam()
         team.reject_form.id.data = team.id
     return render_template('auth_teacher/teacher_teammanagement.html',
                            team_list=team_list)
-
+db.Table
 
 # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 def get_team_report(course_id):
@@ -559,15 +556,31 @@ def see_class_before(semester_id):
 @teacher.route('/<course_id>/team', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def team_manage(course_id):
+    # 教师管理团队
     course = Course.query.filter_by(id=course_id).first()
-    teams_origin = Team.query.filter_by(course_id=course_id).all()
-    teams = []
-    for team in teams_origin:
-        members = TeamMember.query.filter_by(team_id=team.id).join(Student).add_column(Student.name).all()
-        teams.append({
-            'id': team.id,
-            'owner_id': team.owner_id,
-            'status': team.status,
-            'members': members
-        })
-    return render_template('teacher/team.html', course_id=course_id, course=course)
+    teams = Team.query.filter_by(course_id=course_id).all()
+    if request.form.get('action') == 'accept':
+        team = Team.query.filter_by(id=request.form.get('team_id')).first()
+        if team:
+            team.status = 2
+            db.session.add(team)
+            db.session.commit()
+            flash("通过成功", "success")
+            return redirect(url_for('teacher.team_manage', course_id=course_id))
+        else:
+            flash("找不到此团队", "danger")
+            return redirect(url_for('teacher.team_manage', course_id=course_id))
+    elif request.form.get('action') == 'reject':
+        team = Team.query.filter_by(id=request.form.get('team_id')).first()
+        if team:
+            team.status = 3
+            team.reject_reason = request.form.get('reason')
+            db.session.add(team)
+            db.session.commit()
+            flash("拒绝成功", "success")
+            return redirect(url_for('teacher.team_manage', course_id=course_id))
+        else:
+            flash("找不到此团队", "danger")
+            return redirect(url_for('teacher.team_manage', course_id=course_id))
+
+    return render_template('teacher/team.html', course_id=course_id, course=course, teams=teams)

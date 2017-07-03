@@ -29,8 +29,17 @@
             <p>{{ team.team_name }} 组的爷爷拒绝了你，<a href="{{ url_for('student.team_view', course_id=course_id) }}">点我</a>选择原谅他</p>
         </div>
     {% endif %}
-    {% if team and not member_status == 0 and not member_status == 2  %}
+    {% if team.status == 3 and not member_status == 0 and not member_status == 2  %}
+        <div class="callout callout-danger">
+            <h4>被拒绝了</h4>
+            <p>教师意见：{{ team.reject_reason }}</p>
+            {% if team.owner_id == current_user.id  %}
+                <button onclick="reset()" class="btn btn-default">确定</button>
+            {% endif %}
+        </div>
+    {% endif %}
     <article>
+        {% if team and not member_status == 0 and not member_status == 2  %}
         <div class="box box-primary course-box">
             <div class="box-header with-border">
                 <h3 class="box-title">
@@ -44,26 +53,28 @@
                     {% endif %}
                 </h3>
                 {% if team.owner_id == current_user.id %}
-                    <div class="box-tools pull-right">
-                        <div class="btn-group">
-                            <button  type="button"
-                                     class="btn btn-sm btn-primary"
-                                     data-toggle="tooltip"
-                                     title="提交团队"
-                                     onclick="submit()"
-                                     {% if team.status == 1 %}disabled{% endif %} >
-                                <i class="fa fa-check-circle-o"></i>
-                            </button>
-                            <button  type="button"
-                                     class="btn btn-sm btn-danger"
-                                     data-toggle="tooltip"
-                                     title="解散团队"
-                                     onclick="dismiss()"
-                                     {% if team.status == 1 %}disabled{% endif %}>
-                                <i class="fa fa-trash"></i>
-                            </button>
+                    {% if team.status == 0 %}
+                        <div class="box-tools pull-right">
+                            <div class="btn-group">
+                                <button  type="button"
+                                         class="btn btn-sm btn-primary"
+                                         data-toggle="tooltip"
+                                         title="提交团队"
+                                         onclick="submit()"
+                                         {% if team.status == 1 %}disabled{% endif %} >
+                                    <i class="fa fa-check-circle-o"></i>
+                                </button>
+                                <button  type="button"
+                                         class="btn btn-sm btn-danger"
+                                         data-toggle="tooltip"
+                                         title="解散团队"
+                                         onclick="dismiss()"
+                                         {% if team.status == 1 %}disabled{% endif %}>
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="box-body no-padding">
@@ -73,18 +84,30 @@
                             <th width="30"></th>
                             <th>id</th>
                             <th>姓名</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td><i class="fa fa-user"></i></td>
                             <td>{{ team.owner_id }}</td>
-                            <td>{{ owner_name }}</td>
+                            <td>{{ team.owner.name }}</td>
+                            <td></td>
                         </tr>
-                        {% for member in teammate_list if member.status == 1  %}
+                        {% for member in team.members if member.status == 1  %}
                             <td></td>
                             <td>{{ member.student_id }}</td>
-                            <td>{{ member.real_name }}</td>
+                            <td>{{ member.student.name }}</td>
+                            <td>
+                                {% if team.status == 0 or team.status == 3 %}
+                                <button class="btn btn-danger btn-sm"
+                                        data-toggle="tooltip"
+                                        title="从本群中移除"
+                                        onclick="rejectMember({{ member.student_id }})">
+                                    <i class="fa fa-times-circle"></i>
+                                </button>
+                            {% endif %}
+                            </td>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -93,7 +116,7 @@
         <!-- /.box-primary -->
         {% endif %}
 
-        {% if team.owner_id == current_user.id  %}
+        {% if team.owner_id == current_user.id and (team.status == 0 or team.status == 3) %}
         <div class="box box-info course-box">
             <div class="box-header with-border">
                 <h3 class="box-title">
@@ -110,25 +133,27 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for member in teammate_list if member.status == 0 %}
-                            <td>{{ member.student_id }}</td>
-                            <td>{{ member.real_name }}</td>
-                            <td>
-                                <div class="btn-group">
-                                    <button class="btn btn-primary btn-sm"
-                                            data-toggle="tooltip"
-                                            title="通过申请"
-                                            onclick="acceptMember({{ member.student_id }})">
-                                        <i class="fa fa-sign-in"></i>
-                                    </button>
-                                    <button class="btn btn-danger btn-sm"
-                                            data-toggle="tooltip"
-                                            title="取消申请"
-                                            onclick="rejectMember({{ member.student_id }})">
-                                        <i class="fa fa-times-circle"></i>
-                                    </button>
-                                </div>
-                            </td>
+                        {% for member in team.members if member.status == 0 %}
+                            <tr>
+                                <td>{{ member.student_id }}</td>
+                                <td>{{ member.real_name }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-primary btn-sm"
+                                                data-toggle="tooltip"
+                                                title="通过申请"
+                                                onclick="acceptMember({{ member.student_id }})">
+                                            <i class="fa fa-sign-in"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm"
+                                                data-toggle="tooltip"
+                                                title="取消申请"
+                                                onclick="rejectMember({{ member.student_id }})">
+                                            <i class="fa fa-times-circle"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -164,6 +189,10 @@
         if(confirm('确定要提交吗？')){
             $.form('',  {action: 'submit'}, 'POST').submit()
         }
+    }
+
+    function reset() {
+        $.form('',  {action: 'reset'}, 'POST').submit()
     }
 
 </script>
