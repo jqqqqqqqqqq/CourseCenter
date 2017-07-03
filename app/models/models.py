@@ -255,7 +255,9 @@ class Teacher(UserMixin, db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    if session['user_type'] == 'dean':
+    if 'user_type' not in session:
+        return None
+    elif session['user_type'] == 'dean':
         temp = DeanInfo.query.get(int(user_id))
     elif session['user_type'] == 'teacher':
         temp = Teacher.query.get(int(user_id))
