@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required
 from .forms import LoginForm, ChangePasswordForm
 from . import auth
@@ -15,16 +15,19 @@ def login():
             user = DeanInfo.query.filter_by(id=form.username.data).first()
             if user is not None and user.verify_password(form.password.data):
                 login_user(user, form.remember_me.data)
+                session['user_type'] = 'dean'
                 return redirect(request.args.get('next') or url_for('main.index'))
         elif form.identity.data == '1':
             user = Teacher.query.filter_by(id=form.username.data).first()
             if user is not None and user.verify_password(form.password.data):
                 login_user(user, form.remember_me.data)
+                session['user_type'] = 'teacher'
                 return redirect(request.args.get('next') or url_for('main.index'))
         else:
             user = Student.query.filter_by(id=form.username.data).first()
             if user is not None and user.verify_password(form.password.data):
                 login_user(user, form.remember_me.data)
+                session['user_type'] = 'student'
                 return redirect(request.args.get('next') or url_for('main.index'))
         flash('用户名或账户错误')
 
