@@ -550,7 +550,7 @@ def see_class_before():
     course_detail_info_list = []
     # 显示往期课程信息
     for i in course:
-        course_detail_info_list.append({'course_id':i.id, 'course_name': i.name, 'course_credit': i.credit,
+        course_detail_info_list.append({'course_id': i.id, 'course_name': i.name, 'course_credit': i.credit,
                                         'course_student_number': len(i.student), 'course_info': i.course_info})
 
     # 下载往期课程作业
@@ -565,6 +565,7 @@ def see_class_before():
             return send_from_directory(directory=file_path, filename='download.zip', as_attachement=True)
         else:
             flash('这个课程没有附件作业保存！', 'danger')
+            return redirect(url_for('teacher.see_class_before'))
     return render_template('teacher/see_class_before.html', course_detail_info_list=course_detail_info_list)
 
 

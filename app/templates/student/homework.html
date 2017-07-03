@@ -34,7 +34,7 @@
                         {% for homework in homeworks %}
                             <tr>
                                 <td>
-                                    <a href="{{ url_for('student.homework_detail', course_id=course_id, homework_id=homework.id) }}"">
+                                    <a href="{{ url_for('student.homework_detail', course_id=course_id, homework_id=homework.id) }}">
                                         {{ homework.name }}
                                     </a>
                                 </td>
