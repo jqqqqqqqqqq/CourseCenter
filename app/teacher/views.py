@@ -432,48 +432,6 @@ def add_member(student_id, team_id):
         db.session.delete(a)
     db.session.commit()
 
-
-@teacher.route('/teacher/<course_id>/student_team', methods=['GET', 'POST'])
-def teacher_team_management(course_id):
-    if "accept" in request.form.values():
-        form = AcceptTeam()
-        _team = Team.query.filter_by(id=int(form.id.data)).first()
-        if _team:
-            _team.status = 1  # 1是通过
-            db.session.add(_team)
-            db.session.commit()
-            flash('通过成功', 'success')
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-        else:
-            flash('找不到此团队', 'danger')
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-    elif 'reject' in request.form.values():
-        form = RejectTeam()
-        _team = Team.query.filter_by(id=int(form.id.data)).first()
-        if _team:
-            _team.status = 2  # 2是拒绝
-            _team.reason = form.reason.data
-            db.session.add(_team)
-            db.session.commit()
-            flash('拒绝成功', 'success')
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-        else:
-            flash('找不到此团队', 'danger')
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-
-    elif 'teamtable' in request.form.values():
-        return get_team_report(course_id)
-
-    team_list = Team.team_list(course_id)
-    for team in team_list:
-        team.accept_form = AcceptTeam()
-        team.accept_form.id.data = team.id
-        team.reject_form = RejectTeam()
-        team.reject_form.id.data = team.id
-    return render_template('auth_teacher/teacher_teammanagement.html',
-                           team_list=team_list)
-
-
 # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 def get_team_report(course_id):
     down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
