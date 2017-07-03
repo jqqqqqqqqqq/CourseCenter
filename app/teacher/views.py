@@ -133,10 +133,12 @@ def homework(course_id):
         return get_homework_all(course_id)
 
     if form.validate_on_submit():
+        if form.weight.data > 100 or form.weight.data <= 0:
+            flash('无效的权重', 'danger')
+            return redirect(url_for('teacher.homework', course_id=course_id))
         begin_time, end_time = form.time.data.split(' - ')
         begin_time = datetime.strptime(begin_time, '%m/%d/%Y %H:%M')
         end_time = datetime.strptime(end_time, '%m/%d/%Y %H:%M')
-
         homework = Homework()
 
         homework.name = form.name.data

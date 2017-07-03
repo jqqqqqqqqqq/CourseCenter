@@ -1,6 +1,7 @@
 from app import db, login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import session
 
 
 SCRelationship = db.Table('sc_relationship', db.Model.metadata,
@@ -155,6 +156,19 @@ class Homework(db.Model):
     def __repr__(self):
         return '<Homework %r>' % self.id
 
+    @property
+    def order(self):
+        return Homework.query.filter_by(course_id=self.course_id).all().index(self)
+
+    @staticmethod
+    def homework_list(course_id):
+        homeworks = Homework.query.filter_by(course_id=course_id).all()
+        order = 1
+        for homework in homeworks:
+            homework.order = order  #为返回的 homework 增加 order (顺序) 属性
+            order += 1
+        return homeworks
+
 
 class Submission(db.Model):                       # 学生提交作业信息
     __tablename__ = 'submissions'
@@ -254,13 +268,15 @@ class Teacher(UserMixin, db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    temp = DeanInfo.query.get(int(user_id))
-    if temp:
-        return temp
-    temp = Teacher.query.get(int(user_id))
-    if temp:
-        return temp
-    return Student.query.get(int(user_id))
+    if 'user_type' not in session:
+        return None
+    elif session['user_type'] == 'dean':
+        temp = DeanInfo.query.get(int(user_id))
+    elif session['user_type'] == 'teacher':
+        temp = Teacher.query.get(int(user_id))
+    elif session['user_type'] == 'student':
+        temp = Student.query.get(int(user_id))
+    return temp
 
 
 class ChatMessage(db.Model):
