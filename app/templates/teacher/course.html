@@ -7,6 +7,8 @@
     <h1>{{ course.name }}：课程信息</h1>
 {% endblock %}
 
+{% block body_attribs %} class="hold-transition skin-black sidebar-mini" {% if form.errors %}onload="edit_state()"{% endif %}{% endblock %}
+
 {% block breadcrumb %}
     <li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
     <li class="active">课程信息</li>
@@ -54,7 +56,7 @@
 {{ super() }}
 <script>
     $('.form-control').hide();
-    $('#toggleEdit').click(function () {
+    function edit_state() {
         if($(this).hasClass('btn-danger')) {
             $(this).removeClass('btn-danger');
             $(this).addClass('btn-primary');
@@ -66,7 +68,8 @@
             $('.form-control').show();
             $('.form-data').hide();
         }
-    });
+    }
+    $('#toggleEdit').click(edit_state);
     $('#teamsize_min').attr('type', 'number');
     $('#teamsize_max').attr('type', 'number');
 </script>
