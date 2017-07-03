@@ -127,7 +127,7 @@ def homework(course_id):
 
     form = HomeworkForm()
 
-    if request.args.get['get_homework_all']:
+    if request.args.get('get_homework_all'):
         return get_homework_all(course_id)
 
     if form.validate_on_submit():
@@ -174,7 +174,7 @@ def get_homework_all(course_id):
         score = 0
         for every_homework in homework_list:
             _this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).first()
-            if len(_this_submission) != 0:
+            if _this_submission is not None:
                 this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).all()[-1]
                 score += this_submission.score * every_homework.weight
                 times += 1
@@ -204,7 +204,7 @@ def homework_detail(course_id, homework_id):
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
 
-    if request.args.get['homework_report']:
+    if request.args.get('homework_report'):
         return get_homework_report(homework_id)
 
     if form.validate_on_submit():
@@ -259,7 +259,7 @@ def get_homework_report(homework_id):
     input_info = []
     for team in team_this_course:
         _finished = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=team.id).all()
-        if len(_finished) == 0:
+        if _finished is None:
             # 无提交记录
             homework_record = {'团队名称': team.team_name,
                                '团队ID': team.order,
@@ -309,7 +309,7 @@ def teacher_resource():
     return render_template('uploadresource.html', form=form, file_url=file_url)
 
 
-#上传老师批改后的作业
+# 上传老师批改后的作业
 def teacher_corrected(course_id, homework_id):
     form = UploadCorrected()
     if form.validate_on_submit():
@@ -389,7 +389,7 @@ db.Table
 def get_team_report(course_id):
     down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
     Team.team_list(course_id)
-    if len(down_list) == 0:
+    if down_list is None:
         flash('没有已接受团队，请等待申请并批准！', 'danger')
         return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
     workbook = Workbook()
@@ -454,7 +454,7 @@ def givegrade_teacher(course_id, homework_id):
     # 显示学生已提交的作业(显示最新的提交记录)
     submission = Submission.query.filter_by(homework_id=homework_id).filter_by(submit_status=1).all()
 
-    #寻找semester_id
+    # 寻找semester_id
     course = Course.query.filter_by(id=course_id).first()
     semester_id = course.semester_id
 

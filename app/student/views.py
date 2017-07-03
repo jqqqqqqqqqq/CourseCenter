@@ -156,13 +156,13 @@ def team_view(course_id):
         member_list = TeamMember.query.filter_by(team_id=request.form.get('team_id')).filter_by(status=1).all()
         number_of_member = len(member_list)
         _course = Course.query.filter_by(id=course_id).first()
-        if len(team_owner) != 0:
+        if team_owner is not None:
             flash('已创建团队，拒绝申请!', 'danger')
-        elif len(team_joined) != 0:
+        elif team_joined is not None:
             flash('已加入团队，拒绝申请!', 'danger')
         elif number_of_member == _course.teamsize_max - 1:
             flash('人数已满，拒绝申请！', 'danger')
-        elif len(team_pending) != 0:
+        elif team_pending is not None:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             teammember = TeamMember()
@@ -189,11 +189,11 @@ def team_view(course_id):
 
     if form.validate_on_submit():
         # 创建团队
-        if len(team_owner) != 0:
+        if team_owner is not None:
             flash('已创建团队，无法再次创建!', 'danger')
-        elif len(team_joined) != 0:
+        elif team_joined is not None:
             flash('已加入团队，无法再次创建!', 'danger')
-        elif len(team_pending) != 0:
+        elif team_pending is not None:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             team = Team()
