@@ -4,6 +4,17 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import session
 
 
+SCRelationship = db.Table('sc_relationship', db.Model.metadata,
+                          db.Column('student_id', db.Integer, db.ForeignKey('students.id')),
+                          db.Column('course_id', db.Integer, db.ForeignKey('courses.id'))
+                          )
+
+TCRelationship = db.Table('tc_relationship', db.Model.metadata,
+                          db.Column('teacher_id', db.Integer, db.ForeignKey('teachers.id')),
+                          db.Column('course_id', db.Integer, db.ForeignKey('courses.id'))
+                          )
+
+
 class DeanInfo(UserMixin, db.Model):
     __tablename__ = 'deanInfo'
     id = db.Column(db.Integer, primary_key=True)
@@ -50,16 +61,6 @@ class Semester(db.Model):
 
     def __repr__(self):
         return '<Semester %r>' % self.id
-
-
-class SCRelationship(db.Model):     # 学生课程之间的关系 (多对多)
-    __tablename__ = 'sc_elationship'
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
-
-    def __repr__(self):
-        return '<SCRelationship %r>' % self.id
 
 
 class Student(UserMixin, db.Model):
@@ -113,6 +114,10 @@ class Team(db.Model):
 
     def __repr__(self):
         return '<Team %r>' % self.id
+
+    @property
+    def order(self):
+        return Team.query.filter_by(course_id=self.course_id).all().index(self)
 
     @staticmethod
     def team_list(course_id):
@@ -194,6 +199,8 @@ class Course(db.Model):
     teamsize_min = db.Column(db.Integer)
     status = db.Column(db.Boolean)
     upload_time = db.Column(db.String(128))
+    students = db.relationship('Student', secondary=SCRelationship, backref='courses')
+    teachers = db.relationship('Teacher', secondary=TCRelationship, backref='courses')
 
     def __repr__(self):
         return '<Course %r>' % self.id
@@ -209,16 +216,6 @@ class CourseTime(db.Model):
 
     def __repr__(self):
         return '<CourseTime %r>' % self.id
-
-
-class TCRelationship(db.Model):
-    __tablename__ = 'tc_relationship'
-    id = db.Column(db.Integer, primary_key=True)
-    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'))
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
-
-    def __repr__(self):
-        return '<TCRelationship %r>' % self.id
 
 
 class Teacher(UserMixin, db.Model):

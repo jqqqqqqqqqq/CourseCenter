@@ -151,21 +151,18 @@ def team_view(course_id):
         .filter(Team.course_id == course_id) \
         .first()
 
-    Team.team_list(course_id)
-    # 新添加的函数方法，team.order表示本课程当前审核通过团队排序后队伍编号
-
     if request.form.get('action') == 'join':
         # 加入团队
         member_list = TeamMember.query.filter_by(team_id=request.form.get('team_id')).filter_by(status=1).all()
         number_of_member = len(member_list)
         _course = Course.query.filter_by(id=course_id).first()
-        if len(team_owner) != 0:
+        if team_owner:
             flash('已创建团队，拒绝申请!', 'danger')
-        elif len(team_joined) != 0:
+        elif team_joined:
             flash('已加入团队，拒绝申请!', 'danger')
         elif number_of_member == _course.teamsize_max - 1:
             flash('人数已满，拒绝申请！', 'danger')
-        elif len(team_pending) != 0:
+        elif team_pending:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             teammember = TeamMember()
@@ -192,11 +189,11 @@ def team_view(course_id):
 
     if form.validate_on_submit():
         # 创建团队
-        if len(team_owner) != 0:
+        if team_owner:
             flash('已创建团队，无法再次创建!', 'danger')
-        elif len(team_joined) != 0:
+        elif team_joined:
             flash('已加入团队，无法再次创建!', 'danger')
-        elif len(team_pending) != 0:
+        elif team_pending:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             team = Team()
@@ -206,6 +203,12 @@ def team_view(course_id):
             team.team_name = form.team_name.data
             db.session.add(team)
             db.session.commit()
+
+            delete_list = TeamMember.query.filter_by(status=2).filter_by(student_id=current_user.id).all()
+            for record in delete_list:
+                db.session.delete(record)
+            db.session.commit()
+
             flash('创建团队成功!', 'success')
             return redirect(url_for('student.team_view', course_id=course_id))
     team_list = Team.query.filter_by(course_id=course_id).filter(or_(Team.status == 0, Team.status == 3)).all()
@@ -331,7 +334,7 @@ def homework_detail(course_id, homework_id):
         db.session.commit()   # 提交更改 生成submission_1.id
 
         # 每次提交新的作业 都会删除原来的作业附件
-        path = os.path.join(basedir, 'uploads', str(course.semester_id), str(course_id),
+        path = os.path.join(basedir, 'uploads', str(course_id),
                             str(homework_id), str(team.id))
         # for i in os.listdir(path=path):
         #     os.remove(os.path.join(path + '\\' + str(i)))
@@ -339,12 +342,12 @@ def homework_detail(course_id, homework_id):
             shutil.rmtree(path)
 
         if form.homework_up.data:
-            # 保存到uploads/<semester-id>/<course-id>/<homework-id>/<team-id>
+            # 保存到uploads/<course-id>/<homework-id>/<team-id>
             guid = uuid.uuid4()
             try:
                 (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
                 homework_ups.save(form.homework_up.data,
-                                  folder=os.path.join(basedir, 'uploads', str(course.semester_id), str(course_id),
+                                  folder=os.path.join(basedir, 'uploads', str(course_id),
                                                       str(homework_id), str(team.id)),
                                   name=str(guid) + ext)
             except UploadNotAllowed:
