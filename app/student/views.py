@@ -151,9 +151,6 @@ def team_view(course_id):
         .filter(Team.course_id == course_id) \
         .first()
 
-    Team.team_list(course_id)
-    # 新添加的函数方法，team.order表示本课程当前审核通过团队排序后队伍编号
-
     if request.form.get('action') == 'join':
         # 加入团队
         member_list = TeamMember.query.filter_by(team_id=request.form.get('team_id')).filter_by(status=1).all()

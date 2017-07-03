@@ -3,6 +3,16 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
+SCRelationship = db.Table('sc_elationship', db.Model.metadata,
+                          db.Column('student_id', db.Integer, db.ForeignKey('students.id')),
+                          db.Column('course_id', db.Integer, db.ForeignKey('courses.id'))
+                          )
+
+TCRelationship = db.Table('tc_relationship', db.Model.metadata,
+                          db.Column('teacher_id', db.Integer, db.ForeignKey('teachers.id')),
+                          db.Column('course_id', db.Integer, db.ForeignKey('courses.id'))
+                          )
+
 class DeanInfo(UserMixin, db.Model):
     __tablename__ = 'deanInfo'
     id = db.Column(db.Integer, primary_key=True)
@@ -59,10 +69,7 @@ class Semester(db.Model):
 #
 #     def __repr__(self):
 #         return '<SCRelationship %r>' % self.id
-SCRelationship = db.Table('sc_elationship', db.Model.metadata,
-                          db.Column('student_id', db.Integer, db.ForeignKey('students.id')),
-                          db.Column('course_id', db.Integer, db.ForeignKey('courses.id'))
-                          )
+
 
 
 class Student(UserMixin, db.Model):
@@ -117,6 +124,10 @@ class Team(db.Model):
 
     def __repr__(self):
         return '<Team %r>' % self.id
+
+    @property
+    def order(self):
+        return Team.query.filter_by(course_id=self.course_id).all().index(self)
 
     @staticmethod
     def team_list(course_id):
@@ -227,10 +238,7 @@ class CourseTime(db.Model):
 #         return '<TCRelationship %r>' % self.id
 
 
-TCRelationship = db.Table('tc_relationship', db.Model.metadata,
-                          db.Column('teacher_id', db.Integer, db.ForeignKey('teachers.id')),
-                          db.Column('course_id', db.Integer, db.ForeignKey('courses.id'))
-                          )
+
 
 
 class Teacher(UserMixin, db.Model):
