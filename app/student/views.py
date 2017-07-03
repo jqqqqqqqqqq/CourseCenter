@@ -94,8 +94,32 @@ def show_resource(course_id):
         else:
             flash('文件不存在！', 'danger')
             return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
+    files = []
 
-    files = list(os.scandir(expand_path))
+    def sizeof_fmt(num, suffix='B'):
+        for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+            if abs(num) < 1024.0:
+                return "%3.1f%s%s" % (num, unit, suffix)
+            num /= 1024.0
+        return "%.1f%s%s" % (num, 'Y', suffix)
+
+    class file_attributes:
+        name = ""
+        size = ""
+        create_time = datetime.min
+        is_dir = False
+        is_file = False
+
+        def __init__(self, name, size, create_time, is_dir, is_file):
+            self.name = name
+            self.size = size
+            self.create_time = create_time
+            self.is_dir = is_dir
+            self.is_file = is_file
+
+    for file in os.scandir(expand_path):
+        time = datetime.fromtimestamp(file.stat().st_mtime)
+        files.append(file_attributes(file.name, sizeof_fmt(file.stat().st_size), time, file.is_dir(), file.is_file()))
     return render_template('student/resource.html', course_id=course_id, course=course, path=path, files=files)
 
 
@@ -339,12 +363,16 @@ def homework_detail(course_id, homework_id):
     homework = Homework.query.filter_by(id=homework_id).first()
     team = Team.query.filter_by(owner_id=current_user.id, course_id=course_id).first()
     if not team:
+        flash('没有团队，不能查看详细信息', 'danger')
+        return redirect(url_for('student.homework', course_id=course_id))
+        '''
         teammember = TeamMember\
                         .query\
                         .join(Team, Team.id == TeamMember.team_id)\
                         .filter(and_(TeamMember.student_id == current_user.id, Team.course_id == course_id))\
                         .first()
         team = Team.query.filter_by(id=teammember.team_id, course_id=course_id).first()
+        '''
     attempts = len(Submission.query.filter_by(team_id=team.id, homework_id=homework_id).all())
 
     if form.validate_on_submit():

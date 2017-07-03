@@ -122,11 +122,12 @@ def manage_course():
         # 添加学生
         for i in student_info:
             student = Student.query.filter_by(id=i.get('id')).first()
+            # 区分可修改和不可修改的数据
             if student is None:
                 student = Student()
-            student.id = int(i.get('id'))
+                student.password = str(i.get('password'))
+                student.id = int(i.get('id'))
             student.name = i.get('name')
-            student.password = str(i.get('password'))
             db.session.add(student)
 
             # 添加学生课程关系
@@ -134,12 +135,13 @@ def manage_course():
         # 添加教师
         for i in teacher_info:
             teacher = Teacher.query.filter_by(id=i.get('id')).first()
+            # 区分可修改和不可修改的数据
             if teacher is None:
                 teacher = Teacher()
-            teacher.id = int(i.get('id'))
+                teacher.password = str(i.get('password'))
+                teacher.id = int(i.get('id'))
             teacher.name = i.get('name')
             teacher.teacher_info = i.get('teacher_info')
-            teacher.password = str(i.get('password'))
             db.session.add(teacher)
 
             # 添加老师课程关系
