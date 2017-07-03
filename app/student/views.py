@@ -156,13 +156,13 @@ def team_view(course_id):
         member_list = TeamMember.query.filter_by(team_id=request.form.get('team_id')).filter_by(status=1).all()
         number_of_member = len(member_list)
         _course = Course.query.filter_by(id=course_id).first()
-        if team_owner is not None:
+        if team_owner:
             flash('已创建团队，拒绝申请!', 'danger')
-        elif team_joined is not None:
+        elif team_joined:
             flash('已加入团队，拒绝申请!', 'danger')
         elif number_of_member == _course.teamsize_max - 1:
             flash('人数已满，拒绝申请！', 'danger')
-        elif team_pending is not None:
+        elif team_pending:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             teammember = TeamMember()
@@ -189,11 +189,11 @@ def team_view(course_id):
 
     if form.validate_on_submit():
         # 创建团队
-        if team_owner is not None:
+        if team_owner:
             flash('已创建团队，无法再次创建!', 'danger')
-        elif team_joined is not None:
+        elif team_joined:
             flash('已加入团队，无法再次创建!', 'danger')
-        elif team_pending is not None:
+        elif team_pending:
             flash('提交申请待审批，拒绝申请！', 'danger')
         else:
             team = Team()
@@ -203,6 +203,12 @@ def team_view(course_id):
             team.team_name = form.team_name.data
             db.session.add(team)
             db.session.commit()
+
+            delete_list = TeamMember.query.filter_by(status=2).filter_by(student_id=current_user.id).all()
+            for record in delete_list:
+                db.session.delete(record)
+            db.session.commit()
+
             flash('创建团队成功!', 'success')
             return redirect(url_for('student.team_view', course_id=course_id))
     team_list = Team.query.filter_by(course_id=course_id).filter(or_(Team.status == 0, Team.status == 3)).all()
