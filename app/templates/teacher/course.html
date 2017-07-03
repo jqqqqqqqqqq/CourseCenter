@@ -31,6 +31,9 @@
                     {{ form.hidden_tag() }}
                     {{ wtf.form_field(form.outline) }}
                     <p class="form-data">{{ form.outline.data }}</p>
+                    {{ form.hidden_tag() }}
+                    {{ wtf.form_field(form.course_info) }}
+                    <p class="form-data">{{ form.course_info.data }}</p>
                     <div class="form-group">
                         <div class="row">
                             <div class="col-xs-6">

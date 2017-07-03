@@ -17,6 +17,7 @@ import os, zipfile
 from openpyxl.utils.exceptions import InvalidFileException
 from config import basedir
 import json
+from openpyxl import Workbook
 
 
 @teacher.before_request
@@ -158,6 +159,10 @@ def homework_detail(course_id, homework_id):
     form = HomeworkForm()
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
+
+    if request.args.get['homework_report']:
+        return get_homework_report(homework_id)
+
     if form.validate_on_submit():
         # 修改作业
         begin_time, end_time = form.time.data.split(' - ')
@@ -189,6 +194,59 @@ def homework_detail(course_id, homework_id):
                            course=course,
                            form=form,
                            homework=homework)
+
+
+# PudgeG负责：得到本次作业报表↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+def get_homework_report(homework_id):
+    # 得到本次作业报表
+    homework = Homework.query.filter_by(id=homework_id).first()
+    team_this_course = Team.query.filter_by(course_id=homework.course_id).filter_by(status=2).all()
+    Team.team_list(homework.course_id)
+
+    # submission_list = Submission.query.filter_by(homework_id=homework_id).all()
+    # if len(submission_list) == 0:
+    #     flash('无提交记录，请先催交！', 'danger')
+    #     return redirect(request.args.get('next') or url_for('main.set_homework'))
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = homework.name + ' 提交情况'
+    worksheet.append(['团队名称', '团队ID', '本次作业是否提交', '本次作业分数'])
+    input_info = []
+    for team in team_this_course:
+        _finished = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=team.id).all()
+        if len(_finished) == 0:
+            # 无提交记录
+            homework_record = {'团队名称': team.team_name,
+                               '团队ID': team.order,
+                               '本次作业是否提交': 'No',
+                               '本次作业分数': 0}
+        else:
+            # 有提交记录，拿最后一个
+            finished = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=team.id).all()[-1]
+            homework_record = {'团队名称': team.team_name,
+                               '团队ID': team.order,
+                               '本次作业是否提交': 'Yes',
+                               '本次作业分数': finished.score}
+        input_info.append(homework_record)
+
+        # def convert_status(status):
+        #     switcher = {
+        #         0: '作业未批改',
+        #         1: '作业已批改'
+        #     }
+        #     return switcher.get(status, '其他')
+
+    worksheet.append(input_info)
+    worksheet.save('homework_report.xlsx')
+    if os.path.isfile(os.path.join(os.getcwd(), 'homework', 'homework_report.xlsx')):
+        response = make_response(send_file(os.path.join(os.getcwd(), 'homework', 'homework_report.xlsx')))
+    else:
+        flash('文件创建失败！', 'danger')
+        return redirect(url_for('teacher/teacher_teammanagement'))
+    response.headers["Content-Disposition"] = "attachment; filename=" + 'homework_report.xlsx' + ";"
+    return response
+# PudgeG负责：得到本次作业报表↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 
 @teacher.route('/uploadresource', methods=['GET', 'POST'])
@@ -224,7 +282,7 @@ def teacher_corrected(course_id, homework_id):
             except UploadNotAllowed:
                 flash(u'附件上传不允许')
                 return redirect(request.args.get('next') or url_for('teacher.teacher_corrected'))
-            #可能加入全体广播 向全部学生广播教师修改作业已上传
+            # 可能加入全体广播 向全部学生广播教师修改作业已上传
             flash('上传成功')
             return redirect(url_for('teacher.teacher_corrected', form=form))
     return render_template('teacher/upload_corrected.html', form=form)
@@ -242,8 +300,8 @@ def add_member(student_id, team_id):
     db.session.commit()
 
 
-@teacher.route('/index-teacher/teacher-teammanagement', methods=['GET', 'POST'])
-def teacher_teammanagement():
+@teacher.route('/teacher/<course_id>/student_team', methods=['GET', 'POST'])
+def teacher_team_management(course_id):
     if "accept" in request.form.values():
         form = AcceptTeam()
         _team = Team.query.filter_by(id=int(form.id.data)).first()
@@ -251,12 +309,12 @@ def teacher_teammanagement():
             _team.status = 1  # 1是通过
             db.session.add(_team)
             db.session.commit()
-            flash("通过成功", "success")
+            flash('通过成功', 'success')
             return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
         else:
-            flash("找不到此团队", "danger")
+            flash('找不到此团队', 'danger')
             return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-    elif "reject" in request.form.values():
+    elif 'reject' in request.form.values():
         form = RejectTeam()
         _team = Team.query.filter_by(id=int(form.id.data)).first()
         if _team:
@@ -264,38 +322,68 @@ def teacher_teammanagement():
             _team.reason = form.reason.data
             db.session.add(_team)
             db.session.commit()
-            flash("拒绝成功", "success")
+            flash('拒绝成功', 'success')
             return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
         else:
-            flash("找不到此团队", "danger")
+            flash('找不到此团队', 'danger')
             return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
 
-    _team_list = Team.query.all()
+    elif 'teamtable' in request.form.values():
+        return get_team_report(course_id)
 
-    class TeamList:
-        id = 0
-        status = 0
-        team_name = ""
-
-        def __init__(self, id, status, team_name):
-            self.id = id
-            self.status = status
-            self.team_name = team_name
-
-    team_list = [TeamList(a.id, a.status, a.team_name) for a in _team_list]
+    team_list = Team.team_list(course_id)
     for team in team_list:
         _team_members = TeamMember.query.filter_by(team_id=team.id).all()
-        member_name = ""
         for member in _team_members:
-            real_name = Student.query.filter_by(id=member.student_id).first().name
-            member_name += member.team_name + "(" + real_name + "), "
-        team.member_name = member_name  # 把所有人名字构造成一个字符串
+            member.real_name = Student.query.filter_by(id=member.student_id).first().name
         team.accept_form = AcceptTeam()
         team.accept_form.id.data = team.id
         team.reject_form = RejectTeam()
         team.reject_form.id.data = team.id
     return render_template('auth_teacher/teacher_teammanagement.html',
                            team_list=team_list)
+
+
+# PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+def get_team_report(course_id):
+    down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
+    Team.team_list(course_id)
+    if len(down_list) == 0:
+        flash('没有已接受团队，请等待申请并批准！', 'danger')
+        return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = '已接受团队信息'
+    worksheet.append(['队伍名称', '队伍编号', '成员姓名', '成员编号', '成员角色'])
+    # i = 0 表示队伍数量
+    input_info = []
+    for team in down_list:
+        member_list = TeamMember.query.filter_by(team_id=team.id).all()
+        input_record = {'队伍名称': team.team_name,
+                        '队伍编号': team.order,
+                        '成员姓名': Student.query.filter_by(id=team.owner_id).name,
+                        '成员编号': team.owner_id,
+                        '成员角色': '团队负责人'}
+        input_info.append(input_record)
+        # num_of_member = len(member_list)+1 表示每支队伍人员数量
+        # i += 1
+        for member in member_list:
+            input_record = {'队伍名称': team.team_name,
+                            '队伍编号': team.order,
+                            '成员姓名': Student.query.filter_by(id=member.student_id).name,
+                            '成员编号': member.student_id,
+                            '成员角色': '普通成员'}
+            input_info.append(input_record)
+    worksheet.append(input_info)
+    worksheet.save('team_table.xlsx')
+    if os.path.isfile(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')):
+        response = make_response(send_file(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')))
+    else:
+        flash('文件创建失败！', 'danger')
+        return redirect(url_for('teacher/teacher_teammanagement'))
+    response.headers["Content-Disposition"] = "attachment; filename=" + 'team_table.xlsx' + ";"
+    return response
+# PudgeG负责:团队报表输出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 
 # 用于生成zip文件
@@ -441,3 +529,20 @@ def givegrade_teacher(course_id, homework_id):
 #         make_zip(file_path, save_path)
 #         return send_from_directory(directory=file_path, filename='download.zip', as_attachement=True)
 #     return render_template('teacher/see_class_before.html', course=course, course_detail_info_list=course_detail_info_list)
+
+
+@teacher.route('/<course_id>/team', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def team_manage(course_id):
+    course = Course.query.filter_by(id=course_id).first()
+    teams_origin = Team.query.filter_by(course_id=course_id).all()
+    teams = []
+    for team in teams_origin:
+        members = TeamMember.query.filter_by(team_id=team.id).join(Student).add_column(Student.name).all()
+        teams.append({
+            'id': team.id,
+            'owner_id': team.owner_id,
+            'status': team.status,
+            'members': members
+        })
+    return render_template('teacher/team.html', course_id=course_id, course=course)
