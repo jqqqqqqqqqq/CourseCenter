@@ -137,9 +137,19 @@ def team_view(course_id):
     # 是不是团队队长
     team_owner = Team.query.filter_by(owner_id=current_user.id, course_id=course_id).first()
     # 是不是加入了团队
-    team_joined = TeamMember.query.filter_by(student_id=current_user.id).filter_by(status=1).first()
+    team_joined = TeamMember\
+        .query\
+        .filter_by(student_id=current_user.id, status=1)\
+        .join(Team)\
+        .filter(Team.course_id == course_id)\
+        .first()
     # 是不是在提交申请状态
-    team_pending = TeamMember.query.filter_by(student_id=current_user.id).filter_by(status=0).first()
+    team_pending = TeamMember\
+        .query\
+        .filter_by(student_id=current_user.id, status=0) \
+        .join(Team) \
+        .filter(Team.course_id == course_id) \
+        .first()
 
     Team.team_list(course_id)
     # 新添加的函数方法，team.order表示本课程当前审核通过团队排序后队伍编号
@@ -209,6 +219,7 @@ def team_view(course_id):
 
 @student.route('/<course_id>/my_team', methods=['GET', 'POST'])
 def my_team(course_id):
+    # 团队管理
     student_id = current_user.id
     team = Team.query.filter_by(owner_id=student_id, course_id=course_id).first()  # 测试是不是队长
     teammate_list = []
@@ -217,6 +228,7 @@ def my_team(course_id):
         # 如果不是队长的话
         member = TeamMember \
             .query \
+            .filter_by(student_id=student_id) \
             .join(Team, TeamMember.team_id == Team.id)\
             .filter(Team.course_id == course_id) \
             .first()
@@ -224,7 +236,7 @@ def my_team(course_id):
             team = Team.query.filter_by(id=member.team_id).first()
             member_status = member.status
     if team:
-        teammate_list = TeamMember.query.filter_by(team_id=team.id).all()
+        teammate_list = team.members
         for member in teammate_list:
             member.real_name = Student.query.filter_by(id=member.student_id).first().name  # 通过member里的status在前端做通过/拒绝
 
@@ -255,27 +267,21 @@ def my_team(course_id):
             flash('已提交申请', 'success')
         elif request.form.get('action') == 'dismiss':
             # 解散团队
-            # team.status = 4
             for member in teammate_list:
-                # member.status = 2  # 2: Rejected
-                # member.team_id = None
-                # db.session.add(member)
                 db.session.delete(member)
-            # db.session.add(team)
-            # db.session.commit()
             db.session.delete(team)
             db.session.commit()
             flash('队伍已解散', 'success')
+        elif request.form.get('action') == 'reset':
+            team.status = 0
+            db.session.add(team)
+            db.session.commit()
         return redirect(url_for('student.my_team', course_id=course_id))
 
-    owner_name = Student.query.filter_by(id=team.owner_id).first().name
-
     return render_template('student/team_manage.html',
-                           teammate_list=teammate_list,
                            team=team,
                            course_id=course_id,
-                           member_status=member_status,
-                           owner_name=owner_name)
+                           member_status=member_status)
 
 
 @student.route('/<int:course_id>/homework')
