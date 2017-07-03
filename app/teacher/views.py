@@ -127,7 +127,7 @@ def homework(course_id):
 
     form = HomeworkForm()
 
-    if request.args.get['get_homework_all']:
+    if request.args.get('get_homework_all'):
         return get_homework_all(course_id)
 
     if form.validate_on_submit():
