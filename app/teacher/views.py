@@ -540,15 +540,24 @@ def rename(source_dir, rename_dic):
 
 @teacher.route('/teacher/<course_id>/givegrade_teacher/<homework_id>', methods=['GET', 'POST'])
 def givegrade_teacher(course_id, homework_id):
+
     # 显示学生已提交的作业(显示最新的提交记录)
     submission = Submission.query.filter_by(homework_id=homework_id).filter_by(submit_status=1).all()
+    team = Team.query.filter_by(course_id=course_id).all()
 
-    # 寻找semester_id
-    course = Course.query.filter_by(id=course_id).first()
-    semester_id = course.semester_id
+    #取每个组最新的提交记录
+    submission_list = []
+    for team_temp in team:
+        submission_latest = Submission \
+            .query \
+            .filter_by(team_id=team_temp.id,
+                       homework_id=homework_id) \
+            .order_by(Submission.id.desc()) \
+            .first()
+        submission_list.append(submission_latest)
 
     homework_list = []
-    for i in submission:
+    for i in submission_list:
         team = Team.query.filter_by(id=i.team_id).first()
         homework_list.append({'team_id': i.team_id, 'team_name': team.team_name, 'text_content': i.text_content,
                               'score': i.score, 'comments': i.comments})
@@ -558,7 +567,7 @@ def givegrade_teacher(course_id, homework_id):
     if request.method == 'POST' and request.form.get('action') == 'submit':
         _list = json.loads(request.form.get('data'))
         for dic in _list:
-            for submission_temp in submission:
+            for submission_temp in submission_list:
                 if submission_temp.team_id == dic['team_id']:
                     submission_temp.score = dic['score']
                     submission_temp.comments = dic['comments']
@@ -571,7 +580,6 @@ def givegrade_teacher(course_id, homework_id):
 
         team_id = request.form.get('team_id')
         file_dir = os.path.join(current_app.config['UPLOADED_FILES_DEST'],
-                                str(semester_id),
                                 str(course_id),
                                 str(homework_id),
                                 str(team_id))
@@ -606,7 +614,7 @@ def givegrade_teacher(course_id, homework_id):
     # 批量下载学生作业
     if request.method == 'POST' and request.form.get('action') == 'multi_download':
 
-        file_path = os.path.join(basedir, 'uploads', str(semester_id), str(course_id), str(homework_id))
+        file_path = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
         save_path = os.path.join(basedir, 'temp', 'download.zip')
 
         submission_all = Submission \
