@@ -260,14 +260,18 @@ def my_team(course_id):
             flash('拒绝成功', 'success')
         elif request.form.get('action') == 'submit':
             # 提交团队组建申请
-            team.status = 1  # 1: pending
-            for member in teammate_list:
-                if member.status == 0:  # 0: Pending
-                    member.status = 2  # 2: Rejected
-                    db.session.add(member)
-            db.session.add(team)
-            db.session.commit()
-            flash('已提交申请', 'success')
+            _course = Course.query.filter_by(id=course_id).first()
+            if team.number_of_members <= _course.teamsize_min:
+                flash('人数不足', 'danger')
+            else:
+                team.status = 1  # 1: pending
+                for member in teammate_list:
+                    if member.status == 0:  # 0: Pending
+                        member.status = 2  # 2: Rejected
+                        db.session.add(member)
+                db.session.add(team)
+                db.session.commit()
+                flash('已提交申请', 'success')
         elif request.form.get('action') == 'dismiss':
             # 解散团队
             for member in teammate_list:
