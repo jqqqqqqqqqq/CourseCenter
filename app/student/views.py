@@ -320,6 +320,7 @@ def homework_detail(course_id, homework_id):
         submission.team_id = team.id
         submission.text_content = form.text.data
         submission.submitter_id = current_user.id
+        submission.score = 0
         db.session.add(submission)
         db.session.commit()   # 提交更改 生成submission_1.id
 
