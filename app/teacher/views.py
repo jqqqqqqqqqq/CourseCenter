@@ -495,37 +495,31 @@ def givegrade_teacher(course_id, homework_id):
     return render_template('teacher/givegrade_teacher.html', homework_list=homework_list)
 
 
-# # 教师查看往期课程和往期课程作业
-# @teacher.route('/see_class_before', methods=['GET', 'POST'])
-# def see_class_before():
-#
-#     #取出当前老师参加的所有课程
-#     # teacher = Teacher.query.filter_by(id=current_user.id).first()
-#     # tcrel = TCRelationship.query.filter_by(teacher_id=teacher.id).all()
-#     # course = []
-#     # for i in tcrel:
-#     #     course_temp = Course.query.filter_by(id=i.course_id)
-#     #     course.append(course_temp)
-#     # course_detail_info_list = []
-#
-#     # 显示往期课程信息
-#     for i in course:
-#         screl = SCRelationship.query.filter_by(course_id=request.args.get('course_id')).all()
-#         course_detail_info_list.append({'course_name': i.name, 'course_credit': i.credit,
-#                                         'course_student_number': len(screl), 'course_info': i.course_info})
-#
-#     # 下载往期课程作业
-#     if request.method == 'POST' and request.form.get('action') == 'download':
-#
-#         course_id = request.args.get('course_id')
-#         file_path = os.path.join(basedir, 'uploads', str(semester_id), str(course_id))
-#         save_path = os.path.join(basedir, 'temp', 'download.zip')
-#
-#         if os.path.exists(file_path):
-#
-#         make_zip(file_path, save_path)
-#         return send_from_directory(directory=file_path, filename='download.zip', as_attachement=True)
-#     return render_template('teacher/see_class_before.html', course=course, course_detail_info_list=course_detail_info_list)
+# 教师查看往期课程和往期课程作业
+@teacher.route('/see_class_before', methods=['GET', 'POST'])
+def see_class_before():
+    #取出当前老师参加的所有课程
+    course = Teacher.query.filter_by(id=current_user.id).course
+
+    course_detail_info_list = []
+    # 显示往期课程信息
+    for i in course:
+        course_detail_info_list.append({'course_id':i.id, 'course_name': i.name, 'course_credit': i.credit,
+                                        'course_student_number': len(i.student), 'course_info': i.course_info})
+
+    # 下载往期课程作业
+    if request.method == 'POST' and request.form.get('action') == 'download':
+
+        course_id = request.args.get('course_id')
+        file_path = os.path.join(basedir, 'uploads', str(course_id))
+        save_path = os.path.join(basedir, 'temp', 'download.zip')
+
+        if os.path.exists(file_path):
+            make_zip(file_path, save_path)
+            return send_from_directory(directory=file_path, filename='download.zip', as_attachement=True)
+        else:
+            flash('这个课程没有附件作业保存！', 'danger')
+    return render_template('teacher/see_class_before.html', course_detail_info_list=course_detail_info_list)
 
 
 @teacher.route('/<course_id>/team', methods=['GET', 'POST'])

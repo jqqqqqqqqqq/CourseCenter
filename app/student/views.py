@@ -331,7 +331,7 @@ def homework_detail(course_id, homework_id):
         db.session.commit()   # 提交更改 生成submission_1.id
 
         # 每次提交新的作业 都会删除原来的作业附件
-        path = os.path.join(basedir, 'uploads', str(course.semester_id), str(course_id),
+        path = os.path.join(basedir, 'uploads', str(course_id),
                             str(homework_id), str(team.id))
         # for i in os.listdir(path=path):
         #     os.remove(os.path.join(path + '\\' + str(i)))
@@ -339,12 +339,12 @@ def homework_detail(course_id, homework_id):
             shutil.rmtree(path)
 
         if form.homework_up.data:
-            # 保存到uploads/<semester-id>/<course-id>/<homework-id>/<team-id>
+            # 保存到uploads/<course-id>/<homework-id>/<team-id>
             guid = uuid.uuid4()
             try:
                 (name_temp, ext) = os.path.splitext(form.homework_up.data.filename)
                 homework_ups.save(form.homework_up.data,
-                                  folder=os.path.join(basedir, 'uploads', str(course.semester_id), str(course_id),
+                                  folder=os.path.join(basedir, 'uploads', str(course_id),
                                                       str(homework_id), str(team.id)),
                                   name=str(guid) + ext)
             except UploadNotAllowed:
