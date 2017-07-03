@@ -3,7 +3,7 @@ import zipfile
 import shutil
 from flask import render_template, flash, request, redirect, url_for, make_response, send_file, current_app, \
     send_from_directory
-from flask_login import current_user
+from flask_login import login_required, current_user
 from . import student
 from ..auths import UserAuth
 from ..models.models import *
@@ -14,6 +14,12 @@ import uuid
 from config import basedir
 from sqlalchemy import or_, and_
 from datetime import datetime
+
+
+@student.before_request
+@login_required
+def before_request():
+    pass
 
 @student.route('/student')
 @UserAuth.student_course_access
