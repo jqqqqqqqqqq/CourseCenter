@@ -9,7 +9,8 @@ from .. import db
 from ..auths import UserAuth
 from .forms import up_corrected, UploadCorrected,\
     CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam
-from ..models.models import Course, Homework, Team, TeamMember, Student, Submission, Attachment
+from ..models.models import Course, Homework, Team,\
+    TeamMember, Student, Submission, Attachment, SCRelationship
 import uuid
 from flask_uploads import UploadNotAllowed
 import os, zipfile
@@ -282,10 +283,37 @@ def teacher_team_management(course_id):
                            team_list=team_list)
 
 
-@teacher.route('/teacher/<course_id>/givegrade_team/<homework_id>', methods=['GET', 'POST'])
+# 用于生成zip文件
+def make_zip(source_dir, output_filename):
+    zipf = zipfile.ZipFile(output_filename, 'w')
+    pre_len = len(os.path.dirname(source_dir))
+    for parent, dirnames, filenames in os.walk(source_dir):
+        for filename in filenames:
+            pathfile = os.path.join(parent, filename)
+            # 相对路径
+            arcname = pathfile[pre_len:].strip(os.path.sep)
+            zipf.write(pathfile, arcname)
+    zipf.close()
+
+
+# 用于下载前对文件重命名
+def rename(source_dir, rename_dic):
+    for parent, dirnames, filenames in os.walk(source_dir):
+        for filename in filenames:
+            name, ext = os.path.splitext(filename)
+            if name in rename_dic.keys():
+                os.rename(os.path.join(parent, filename), os.path.join(parent, rename_dic[name]))
+
+
+@teacher.route('/teacher/<course_id>/givegrade_teacher/<homework_id>', methods=['GET', 'POST'])
 def givegrade_teacher(course_id, homework_id):
     # 显示学生已提交的作业(显示最新的提交记录)
     submission = Submission.query.filter_by(homework_id=homework_id).filter_by(submit_status=1).all()
+
+    #寻找semester_id
+    course = Course.query.filter_by(id=course_id).first()
+    semester_id = course.semester_id
+
     homework_list = []
     for i in submission:
         team = Team.query.filter_by(id=i.team_id).first()
@@ -303,55 +331,97 @@ def givegrade_teacher(course_id, homework_id):
                     submission_temp.comments = dic['comments']
                     db.session.add(submission_temp)
         db.session.commit()
-        return redirect(request.args.get('next') or url_for('teacher.givegrade_teacher', homework_list=homework_list))
+        return redirect(url_for('teacher.givegrade_teacher', course_id=course_id, homework_id=homework_id))
 
     # 单个下载学生作业
     if request.method == 'POST' and request.form.get('action') == 'download':
+
         team_id = request.form.get('team_id')
         file_dir = os.path.join(current_app.config['UPLOADED_FILES_DEST'],
+                                str(semester_id),
                                 str(course_id),
                                 str(homework_id),
                                 str(team_id))
-        # 取最新的一次上传和上传时的附件
-        submission_temp = submission.query.filter_by(team_id=int(team_id)).filter_by(submit_status=1).first()
-        attachment_temp = Attachment.query.filter_by(submission_id=submission_temp.id).first()
-        filename_upload = attachment_temp.file_name
-        file_uuid = attachment_temp.guid
 
-        # 寻找保存目录下的uuid文件
-        for i in os.listdir(file_dir):
-            if i.startswith(str(file_uuid)):
-                os.rename(i, filename_upload)
+        # 取最新的一次上传和上传时的附件
+        submission_previous = Submission \
+            .query \
+            .filter_by(team_id=team_id,
+                       homework_id=homework_id) \
+            .order_by(Submission.id.desc()) \
+            .first()
+
+        attachment_previous = None
+        if submission_previous:
+            attachment_previous = Attachment.query.filter_by(submission_id=submission_previous.id).first()
 
         # 无附件
-        if not attachment_temp:
-            flash('该组没有上传作业')
-            return redirect(url_for('teacher.givegrade_teacher', homework_list=homework_list))
-        elif os.path.exists(os.path.join(file_dir, filename_upload)):
-            return send_from_directory(file_dir, filename_upload, as_attachment=True)
+        if not attachment_previous:
+            flash('该组没有上传作业附件')
+            return redirect(url_for('teacher.givegrade_teacher', course_id=course_id, homework_id=homework_id))
+        else:
+
+            filename_upload = attachment_previous.file_name
+            file_uuid = attachment_previous.guid
+
+            # 寻找保存目录下的uuid文件
+            for i in os.listdir(file_dir):
+                if i.startswith(str(file_uuid)):
+                    os.rename(i, filename_upload)
+            return send_from_directory(directory=file_dir, filename=filename_upload, as_attachment=True)
+
     # 批量下载学生作业
     if request.method == 'POST' and request.form.get('action') == 'multi_download':
-        file_path = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
 
-        return send_from_directory()
-    # if request.form.get('action') == 'multidownload':
-    #     filelist = request.args.get('filelist')
-    #     output_filename = request.args.get('output_filename')
-    #     zipf = zipfile.ZipFile(output_filename, 'w')
-    #     [zipf.write(filename, filename.rsplit(os.path.sep, 1)[-1]) for filename in filelist]
-    #     zipf.close()
-    #     response = make_response(send_file(os.path.join(os.getcwd(), output_filename)))
-    #     response.headers["Content-Disposition"] = "attachment; filename=" + output_filename + ";"
-    #     return response
+        file_path = os.path.join(basedir, 'uploads', str(semester_id), str(course_id), str(homework_id))
+        save_path = os.path.join(basedir, 'temp', 'download.zip')
+
+        submission_all = Submission \
+            .query \
+            .filter_by(homework_id=homework_id) \
+            .order_by(Submission.id.desc()) \
+            .all()
+
+        # 建立 uuid与 上传时file_name的 键值对关系{uuid: file_name}
+        rename_list = {}
+        for submission_temp in submission_all:
+            attachment_temp = Attachment.query.filter_by(submission_id=submission_temp.id).first()
+            rename_list[str(attachment_temp.guid)] = str(attachment_temp.file_name)
+
+        # 重命名文件并提供下载
+        rename(file_path, rename_list)
+        make_zip(file_path, save_path)
+        return send_from_directory(directory=file_path, filename='download.zip', as_attachment=True)
     return render_template('teacher/homework/givegrade_teacher.html', homework_list=homework_list)
 
 
-def make_zip(source_dir, output_filename):
-  zipf = zipfile.ZipFile(output_filename, 'w')
-  pre_len = len(os.path.dirname(source_dir))
-  for parent, dirnames, filenames in os.walk(source_dir):
-    for filename in filenames:
-      pathfile = os.path.join(parent, filename)
-      arcname = pathfile[pre_len:].strip(os.path.sep)   #相对路径
-      zipf.write(pathfile, arcname)
-  zipf.close()
+#教师查看往期课程：
+@teacher.route('/<semester_id>/see_class_before', methods=['GET'])
+def see_class_before(semester_id):
+    course = Course.query.filter_by(semester_id=semester_id).all()
+    course_info_list = []
+    if course is None:
+        flash('该学期没有任何课程', 'danger')
+        return redirect(url_for('teacher/see_class_before.html', semester_id=semester_id))
+    for i in course:
+        screl = SCRelationship.query.filter_by(course_id=request.args.get('course_id')).first()
+        course_info_list.append({'course_name': i.name, 'course_credit': i.credit,
+                                 'course_student_number': len(screl), 'course_info': i.course_info})
+    return render_template('teacher/see_class_before.html', course_info_list=course_info_list)
+
+
+@teacher.route('/<course_id>/team', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def team_manage(course_id):
+    course = Course.query.filter_by(id=course_id).first()
+    teams_origin = Team.query.filter_by(course_id=course_id).all()
+    teams = []
+    for team in teams_origin:
+        members = TeamMember.query.filter_by(team_id=team.id).join(Student).add_column(Student.name).all()
+        teams.append({
+            'id': team.id,
+            'owner_id': team.owner_id,
+            'status': team.status,
+            'members': members
+        })
+    return render_template('teacher/team.html', course_id=course_id, course=course)
