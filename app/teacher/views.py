@@ -457,48 +457,6 @@ def add_member(student_id, team_id):
         db.session.delete(a)
     db.session.commit()
 
-
-@teacher.route('/teacher/<course_id>/student_team', methods=['GET', 'POST'])
-def teacher_team_management(course_id):
-    if "accept" in request.form.values():
-        form = AcceptTeam()
-        _team = Team.query.filter_by(id=int(form.id.data)).first()
-        if _team:
-            _team.status = 1  # 1是通过
-            db.session.add(_team)
-            db.session.commit()
-            flash('通过成功', 'success')
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-        else:
-            flash('找不到此团队', 'danger')
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-    elif 'reject' in request.form.values():
-        form = RejectTeam()
-        _team = Team.query.filter_by(id=int(form.id.data)).first()
-        if _team:
-            _team.status = 2  # 2是拒绝
-            _team.reason = form.reason.data
-            db.session.add(_team)
-            db.session.commit()
-            flash('拒绝成功', 'success')
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-        else:
-            flash('找不到此团队', 'danger')
-            return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-
-    elif 'teamtable' in request.form.values():
-        return get_team_report(course_id)
-
-    team_list = Team.team_list(course_id)
-    for team in team_list:
-        team.accept_form = AcceptTeam()
-        team.accept_form.id.data = team.id
-        team.reject_form = RejectTeam()
-        team.reject_form.id.data = team.id
-    return render_template('auth_teacher/teacher_teammanagement.html',
-                           team_list=team_list)
-
-
 # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 def get_team_report(course_id):
     down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
@@ -565,15 +523,24 @@ def rename(source_dir, rename_dic):
 
 @teacher.route('/teacher/<course_id>/givegrade_teacher/<homework_id>', methods=['GET', 'POST'])
 def givegrade_teacher(course_id, homework_id):
+
     # 显示学生已提交的作业(显示最新的提交记录)
     submission = Submission.query.filter_by(homework_id=homework_id).filter_by(submit_status=1).all()
+    team = Team.query.filter_by(course_id=course_id).all()
 
-    # 寻找semester_id
-    course = Course.query.filter_by(id=course_id).first()
-    semester_id = course.semester_id
+    #取每个组最新的提交记录
+    submission_list = []
+    for team_temp in team:
+        submission_latest = Submission \
+            .query \
+            .filter_by(team_id=team_temp.id,
+                       homework_id=homework_id) \
+            .order_by(Submission.id.desc()) \
+            .first()
+        submission_list.append(submission_latest)
 
     homework_list = []
-    for i in submission:
+    for i in submission_list:
         team = Team.query.filter_by(id=i.team_id).first()
         homework_list.append({'team_id': i.team_id, 'team_name': team.team_name, 'text_content': i.text_content,
                               'score': i.score, 'comments': i.comments})
@@ -583,7 +550,7 @@ def givegrade_teacher(course_id, homework_id):
     if request.method == 'POST' and request.form.get('action') == 'submit':
         _list = json.loads(request.form.get('data'))
         for dic in _list:
-            for submission_temp in submission:
+            for submission_temp in submission_list:
                 if submission_temp.team_id == dic['team_id']:
                     submission_temp.score = dic['score']
                     submission_temp.comments = dic['comments']
@@ -596,7 +563,6 @@ def givegrade_teacher(course_id, homework_id):
 
         team_id = request.form.get('team_id')
         file_dir = os.path.join(current_app.config['UPLOADED_FILES_DEST'],
-                                str(semester_id),
                                 str(course_id),
                                 str(homework_id),
                                 str(team_id))
@@ -631,7 +597,7 @@ def givegrade_teacher(course_id, homework_id):
     # 批量下载学生作业
     if request.method == 'POST' and request.form.get('action') == 'multi_download':
 
-        file_path = os.path.join(basedir, 'uploads', str(semester_id), str(course_id), str(homework_id))
+        file_path = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
         save_path = os.path.join(basedir, 'temp', 'download.zip')
 
         submission_all = Submission \
@@ -662,7 +628,7 @@ def see_class_before():
     course_detail_info_list = []
     # 显示往期课程信息
     for i in course:
-        course_detail_info_list.append({'course_id':i.id, 'course_name': i.name, 'course_credit': i.credit,
+        course_detail_info_list.append({'course_id': i.id, 'course_name': i.name, 'course_credit': i.credit,
                                         'course_student_number': len(i.student), 'course_info': i.course_info})
 
     # 下载往期课程作业
@@ -677,6 +643,7 @@ def see_class_before():
             return send_from_directory(directory=file_path, filename='download.zip', as_attachement=True)
         else:
             flash('这个课程没有附件作业保存！', 'danger')
+            return redirect(url_for('teacher.see_class_before'))
     return render_template('teacher/see_class_before.html', course_detail_info_list=course_detail_info_list)
 
 

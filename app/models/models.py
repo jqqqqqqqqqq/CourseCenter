@@ -101,6 +101,7 @@ class Team(db.Model):
     __tablename__ = 'teams'
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('students.id'))
+    owner_grade = db.Column(db.Float, default=0)
     team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
     status = db.Column(db.Integer, default=0)  # 0: building 1: pending 2: accepted 3: rejected 4: dismiss
     reject_reason = db.Column(db.Text)

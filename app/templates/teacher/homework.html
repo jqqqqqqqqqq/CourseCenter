@@ -1,5 +1,4 @@
 {% extends "base_main.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
 
 {% block title %}{{ super() }} - 课程管理{% endblock %}
 
@@ -74,7 +73,7 @@
                     </h4>
                 </div>
                 <div class="modal-body">
-                    <form method="post" id="form" action="?action=add">
+                    <form method="post" id="form" action="">
                         {{ form.hidden_tag() }}
                         {{ wtf.form_field(form.name) }}
                         {{ wtf.form_field(form.base_requirement) }}
