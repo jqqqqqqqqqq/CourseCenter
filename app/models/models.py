@@ -1,6 +1,7 @@
 from app import db, login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import session
 
 
 SCRelationship = db.Table('sc_relationship', db.Model.metadata,
@@ -254,13 +255,13 @@ class Teacher(UserMixin, db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    temp = DeanInfo.query.get(int(user_id))
-    if temp:
-        return temp
-    temp = Teacher.query.get(int(user_id))
-    if temp:
-        return temp
-    return Student.query.get(int(user_id))
+    if session['user_type'] == 'dean':
+        temp = DeanInfo.query.get(int(user_id))
+    elif session['user_type'] == 'teacher':
+        temp = Teacher.query.get(int(user_id))
+    elif session['user_type'] == 'student':
+        temp = Student.query.get(int(user_id))
+    return temp
 
 
 class ChatMessage(db.Model):
