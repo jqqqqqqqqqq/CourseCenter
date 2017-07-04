@@ -15,7 +15,7 @@
 {% block content_main %}
     {% if not team  %}
         <div class="callout callout-warning">
-            <h4>爷爷你还没有组呢！</h4>
+            <h4>你还没有组呢！</h4>
             <p><a href="{{ url_for('student.team_view', course_id=course_id) }}">点我</a>去加一个或者去创建一个</p>
         </div>
     {% elif member_status == 0 %}
@@ -26,7 +26,7 @@
     {% elif member_status == 2 %}
         <div class="callout callout-danger">
             <h4>咕咕咕咕</h4>
-            <p>{{ team.team_name }} 组的爷爷拒绝了你，<a href="{{ url_for('student.team_view', course_id=course_id) }}">点我</a>选择原谅他</p>
+            <p>{{ team.team_name }} 组拒绝了你，<a href="{{ url_for('student.team_view', course_id=course_id) }}">点我</a>重新加组</p>
         </div>
     {% endif %}
     {% if team.status == 3 and not member_status == 0 and not member_status == 2  %}

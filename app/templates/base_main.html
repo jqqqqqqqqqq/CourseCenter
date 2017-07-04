@@ -131,6 +131,9 @@ desired effect
                         <li {% if nav == 'manage_attendance' %}class="active"{% endif %}><a href="{{ url_for('teacher.manage_attendance', course_id=course_id) }}">
                             <i class="fa fa-group"></i> <span>发布签到</span></a>
                         </li>
+                        <li {% if nav == 'add_plus' %}class="active"{% endif %}><a href="{{ url_for('teacher.add_plus', course_id=course_id) }}">
+                            <i class="fa fa-plus"></i> <span>加分项管理</span></a>
+                        </li>
                         <li {% if nav == 'chat' %}class="active"{% endif %}><a href="{{ url_for('main.chat', course_id=course_id) }}">
                             <i class="fa fa-comments"></i> <span>聊天室</span></a>
                         </li>

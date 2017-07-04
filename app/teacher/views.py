@@ -872,11 +872,11 @@ def manage_attendance(course_id):
                            nav='manage_attendance')
 
 
-'''
-@teacher.route('/<course_id>/add_plus', methods=['GET', 'POST'])
+@teacher.route('/<course_id>/plus', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def add_plus(course_id):
     form = PlusForm()
+    pluses = Plus.query.filter_by(course_id=course_id).all()
     if form.validate_on_submit():
         plus = Plus()
         plus.course_id = course_id
@@ -884,67 +884,79 @@ def add_plus(course_id):
         plus.weight = form.weight.data
         db.session.add(plus)
         db.session.commit()
-        flash('成功添加加分项')
-        return redirect(url_for('teacher.add_plus'), course_id=course_id)
-    return render_template('teacher/add_plus.html', course_id=course_id, form=form)
-'''
+        flash('成功添加加分项', 'success')
+        return redirect(url_for('teacher.aiddd_plus', course_id=course_id))
+    course = Course.query.filter_by(id=course_id).first()
+    return render_template('teacher/plus.html', course_id=course_id, course=course, form=form, pluses=pluses, nav='add_plus')
 
 
 @teacher.route('/<int:course_id>/plus_manage/<int:plus_id>', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def plus_manage(course_id, plus_id):
-    plus_table = []
+    # plus_table = []
 
-    # 获取加分项的信息
-    pp = Plus.query.filter_by(id=plus_id).first()
-    '''
-    if not pp:
-        flash('没有这个加分项', 'danger')
-        return redirect(url_for('teacher.set_course_info', course_id=course_id))
-    '''
-    plus_table.append({
-        'plus_id': pp.id if pp else 0,
-        'plus_name': pp.name if pp else '',
-        'plus_course_id': course_id,
-        'plus_weight': pp.weight if pp else 0})
+    # # 获取加分项的信息
+    # pp = Plus.query.filter_by(id=plus_id).first()
+    # '''
+    # if not pp:
+    #     flash('没有这个加分项', 'danger')
+    #     return redirect(url_for('teacher.set_course_info', course_id=course_id))
+    # '''
+    # plus_table.append({
+    #     'plus_id': pp.id if pp else 0,
+    #     'plus_name': pp.name if pp else '',
+    #     'plus_course_id': course_id,
+    #     'plus_weight': pp.weight if pp else 0})
 
     # 加入学生信息
-    team_list = TeamPlus.query.filter_by(course_id=course_id, plus_id=plus_id).all()
-    for i in team_list:
-        plus_table.append({
-            'plus_id': i.plus_id,
-            'course_id': i.course_id,
-            'team_id': i.team_id,
-            'team_score': i.score})
+    team_list = TeamPlus.query.filter_by(plus_id=plus_id).filter(TeamPlus.plus.has(course_id=course_id)).all()
+    teams_origin = Team.query.filter_by(course_id=course_id, status=2).all()
+    teams = []
+    for team in teams_origin:
+        score = TeamPlus.query.filter_by(plus_id=plus_id, team_id=team.id).first()
 
-    if request.method == 'POST' and request.form.get('action') == 'submit':
+        teams.append({
+            'id': team.id,
+            'team_name': team.team_name,
+            'score': score.score if score else 0
+        })
+    # for i in team_list:
+    #     plus_table.append({
+    #         'team_id': i.team_id,
+    #         'team_score': i.score})
+
+    # [{team_id:team_id, team_score:team_score}]
+    if request.method == 'POST':
         _list = json.loads(request.form.get('data'))
-        plus_dic = _list[0]
-        _list = _list[1:]
+        # plus_dic = _list[0]
+        # _list = _list[1:]
 
-        plus = Plus()
-        plus.course_id = course_id
-        plus.name = plus_dic['plus_name']
-        plus.weight = plus_dic['plus_weight']
-        db.session.add(plus)
-        db.session.commit()
+        # plus = Plus()
+        # plus.course_id = course_id
+        # plus.name = plus_dic['plus_name']
+        # plus.weight = plus_dic['plus_weight']
+        # db.session.add(plus)
+        # db.session.commit()
 
         for dic in _list:
             # team plus
             tp = TeamPlus()
-            tp.plus_id = plus.id
-            tp.team_id = disc['team_id']
-            tp.score = disc['team_score']
+            tp.plus_id = plus_id
+            tp.team_id = dic['team_id']
+            tp.score = dic['team_score']
             tp.course_id = course_id
             db.session.add(tp)
         db.session.commit()
-
-        return redirect(url_for('teacher.plus_manage'), course_id=course_id)
-
+        flash('提交成功！', 'success')
+        return redirect(url_for('teacher.plus_manage', course_id=course_id, plus_id=plus_id))
+    plus = Plus.query.filter_by(id=plus_id).first()
+    course = Course.query.filter_by(id=course_id).first()
     return render_template('teacher/plus_manage.html',
-                            plus_table=plus_table,
-                            course_id=course_id,
-                            plus_id=plus_id)
+                           teams=teams,
+                           course_id=course_id,
+                           course=course,
+                           plus=plus,
+                           nav='add_plus')
 
 
 # PudgeG负责：签到情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓

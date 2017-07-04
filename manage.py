@@ -5,7 +5,7 @@ from app import create_app, db
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand, upgrade
 from app.models.models import Student, Teacher, DeanInfo, \
-    Semester, Team, TeamMember, Homework ,Submission, Attachment, Course, CourseTime, SCRelationship, TCRelationship
+    Semester, Team, TeamMember, Homework ,Submission, Attachment, Course, CourseTime, SCRelationship, TCRelationship, Plus
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 
