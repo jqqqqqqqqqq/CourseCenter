@@ -60,3 +60,8 @@ class MoveForm(FlaskForm):
     pending_teams = SelectField('可以加入的组',
                                 choices=[],
                                 coerce=int)
+
+
+class AttendanceForm(FlaskForm):
+    info = StringField("备注")
+    time_delta = IntegerField("反应时长")

@@ -27,6 +27,11 @@
                     <dt>上课地点</dt>
                     <dd>{{ course.place }}</dd>
                 </dl>
+                {% if attendance_available %}
+                <button class="btn btn-primary" type="button" onclick="sign_up()">
+                    签到
+                </button>
+                {% endif %}
             </div>
         </div>
         <!-- /.box-primary -->
@@ -52,5 +57,8 @@
     });
     $('#teamsize_min').attr('type', 'number');
     $('#teamsize_max').attr('type', 'number');
+    function sign_up() {
+        $.form('', {action: 'sign_up'}, 'POST').submit()
+    }
 </script>
 {% endblock %}
