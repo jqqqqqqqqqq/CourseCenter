@@ -35,6 +35,13 @@ def set_course_info(course_id):
         course.outline = form.outline.data
         course.teamsize_min = form.teamsize_min.data
         course.teamsize_max = form.teamsize_max.data
+        course.no_miss = form.no_miss.data
+        print(form.no_miss.data)
+        course.miss_1 = form.miss_1.data
+        course.miss_2 = form.miss_2.data
+        course.miss_3 = form.miss_3.data
+        course.miss_4 = form.miss_4.data
+        course.miss_5 = form.miss_5.data
         db.session.add(course)
         db.session.commit()
         flash('修改成功！', 'success')
@@ -42,6 +49,12 @@ def set_course_info(course_id):
     form.outline.data = course.outline
     form.teamsize_min.data = course.teamsize_min
     form.teamsize_max.data = course.teamsize_max
+    form.no_miss.data = course.no_miss
+    form.miss_1.data = course.miss_1
+    form.miss_2.data = course.miss_2
+    form.miss_3.data = course.miss_3
+    form.miss_4.data = course.miss_4
+    form.miss_5.data = course.miss_5
     return render_template('teacher/course.html', course_id=course_id, form=form, course=course)
 
 

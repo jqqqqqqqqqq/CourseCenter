@@ -218,6 +218,12 @@ class Course(db.Model):
     upload_time = db.Column(db.String(128))
     students = db.relationship('Student', secondary=SCRelationship, backref='courses')
     teachers = db.relationship('Teacher', secondary=TCRelationship, backref='courses')
+    no_miss = db.Column(db.Integer)
+    miss_1 = db.Column(db.Integer)
+    miss_2 = db.Column(db.Integer)
+    miss_3 = db.Column(db.Integer)
+    miss_4 = db.Column(db.Integer)
+    miss_5 = db.Column(db.Integer)
 
     def __repr__(self):
         return '<Course %r>' % self.id

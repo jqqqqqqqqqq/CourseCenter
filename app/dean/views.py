@@ -101,6 +101,12 @@ def manage_course():
         course.outline = '无'
         course.teamsize_min = 1
         course.teamsize_max = 5
+        course.no_miss = 0
+        course.miss_1 = 0
+        course.miss_2 = 0
+        course.miss_3 = 0
+        course.miss_4 = 0
+        course.miss_5 = 0
         course.status = True
 
         try:
