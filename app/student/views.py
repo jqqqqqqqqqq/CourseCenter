@@ -390,8 +390,8 @@ def homework_detail(course_id, homework_id):
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
     team = Team.query.filter_by(owner_id=current_user.id, course_id=course_id).first()
-    if not team:
-        flash('没有团队，不能查看详细信息', 'danger')
+    if (not team) or (team.status != 2):
+        flash('没有团队或者团队未通过，不能查看详细信息', 'danger')
         return redirect(url_for('student.homework', course_id=course_id))
     attempts = len(Submission.query.filter_by(team_id=team.id, homework_id=homework_id).all())
 
