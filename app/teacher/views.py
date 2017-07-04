@@ -874,7 +874,7 @@ def add_plus(course_id):
     return render_template('teacher/add_plus.html', course_id=course_id, form=form)
 
 
-@teacher.route('/<course_id>/plus_manage/<plus_id>', methods=['GET', 'POST'])
+@teacher.route('/<int:course_id>/plus_manage/<int:plus_id>', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def plus_manage(course_id, plus_id):
     plus_table = []
