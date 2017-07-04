@@ -4,7 +4,12 @@
 {% block title %}{{ super() }} - 团队管理{% endblock %}
 
 {% block content_header %}
-    <h1>{{ course.name }}：团队管理</h1>
+    <h1>
+        {{ course.name | safe }}：团队管理
+        <a href="{{ url_for('teacher.get_team_report',
+            course_id=course_id) }}"
+            class="btn btn-success btn-sm">下载团队报表</a>
+    </h1>
 {% endblock %}
 
 {% block breadcrumb %}

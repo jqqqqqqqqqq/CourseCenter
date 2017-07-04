@@ -204,6 +204,8 @@ def homework(course_id):
 
 
 # PudgeG负责：提交情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+@teacher.route('/<course_id>/homework/download', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
 def get_teamhomework_all(course_id):
     # 得到所有小队历次作业提交信息
     workbook = Workbook()
@@ -376,9 +378,6 @@ def homework_detail(course_id, homework_id):
         if Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id).all():
             submission_latest[i.id] = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id)[-1]
 
-    if request.args.get('homework_report'):
-        return get_homework_report(homework_id)
-
     if form.validate_on_submit():
         # 修改作业
         begin_time, end_time = form.time.data.split(' - ')
@@ -432,7 +431,7 @@ def homework_detail(course_id, homework_id):
     if request.form.get('action') == 'submit':
         _list = json.loads(request.form.get('data'))
         for team_id in _list:
-            submission_temp = Team.query.filter_by(id=team_id).first().submissions[-1]
+            submission_temp = Submission.query.filter_by(homework_id=homework_id, team_id=team_id).order_by(Submission.id.desc()).first()
             submission_temp.score = _list[team_id]['score']
             submission_temp.comments = _list[team_id]['comments']
             db.session.add(submission_temp)
@@ -487,7 +486,9 @@ def homework_detail(course_id, homework_id):
 
 
 # PudgeG负责：得到本次作业报表↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-def get_homework_report(homework_id):
+@teacher.route('/<int:course_id>/homework/<int:homework_id>/download', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def get_homework_report(course_id, homework_id):
     # 得到本次作业报表
 
     this_homework = Homework.query.filter_by(id=homework_id).first()
@@ -525,6 +526,8 @@ def get_homework_report(homework_id):
     # worksheet.append(input_info)
 
     filename = 'this_homework.xlsx'
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
     workbook.save(os.path.join(basedir, 'homework', filename))
     if os.path.isfile(os.path.join(basedir, 'homework', filename)):
         response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
@@ -785,6 +788,8 @@ def team_manage(course_id):
 
 
 # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+@teacher.route('/<course_id>/team/download', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
 def get_team_report(course_id):
     down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
     # Team.team_list(course_id)
@@ -923,15 +928,20 @@ def plus_manage(course_id, plus_id):
     return render_template('teacher/plus_manage.html',
                             plus_table=plus_table,
                             course_id=course_id)
+
+
 # PudgeG负责：签到情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+@teacher.route('/<course_id>/attendance/download', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
 def get_attendence_all(course_id):
     # 得到所有小队历次作业提交信息
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = '签到整体情况表'
 
-    student_list = SCRelationship.query.filter_by(course_id=course_id).join(Student, SCRelationship.student_id == Student.id).all()
-
+    # student_list = SCRelationship.query.filter_by(course_id=course_id).join(Student, SCRelationship.student_id == Student.id).all()
+    course = Course.query.filter_by(id=course_id).first()
+    student_list = course.students
     attendance_list = Attendance.query.filter_by(course_id=course_id).all()
 
     # 总列数

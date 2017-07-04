@@ -106,7 +106,7 @@
                                                 data-team-id="{{ team.id }}"
                                                 data-for="comments"
                                                 placeholder="评语">{% if sub.comments -%}
-                                            {{ sub.comments }}{% endif %}</textarea>
+                                            {{ sub.comments }}{%- endif %}</textarea>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -125,16 +125,22 @@
                         </div>
                     {% endfor %}
                     <hr>
-                    <button class="btn btn-primary" onclick="submitAll()">全部提交</button>
-                    <a href="?action=multi_download" class="btn btn-success">下载全部附件</a>
-                    <button class="btn btn-info" onclick="$('#file').click()">上传批改后的作业</button>
-                    {% if teacher_corrected %}
-                        <a href="?action=download_corrected" class="badge bg-blue">
-                            <i class="fa fa-file">
-                                批改详情.zip
-                            </i>
-                        </a>
-                    {% endif %}
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="submitAll()">全部提交</button>
+                        <a href="?action=multi_download" class="btn btn-default">下载全部附件</a>
+                        <a href="{{ url_for('teacher.get_homework_report',
+                                course_id=course_id,
+                                homework_id=homework.id) }}"
+                                class="btn btn-default">下载当前作业的报表</a>
+                        <button class="btn btn-default" onclick="$('#file').click()">上传批改后的作业</button>
+                    </div>
+                        {% if teacher_corrected %}
+                            <a href="?action=download_corrected" class="badge bg-blue">
+                                <i class="fa fa-file">
+                                    批改详情.zip
+                                </i>
+                            </a>
+                        {% endif %}
                     <form id="fileForm" method="post" enctype="multipart/form-data" style="display: none">
                         <input type="text" name="action" value="multi_upload">
                         <input type="file" name="file" id="file">
