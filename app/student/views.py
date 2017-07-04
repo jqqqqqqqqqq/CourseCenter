@@ -59,7 +59,10 @@ def download_resource(course_id, file_name):
 
 
 def attendance_available(course_id):
-    last_attendance = Attendance.query.filter_by(course_id=course_id).last()
+    attencence_list = Attendance.query.filter_by(course_id=course_id).all()
+    if not attencence_list:
+        return False  # 没有签到
+    last_attendance = attencence_list[-1]
     if last_attendance.time_end > datetime.now():  # 时间没截止可以签到
         _attendance = AttendanceStats.query.filter_by(course_id=course_id, student_id=current_user.id).first()
         if not _attendance:
@@ -69,7 +72,11 @@ def attendance_available(course_id):
 
 def submit_attendance(course_id):
     # 学生查看作业列表
-    last_attendance = Attendance.query.filter_by(course_id=course_id).last()
+    attencence_list = Attendance.query.filter_by(course_id=course_id).all()
+    if not attencence_list:
+        flash("当前没有签到", "danger")
+        return False  # 没有签到
+    last_attendance = attencence_list[-1]
     _attendance_available = last_attendance.time_end > datetime.now()  # 时间没截止可以签到
     if not _attendance_available:
         flash("当前没有签到", "danger")
