@@ -94,7 +94,7 @@
                             <td>{{ team.owner.name }}</td>
                             <td></td>
                         </tr>
-                        {% for member in team.members  %}
+                        {% for member in team.members if member.status == 1 %}
                             <tr>
                                 <td></td>
                                 <td>{{ member.student_id }}</td>
