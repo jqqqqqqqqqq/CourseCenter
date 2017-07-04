@@ -33,6 +33,12 @@
                                 {{ course.name }}
                                 <small>{{ (course.semester_id / 100) | int  }}年第{{ course.semester_id % 100 }}学期</small>
                             </h3>
+                            {% if not course.status %}
+                                <div class="box-tools pull-right">
+                                    <a href="#"
+                                        class="btn btn-success btn-sm">下载往期课程作业</a>
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="box-body">
                             <dl class="dl-horizontal">
