@@ -27,6 +27,12 @@ def index():
     return render_template('index.html')
 
 
+def download_file(directory, filename):
+    response = make_response(send_from_directory(directory, filename, as_attachment=True))
+    response.headers["Content-Disposition"] = "attachment; filename={}".format(filename.encode().decode('latin-1'))
+    return response
+
+
 # 提供打包的功能,需要根据实际情况修改
 # 提供一个filelist，是一个list，包含的是目标多个文件的绝对路径
 # output_filename是目标zip的名字
@@ -134,7 +140,7 @@ def show_resource(course_id):
         filename = request.args.get('filename')
         print(filename)
         if os.path.exists(os.path.join(filedir, filename)):
-            return send_from_directory(filedir, filename, as_attachment=True)
+            return download_file(filedir, filename)
         else:
             flash('文件不存在！', 'danger')
             return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
@@ -202,7 +208,7 @@ def team_grade(course_id):
             flash('权限不足，只有组长可以打分', 'danger')
             return redirect(url_for('student.team_grade', course_id=course_id))
         else:
-            try:
+             try:
                 # request.form: {student_id: grade}
                 sum_total = 0
                 # 设置队长grade
@@ -222,7 +228,7 @@ def team_grade(course_id):
                 else:
                     flash('所有人的得分系数平均为1', 'danger')
                     return redirect(url_for('student.team_grade', course_id=course_id))
-            except ValueError:
+             except ValueError:
                 flash('不能为空', 'danger')
                 return redirect(url_for('student.team_grade', course_id=course_id))
     return render_template('student/team_score.html', student_list=student_list, course_id=course_id, team=team)
@@ -341,7 +347,7 @@ def my_team(course_id):
             if member.status == 2:  # 被拒的都滚粗
                 teammate_list.remove(member)
                 continue
-            member.real_name = Student.query.filter_by(id=member.student_id).first().name  # 通过member里的status在前端做通过/拒绝
+            member.real_name = member.student.name  # 通过member里的status在前端做通过/拒绝
 
     if team and request.form.get('action'):
         if request.form.get('action') == 'accept':
@@ -426,7 +432,7 @@ def download_attachment(course_id, homework_id, team_id, filename):
     for i in os.listdir(file_dir):
         if i.startswith(str(file_uuid)):
             os.rename(os.path.join(file_dir, i), os.path.join(file_dir, filename_upload))
-    return send_from_directory(directory=file_dir, filename=filename_upload)
+    return download_file(file_dir, filename_upload)
 
 
 @student.route('/<int:course_id>/homework/<int:homework_id>', methods=['GET', 'POST'])
@@ -512,7 +518,7 @@ def homework_detail(course_id, homework_id):
         teacher_corrected = True
 
     if request.args.get('action') == 'download_corrected':
-        return send_from_directory(directory=corrected_file_dir, filename='teacher_corrected.zip', as_attachment=True)
+        return download_file(corrected_file_dir, 'teacher_corrected.zip')
 
     # 查找上一次提交
     submission_previous = Submission\
@@ -526,6 +532,12 @@ def homework_detail(course_id, homework_id):
     if submission_previous:
         attachment_previous = Attachment.query.filter_by(submission_id=submission_previous.id).first()
 
+    # 寻找当前homework
+    homework_temp = Homework.query.filter_by(id=homework_id).first()
+    begin_time = homework_temp.begin_time
+    end_time = homework_temp.end_time
+
+    current_time = datetime.now()
     return render_template('student/homework_detail.html',
                            course_id=course_id,
                            course=course,
@@ -535,4 +547,7 @@ def homework_detail(course_id, homework_id):
                            form=form,
                            team=team,
                            attempts=attempts,
-                           teacher_corrected=teacher_corrected)
+                           teacher_corrected=teacher_corrected,
+                           begin_time=begin_time,
+                           end_time=end_time,
+                           current_time=current_time)

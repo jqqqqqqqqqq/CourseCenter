@@ -218,6 +218,12 @@ class Course(db.Model):
     upload_time = db.Column(db.String(128))
     students = db.relationship('Student', secondary=SCRelationship, backref='courses')
     teachers = db.relationship('Teacher', secondary=TCRelationship, backref='courses')
+    no_miss = db.Column(db.Integer)
+    miss_1 = db.Column(db.Integer)
+    miss_2 = db.Column(db.Integer)
+    miss_3 = db.Column(db.Integer)
+    miss_4 = db.Column(db.Integer)
+    miss_5 = db.Column(db.Integer)
 
     def __repr__(self):
         return '<Course %r>' % self.id
@@ -310,6 +316,19 @@ class Attendance(db.Model):
     def __repr__(self):
         return '<Attendance %r>' % self.id
 
+    @property
+    def order(self):
+        return Attendance.query.filter_by(course_id=self.course_id).all().index(self)
+
+    @staticmethod
+    def attendance_list(course_id):
+        attendances = Attendance.query.filter_by(course_id=course_id).all()
+        order = 1
+        for attendance in attendances:
+            attendance.order = order  #为返回的 homework 增加 order (顺序) 属性
+            order += 1
+        return attendances
+
 
 class AttendanceStats(db.Model):
     __tablename__ = 'attendance_stats'
@@ -321,10 +340,12 @@ class AttendanceStats(db.Model):
     def __repr__(self):
         return '<AttendanceStats %r>' % self.id
 
+
 # 加分项
 class Plus(db.Model):
     __tablename__ = 'plus'
     id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
     name = db.Column(db.String(256))
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
     weight = db.Column(db.Integer)
