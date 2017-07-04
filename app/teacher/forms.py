@@ -65,3 +65,8 @@ class MoveForm(FlaskForm):
 class AttendanceForm(FlaskForm):
     info = StringField("备注")
     time_delta = IntegerField("反应时长")
+
+
+class PlusForm(FlaskForm):
+    name = StringField('加分项名', validators=[DataRequired()])
+    weight = StringField('加分最大分值', validators=[DataRequired()])

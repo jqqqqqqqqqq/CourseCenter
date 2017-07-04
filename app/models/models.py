@@ -322,9 +322,20 @@ class AttendanceStats(db.Model):
         return '<AttendanceStats %r>' % self.id
 
 # 加分项
-class Plus(db.modbl):
+class Plus(db.Model):
     __tablename__ = 'plus'
     id = db.Column(db.Integer, primary_key=True)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
     name = db.Column(db.String(256))
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
     weight = db.Column(db.Integer)
+
+
+class TeamPlus(db.Model):
+    __tablename__ = 'team_plus'
+    id = db.Column(db.Integer, primary_key=True)
+    plus_id = db.Column(db.Integer, db.ForeignKey('plus.id'))
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+    score = db.Column(db.Integer)
+
+
