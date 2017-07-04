@@ -202,7 +202,7 @@ def team_grade(course_id):
             flash('权限不足，只有组长可以打分', 'danger')
             return redirect(url_for('student.team_grade', course_id=course_id))
         else:
-            try:
+             try:
                 # request.form: {student_id: grade}
                 sum_total = 0
                 # 设置队长grade
@@ -222,7 +222,7 @@ def team_grade(course_id):
                 else:
                     flash('所有人的得分系数平均为1', 'danger')
                     return redirect(url_for('student.team_grade', course_id=course_id))
-            except ValueError:
+             except ValueError:
                 flash('不能为空', 'danger')
                 return redirect(url_for('student.team_grade', course_id=course_id))
     return render_template('student/team_score.html', student_list=student_list, course_id=course_id, team=team)
@@ -526,6 +526,12 @@ def homework_detail(course_id, homework_id):
     if submission_previous:
         attachment_previous = Attachment.query.filter_by(submission_id=submission_previous.id).first()
 
+    # 寻找当前homework
+    homework_temp = Homework.query.filter_by(id=homework_id).first()
+    begin_time = homework_temp.begin_time
+    end_time = homework_temp.end_time
+
+    current_time = datetime.now()
     return render_template('student/homework_detail.html',
                            course_id=course_id,
                            course=course,
@@ -535,4 +541,7 @@ def homework_detail(course_id, homework_id):
                            form=form,
                            team=team,
                            attempts=attempts,
-                           teacher_corrected=teacher_corrected)
+                           teacher_corrected=teacher_corrected,
+                           begin_time=begin_time,
+                           end_time=end_time,
+                           current_time=current_time)

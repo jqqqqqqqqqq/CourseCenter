@@ -349,9 +349,10 @@ def homework_detail(course_id, homework_id):
     teams = Team.query.filter_by(course_id=course_id).all()
 
     submission_latest = {}
+
     for i in teams:
-        submission_latest[i.id] = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id)[-1]
-        # submission_latest.append({str(i.id): Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id)[-1]})
+        if Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id).all():
+            submission_latest[i.id] = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id)[-1]
 
     if request.args.get('homework_report'):
         return get_homework_report(homework_id)
