@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 def before_request():
     pass
 
+
 @student.route('/student')
 @UserAuth.student_course_access
 def index():
@@ -108,12 +109,12 @@ def show_course_info(course_id):
     course = Course.query.filter_by(id=course_id).first()
     if request.form.get('action') == 'sign_up':
         submit_attendance(course_id)
-        print(1)
     _attendance_available = attendance_available(course_id)
     return render_template('student/course.html',
                            course_id=course_id,
                            course=course,
-                           attendance_available=_attendance_available)
+                           attendance_available=_attendance_available,
+                           nav='show_course_info')
 
 
 @student.route('/<course_id>/resource', methods=['GET'])
@@ -170,7 +171,7 @@ def show_resource(course_id):
     for file in os.scandir(expand_path):
         time = datetime.fromtimestamp(file.stat().st_mtime)
         files.append(file_attributes(file.name, sizeof_fmt(file.stat().st_size), time, file.is_dir(), file.is_file()))
-    return render_template('student/resource.html', course_id=course_id, course=course, path=path, files=files)
+    return render_template('student/resource.html', course_id=course_id, course=course, path=path, files=files, nav='show_resource')
 
 
 @student.route('/<course_id>/grade', methods=['GET', 'POST'])
@@ -231,7 +232,7 @@ def team_grade(course_id):
              except ValueError:
                 flash('不能为空', 'danger')
                 return redirect(url_for('student.team_grade', course_id=course_id))
-    return render_template('student/team_score.html', student_list=student_list, course_id=course_id, team=team)
+    return render_template('student/team_score.html', student_list=student_list, course_id=course_id, team=team, nav='team_grade')
 
 
 @student.route('/<course_id>/teams', methods=['GET', 'POST'])
@@ -320,7 +321,8 @@ def team_view(course_id):
                            form=form,
                            course_id=course_id,
                            unjoinable=team_owner or team_joined or team_pending,
-                           pending=team_pending)
+                           pending=team_pending,
+                           nav='team_view')
 
 
 @student.route('/<course_id>/my_team', methods=['GET', 'POST'])
@@ -394,7 +396,8 @@ def my_team(course_id):
     return render_template('student/team_manage.html',
                            team=team,
                            course_id=course_id,
-                           member_status=member_status)
+                           member_status=member_status,
+                           nav='my_team')
 
 
 @student.route('/<int:course_id>/homework')
@@ -404,7 +407,7 @@ def homework(course_id):
     course = Course.query.filter_by(id=course_id).first()
 
     homework_list = Homework.query.filter_by(course_id=course_id).all()
-    return render_template('student/homework.html', course_id=course_id, homeworks=homework_list, course=course)
+    return render_template('student/homework.html', course_id=course_id, homeworks=homework_list, course=course, nav='homework')
 
 
 @student.route('/<int:course_id>/homework/<int:homework_id>/attachment/<int:team_id>/<filename>', methods=['GET', 'POST'])
@@ -550,4 +553,5 @@ def homework_detail(course_id, homework_id):
                            teacher_corrected=teacher_corrected,
                            begin_time=begin_time,
                            end_time=end_time,
-                           current_time=current_time)
+                           current_time=current_time,
+                           nav='homework')

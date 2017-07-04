@@ -78,7 +78,7 @@ desired effect
                                     {% elif current_user.user_type() == 2 %}
                                         <span class="label label-primary">学生</span>
                                     {% endif %}
-                                    {{ current_user.id }}
+                                    {{ current_user.name }}
                                 </span>
                             </a>
                             <ul class="dropdown-menu">
@@ -89,7 +89,7 @@ desired effect
                                 <!-- Menu Footer-->
                                 <li class="user-footer">
                                     <div class="pull-left">
-                                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-default btn-flat">个人信息</a>
+                                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-default btn-flat">修改密码</a>
                                     </div>
                                     <div class="pull-right">
                                         <a href="{{ url_for('auth.logout') }}" class="btn btn-default btn-flat">登出</a>
@@ -108,38 +108,43 @@ desired effect
             <section class="sidebar">
                 <ul class="sidebar-menu">
                     {% if current_user.user_type() == 0 %}
-                        <li><a href="{{ url_for('dean.manage_semester') }}"><i class="fa fa-calendar"></i> <span>学期管理</span></a></li>
-                        <li><a href="{{ url_for('dean.manage_course') }}"><i class="fa fa-book"></i> <span>课程管理</span></a></li>
+                        <li {% if nav == 'manage_semester' %}class="active"{% endif %}><a href="{{ url_for('dean.manage_semester') }}">
+                            <i class="fa fa-calendar"></i> <span>学期管理</span></a>
+                        </li>
+                        <li {% if nav == 'manage_course' %}class="active"{% endif %}>
+                            <a href="{{ url_for('dean.manage_course') }}">
+                                <i class="fa fa-book"></i> <span>课程管理</span></a>
+                        </li>
                     {% elif current_user.user_type() == 1 and course_id %}
-                        <li><a href="{{ url_for('teacher.set_course_info', course_id=course_id) }}">
+                        <li {% if nav == 'set_course_info' %}class="active"{% endif %}><a href="{{ url_for('teacher.set_course_info', course_id=course_id) }}">
                             <i class="fa fa-info"></i> <span>课程信息</span></a>
                         </li>
-                        <li><a href="{{ url_for('teacher.manage_resource', course_id=course_id) }}">
+                        <li {% if nav == 'manage_resource' %}class="active"{% endif %}><a href="{{ url_for('teacher.manage_resource', course_id=course_id) }}">
                             <i class="fa fa-folder"></i> <span>课程资源</span></a>
                         </li>
-                        <li><a href="{{ url_for('teacher.homework', course_id=course_id) }}">
+                        <li {% if nav == 'homework' %}class="active"{% endif %}><a href="{{ url_for('teacher.homework', course_id=course_id) }}">
                             <i class="fa fa-book"></i> <span>课程作业</span></a>
                         </li>
-                        <li><a href="{{ url_for('teacher.team_manage', course_id=course_id) }}">
+                        <li {% if nav == 'team_manage' %}class="active"{% endif %}><a href="{{ url_for('teacher.team_manage', course_id=course_id) }}">
                             <i class="fa fa-group"></i> <span>团队管理</span></a>
                         </li>
-                        <li><a href="{{ url_for('teacher.manage_attendance', course_id=course_id) }}">
+                        <li {% if nav == 'manage_attendance' %}class="active"{% endif %}><a href="{{ url_for('teacher.manage_attendance', course_id=course_id) }}">
                             <i class="fa fa-group"></i> <span>发布签到</span></a>
                         </li>
-                        <li><a href="{{ url_for('main.chat', course_id=course_id) }}">
+                        <li {% if nav == 'chat' %}class="active"{% endif %}><a href="{{ url_for('main.chat', course_id=course_id) }}">
                             <i class="fa fa-comments"></i> <span>聊天室</span></a>
                         </li>
                     {% elif current_user.user_type() == 2 and course_id %}
-                        <li><a href="{{ url_for('student.show_course_info', course_id=course_id) }}">
+                        <li {% if nav == 'show_course_info' %}class="active"{% endif %}><a href="{{ url_for('student.show_course_info', course_id=course_id) }}">
                             <i class="fa fa-info"></i> <span>课程信息</span></a>
                         </li>
-                        <li><a href="{{ url_for('student.show_resource', course_id=course_id) }}">
+                        <li {% if nav == 'show_resource' %}class="active"{% endif %}><a href="{{ url_for('student.show_resource', course_id=course_id) }}">
                             <i class="fa fa-folder"></i> <span>课程资源</span></a>
                         </li>
-                        <li><a href="{{ url_for('student.homework', course_id=course_id) }}">
+                        <li {% if nav == 'homework' %}class="active"{% endif %}><a href="{{ url_for('student.homework', course_id=course_id) }}">
                             <i class="fa fa-book"></i> <span>课程作业</span></a>
                         </li>
-                        <li class="tree-view">
+                        <li class="tree-view {% if nav == 'team_view' or nav == 'my_team' or nav == 'team_grade' %}active{% endif %}">
                             <a href="#">
                                 <i class="fa fa-group"></i> <span>团队</span>
                                 <span class="pull-right-container">
@@ -147,23 +152,23 @@ desired effect
                                 </span>
                             </a>
                             <ul class="treeview-menu">
-                                <li>
+                                <li {% if nav == 'team_view' %}class="active"{% endif %}>
                                     <a href="{{ url_for('student.team_view', course_id=course_id) }}">
                                         <i class="fa fa-circle-o"></i> 团队组建</a>
                                 </li>
-                                <li>
+                                <li {% if nav == 'my_team' %}class="active"{% endif %}>
                                     <a href="{{ url_for('student.my_team', course_id=course_id) }}">
                                         <i class="fa fa-circle"></i> 我的团队
                                     </a>
                                 </li>
-                                <li>
+                                <li {% if nav == 'team_grade' %}class="active"{% endif %}>
                                     <a href="{{ url_for('student.team_grade', course_id=course_id) }}">
                                         <i class="fa fa-check-circle-o"></i> 团队打分
                                     </a>
                                 </li>
                             </ul>
                         </li>
-                        <li><a href="{{ url_for('main.chat', course_id=course_id) }}">
+                        <li {% if nav == 'chat' %}class="active"{% endif %}><a href="{{ url_for('main.chat', course_id=course_id) }}">
                             <i class="fa fa-comments"></i> <span>聊天室</span></a>
                         </li>
                     {% endif %}
@@ -210,9 +215,9 @@ desired effect
         <!-- Main Footer -->
         <footer class="main-footer">
             <!-- To the right -->
-            <div class="pull-right hidden-xs">
-                咕咕咕（这个没啥用的话直接删了也行）
-            </div>
+{#            <div class="pull-right hidden-xs">#}
+{#                咕咕咕（这个没啥用的话直接删了也行）#}
+{#            </div>#}
             <!-- Default to the left -->
             <strong>Copyright &copy; 2016 <a href="#">敏捷组</a>。</strong>保留所有权利。
         </footer>

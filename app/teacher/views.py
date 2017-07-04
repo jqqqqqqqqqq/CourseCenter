@@ -61,7 +61,7 @@ def set_course_info(course_id):
     form.miss_3.data = course.miss_3
     form.miss_4.data = course.miss_4
     form.miss_5.data = course.miss_5
-    return render_template('teacher/course.html', course_id=course_id, form=form, course=course)
+    return render_template('teacher/course.html', course_id=course_id, form=form, course=course, nav='set_course_info')
 
 
 @teacher.route('/<course_id>/resource', methods=['GET', 'POST'])
@@ -161,7 +161,7 @@ def manage_resource(course_id):
     for file in os.scandir(expand_path):
         time = datetime.fromtimestamp(file.stat().st_mtime)
         files.append(file_attributes(file.name, sizeof_fmt(file.stat().st_size), time, file.is_dir(), file.is_file()))
-    return render_template('teacher/resource.html', course_id=course_id, files=files, path=path)
+    return render_template('teacher/resource.html', course_id=course_id, files=files, path=path, nav='manage_resource')
 
 
 @teacher.route('/<course_id>/homework', methods=['GET', 'POST'])
@@ -200,7 +200,7 @@ def homework(course_id):
     course = Course.query.filter_by(id=course_id).first()
 
     homework_list = Homework.query.filter_by(course_id=course_id).all()
-    return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form, course=course)
+    return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form, course=course, nav='homework')
 
 
 # PudgeG负责：提交情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
@@ -482,7 +482,8 @@ def homework_detail(course_id, homework_id):
                            homework=homework,
                            teams=teams,
                            teacher_corrected=teacher_corrected,
-                           submission_latest=submission_latest)
+                           submission_latest=submission_latest,
+                           nav='homework')
 
 
 # PudgeG负责：得到本次作业报表↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
@@ -779,7 +780,8 @@ def team_manage(course_id):
                            course=course,
                            teams=teams,
                            unteamed_group=unteamed_group,
-                           form=form)
+                           form=form,
+                           nav='team_manage')
 
 
 # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
@@ -848,11 +850,12 @@ def manage_attendance(course_id):
                                 form=form,
                                 course=course))
     return render_template('teacher/manage_attendance.html',
-                            course_id=course_id,
-                            attendance_available=attendance_available,
-                            attendance_list=attendance_list,
-                            form=form,
-                            course=course)
+                           course_id=course_id,
+                           attendance_available=attendance_available,
+                           attendance_list=attendance_list,
+                           form=form,
+                           course=course,
+                           nav='manage_attendance')
 
 
 <<<<<<< HEAD

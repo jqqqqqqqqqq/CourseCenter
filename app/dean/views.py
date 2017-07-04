@@ -73,7 +73,7 @@ def manage_semester():
         return redirect(url_for('dean.manage_semester'))
 
     semester_list = Semester.query.all()
-    return render_template('dean/semester.html', form=form, semesters=semester_list)
+    return render_template('dean/semester.html', form=form, semesters=semester_list, nav='manage_semester')
 
 
 @dean.route('/course', methods=['GET', 'POST'])
@@ -186,4 +186,5 @@ def manage_course():
                            form=form,
                            courses=course_list,
                            semesters=semester_list,
-                           stuff=stuff_list)
+                           stuff=stuff_list,
+                           nav='manage_course')
