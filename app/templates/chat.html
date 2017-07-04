@@ -21,9 +21,11 @@
         }
         .direct-chat-text {
             margin: 5px 0 0 10px;
+            display: table;
         }
         .right .direct-chat-text {
             margin-right: 10px;
+            margin-left: auto;
         }
         .direct-chat-info, .direct-chat-text {
             max-width: 400px;
@@ -95,6 +97,7 @@
 <script>
     $('#form').submit(function(ev){
         ev.preventDefault();
+        if(!$('#message').val()) return;
         $.ajax({
             url: 'post',
             method: 'POST',
