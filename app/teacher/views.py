@@ -847,3 +847,79 @@ def manage_attendance(course_id):
                             attendance_list=attendance_list,
                             form=form,
                             course=course)
+
+
+# PudgeG负责：签到情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+def get_attendence_all(course_id):
+    # 得到所有小队历次作业提交信息
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = '签到整体情况表'
+
+    student_list = SCRelationship.query.filter_by(course_id=course_id).join(Student, SCRelationship.student_id == Student.id).all()
+
+    attendance_list = Attendance.query.filter_by(course_id=course_id).all()
+
+    # 总列数
+    column_number = 2
+    # 总行数
+    row_number = 1
+
+    # 第一行输入的内容
+
+    worksheet.cell(row=1, column=1).value = '学生姓名'
+    worksheet.cell(row=1, column=2).value = '学生编号'
+
+    for every_attendance in attendance_list:
+        column_number += 1
+        t = every_attendance.order + 1
+        worksheet.cell(row=1, column=column_number).value = '第' + str(t) + '次签到'
+    column_number += 1
+    worksheet.cell(row=1, column=column_number).value = '签到成绩'
+
+    # 后续内容循环输入
+    for every_student in student_list:
+        row_number += 1
+        worksheet.cell(row=row_number, column=1).value = every_student.name
+        worksheet.cell(row=row_number, column=2).value = every_student.id
+        i = 2
+        times = 0
+        for every_attendance in attendance_list:
+            i += 1
+            attendance_record = AttendanceStats.query.filter_by(attendance_id=every_attendance.id).filter_by(student_id=every_student.id).first()
+            if attendance_record:
+                times += 1
+                worksheet.cell(row=row_number, column=i).value = 'Yes'
+            else:
+                worksheet.cell(row=row_number, column=i).value = 'No'
+        i += 1
+        worksheet.cell(row=row_number, column=i).value = get_attendance_score(times, course_id)
+
+    filename = 'attendance_all.xlsx'
+
+    workbook.save(os.path.join(basedir, 'homework', filename))
+    if os.path.isfile(os.path.join(basedir, 'homework', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
+    else:
+        flash('文件创建失败！', 'danger')
+        return redirect(url_for('teacher.homework', course_id=course_id))
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
+    return response
+
+
+def get_attendance_score(times, course_id):
+    course = Course.query.filter_by(id=course_id).first()
+    if times == 0:
+        return course.no_miss
+    elif times == 1:
+        return course.miss_1
+    elif times == 2:
+        return course.miss_2
+    elif times == 3:
+        return course.miss_3
+    elif times == 4:
+        return course.miss_4
+    else:
+        return course.miss_5
+
+# PudgeG负责：签到情况表导出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑

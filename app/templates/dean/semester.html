@@ -27,6 +27,18 @@
                     <h3 class="box-title">
                         {{ (semester.id / 100) | int }}学年第{{ semester.id % 100 }}学期
                     </h3>
+                    <div class="box-tools pull-right">
+                        <div class="btn-group">
+                            <button type="button"
+                                    class="btn btn-sm btn-danger" data-toggle="tooltip" title="结束学期"
+                                    onclick="endSemester({{ semester.id }})">
+                                <i class="fa fa-square"></i></button>
+                            <button type="button"
+                                    class="btn btn-sm btn-info" data-toggle="tooltip" title="开始学期"
+                                    onclick="startSemester({{ semester.id }})">
+                                <i class="fa fa-play"></i></button>
+                        </div>
+                    </div>
                 </div>
                 <!-- /.box-header -->
                 <div class="box-body">
@@ -75,5 +87,15 @@
     <script>
         $('#id').inputmask('(1|2)999(01|02)');
         $('#time').daterangepicker();
+        function endSemester(semester_id) {
+            if(confirm('真的要结束学期吗？')){
+                location.href='{{ url_for("dean.manage_semester") }}?action=end&semester_id=' + semester_id;
+            }
+        }
+        function startSemester(semester_id) {
+            if(confirm('真的要开始学期吗？')){
+                location.href='{{ url_for("dean.manage_semester") }}?action=start&semester_id=' + semester_id;
+            }
+        }
     </script>
 {% endblock %}
