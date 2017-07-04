@@ -17,6 +17,22 @@
     <li class="active">课程管理</li>
 {% endblock %}
 
+{% block styles %}
+    {{ super() }}
+    <style>
+        [id^=student] {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        [id^=teacher] {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+    </style>
+{% endblock %}
+
 {% block content_main %}
     <article>
         {% for course in courses %}
