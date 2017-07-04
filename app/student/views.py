@@ -267,7 +267,7 @@ def team_view(course_id):
                 db.session.delete(record)
             db.session.commit()
 
-            flash('加入成功！', 'success')
+            flash('申请加入成功！', 'success')
         return redirect(url_for('student.team_view', course_id=course_id))
     elif request.form.get('action') == 'cancel':
         # 取消申请
