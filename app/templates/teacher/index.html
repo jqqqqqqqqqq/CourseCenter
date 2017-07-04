@@ -35,8 +35,8 @@
                             </h3>
                             {% if not course.status %}
                                 <div class="box-tools pull-right">
-                                    <a href="#"
-                                        class="btn btn-success btn-sm">下载往期课程作业</a>
+                                    <button data-download="{{ url_for('teacher.see_class_before', course_id = course.id) }}"
+                                        class="btn btn-success btn-sm">下载往期课程作业</button>
                                 </div>
                             {% endif %}
                         </div>
@@ -73,6 +73,10 @@
     <script>
         $('.course-box').click(function () {
             window.location.href = $(this).data('href');
+        });
+        $('[data-download]').click(function (ev) {
+            ev.stopPropagation();
+            window.location.href = $(this).data('download');
         });
     </script>
 {% endblock %}

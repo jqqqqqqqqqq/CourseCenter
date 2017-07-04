@@ -774,18 +774,23 @@ def givegrade_teacher(course_id, homework_id):
     return render_template('teacher/givegrade_teacher.html', homework_list=homework_list)
 
 
-# 教师查看往期课程和往期课程作业
-@teacher.route('/see_class_before', methods=['GET', 'POST'])
-def see_class_before(course_id):
+# 教师往期课程作业
+@teacher.route('/download', methods=['GET', 'POST'])
+def see_class_before():
 
     # 下载往期课程作业
+
+    course_id = request.args.get('course_id')
 
     file_path = os.path.join(basedir, 'uploads', str(course_id))
     save_path = os.path.join(basedir, 'temp', 'download.zip')
 
+    if not os.path.exists(os.path.join(basedir, 'temp')):
+        os.mkdir(os.path.join(basedir, 'temp'))
+
     if os.path.exists(file_path):
         make_zip(file_path, save_path)
-        return download_file(file_path, 'download.zip')
+        return download_file(os.path.join(basedir, 'temp'), 'download.zip')
     else:
         flash('这个课程没有附件作业保存！', 'danger')
         return redirect(url_for('teacher.see_class_before'))
