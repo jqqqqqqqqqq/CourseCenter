@@ -2,7 +2,6 @@ import shutil
 import os
 import zipfile
 import json
-import uuid
 from flask import flash, redirect, render_template, url_for, request,\
     current_app, send_from_directory, make_response, send_file
 from datetime import datetime, timedelta
@@ -42,7 +41,6 @@ def set_course_info(course_id):
         course.teamsize_min = form.teamsize_min.data
         course.teamsize_max = form.teamsize_max.data
         course.no_miss = form.no_miss.data
-        print(form.no_miss.data)
         course.miss_1 = form.miss_1.data
         course.miss_2 = form.miss_2.data
         course.miss_3 = form.miss_3.data
@@ -50,6 +48,24 @@ def set_course_info(course_id):
         course.miss_5 = form.miss_5.data
         db.session.add(course)
         db.session.commit()
+
+        if form.outlet_attachment.data:
+            file = form.outlet_attachment.data
+            filename = secure_filename(file.filename)
+            filedir = os.path.join(basedir, 'uploads', str(course_id))
+            # 总之有outlet就删了先。。
+            for file_ in os.listdir(filedir):
+                try:
+                    name, _ = file_.split('.')
+                    if name == 'outlet':
+                        os.remove(os.path.join(filedir, file_))
+                except ValueError:
+                    pass
+
+            file.save(os.path.join(filedir, filename))
+            _, ext = filename.split('.')
+            os.rename(os.path.join(filedir, filename), os.path.join(filedir, 'outlet.' + ext))
+
         flash('修改成功！', 'success')
         return redirect(url_for('teacher.set_course_info', course_id=course_id))
     form.outline.data = course.outline
@@ -61,7 +77,19 @@ def set_course_info(course_id):
     form.miss_3.data = course.miss_3
     form.miss_4.data = course.miss_4
     form.miss_5.data = course.miss_5
-    return render_template('teacher/course.html', course_id=course_id, form=form, course=course, nav='set_course_info')
+    outlet_attachment = None
+    filedir = os.path.join(basedir, 'uploads', str(course_id))
+    for file in os.listdir(filedir):
+        try:
+            name, _ = file.split('.')
+            if name == 'outlet':
+                outlet_attachment = file
+                break
+        except ValueError:
+            pass
+    if request.args.get('action') == 'download':
+        return send_from_directory(filedir, outlet_attachment, as_attachment=True)
+    return render_template('teacher/course.html', course_id=course_id, form=form, course=course, nav='set_course_info', outlet_attachment=outlet_attachment)
 
 
 @teacher.route('/<course_id>/resource', methods=['GET', 'POST'])
@@ -922,23 +950,7 @@ def add_plus(course_id):
 @teacher.route('/<int:course_id>/plus_manage/<int:plus_id>', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def plus_manage(course_id, plus_id):
-    # plus_table = []
-
-    # # 获取加分项的信息
-    # pp = Plus.query.filter_by(id=plus_id).first()
-    # '''
-    # if not pp:
-    #     flash('没有这个加分项', 'danger')
-    #     return redirect(url_for('teacher.set_course_info', course_id=course_id))
-    # '''
-    # plus_table.append({
-    #     'plus_id': pp.id if pp else 0,
-    #     'plus_name': pp.name if pp else '',
-    #     'plus_course_id': course_id,
-    #     'plus_weight': pp.weight if pp else 0})
-
     # 加入学生信息
-    team_list = TeamPlus.query.filter_by(plus_id=plus_id).filter(TeamPlus.plus.has(course_id=course_id)).all()
     teams_origin = Team.query.filter_by(course_id=course_id, status=2).all()
     teams = []
     for team in teams_origin:
@@ -949,23 +961,10 @@ def plus_manage(course_id, plus_id):
             'team_name': team.team_name,
             'score': score.score if score else 0
         })
-    # for i in team_list:
-    #     plus_table.append({
-    #         'team_id': i.team_id,
-    #         'team_score': i.score})
 
     # [{team_id:team_id, team_score:team_score}]
     if request.method == 'POST':
         _list = json.loads(request.form.get('data'))
-        # plus_dic = _list[0]
-        # _list = _list[1:]
-
-        # plus = Plus()
-        # plus.course_id = course_id
-        # plus.name = plus_dic['plus_name']
-        # plus.weight = plus_dic['plus_weight']
-        # db.session.add(plus)
-        # db.session.commit()
 
         for dic in _list:
             # team plus

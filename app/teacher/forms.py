@@ -10,6 +10,7 @@ up_corrected = UploadSet('files', extensions=('zip', 'rar'))
 
 class CourseForm(FlaskForm):
     outline = TextAreaField('课程大纲', validators=[InputRequired()])
+    outlet_attachment = FileField('大纲附件')
     teamsize_max = IntegerField('课程人数上限', validators=[DataRequired(), NumberRange(min=1, message='至少需要一个人')])
     teamsize_min = IntegerField('课程人数下限', validators=[DataRequired(), NumberRange(min=1, message='至少需要一个人')])
     no_miss = IntegerField('全勤分数', validators=[InputRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
