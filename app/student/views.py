@@ -13,7 +13,7 @@ from openpyxl.utils.exceptions import InvalidFileException
 import uuid
 from config import basedir
 from sqlalchemy import or_, and_
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 @student.before_request
@@ -58,12 +58,49 @@ def download_resource(course_id, file_name):
     return response
 
 
+def attendance_available(course_id):
+    last_attendance = Attendance.query.filter_by(course_id=course_id).last()
+    if last_attendance.time_end > datetime.now():  # 时间没截止可以签到
+        _attendance = AttendanceStats.query.filter_by(course_id=course_id, student_id=current_user.id).first()
+        if not _attendance:
+            return True
+    return False
+
+
+def submit_attendance(course_id):
+    # 学生查看作业列表
+    last_attendance = Attendance.query.filter_by(course_id=course_id).last()
+    _attendance_available = last_attendance.time_end > datetime.now()  # 时间没截止可以签到
+    if not _attendance_available:
+        flash("当前没有签到", "danger")
+        return False
+    _attendance = AttendanceStats.query.filter_by(course_id=course_id, student_id=current_user.id).first()
+    if _attendance:
+        flash("已经签过到", "info")
+        return False
+    new_attendance = AttendanceStats()
+    new_attendance.course_id = course_id
+    new_attendance.student_id = current_user.id
+    new_attendance.time = datetime.now()
+    new_attendance.attendance_id = last_attendance
+    db.session.add(new_attendance)
+    db.session.commit()
+    flash("签到成功", "success")
+    return True
+
+
 @student.route('/<course_id>/course', methods=['GET'])
 @UserAuth.student_course_access
 def show_course_info(course_id):
     # 学生查看课程信息
     course = Course.query.filter_by(id=course_id).first()
-    return render_template('student/course.html', course_id=course_id, course=course)
+    _attendance_available = attendance_available(course_id)
+    if request.form.get('action') == 'signup':
+        submit_attendance(course_id)
+    return render_template('student/course.html',
+                           course_id=course_id,
+                           course=course,
+                           attendance_available=_attendance_available)
 
 
 @student.route('/<course_id>/resource', methods=['GET'])
@@ -294,6 +331,9 @@ def my_team(course_id):
     if team:
         teammate_list = team.members
         for member in teammate_list:
+            if member.status == 2:
+                teammate_list.remove(member)
+                continue
             member.real_name = Student.query.filter_by(id=member.student_id).first().name  # 通过member里的status在前端做通过/拒绝
 
     if team and request.form.get('action'):
