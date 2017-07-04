@@ -65,7 +65,7 @@
                     <h3 class="box-title">学生作业</h3>
                 </div>
                 <div class="box-body">
-                    {% for team in teams %}
+                    {% for team in teams if submission_latest[team.id] %}
                         <div class="post">
                             <h4>
                                 <i class="fa fa-group"></i>
@@ -74,13 +74,13 @@
                                                     course_id=course_id,
                                                     homework_id=homework.id,
                                                     team_id=team.id,
-                                                    filename=team.submissions[-1].attachment[-1].file_name) }}"
+                                                    filename=submission_latest[team.id].attachment[0].file_name) }}"
                                    class="badge bg-green">
                                     <i class="fa fa-file"></i>
-                                    {{ team.submissions[-1].attachment[-1].file_name }}
+                                    {{ submission_latest[team.id].attachment[0].file_name }}
                                 </a>
                             </h4>
-                            {% set sub = team.submissions[-1] %}
+                            {% set sub = submission_latest[team.id] %}
                             <div class="well">
                                 {{ sub.text_content }}
                                 {% if sub.score %}

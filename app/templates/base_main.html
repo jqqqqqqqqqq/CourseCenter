@@ -126,6 +126,9 @@ desired effect
                         <li><a href="{{ url_for('teacher.manage_attendance', course_id=course_id) }}">
                             <i class="fa fa-group"></i> <span>签到</span></a>
                         </li>
+                        <li><a href="{{ url_for('main.chat', course_id=course_id) }}">
+                            <i class="fa fa-comments"></i> <span>聊天室</span></a>
+                        </li>
                     {% elif current_user.user_type() == 2 and course_id %}
                         <li><a href="{{ url_for('student.show_course_info', course_id=course_id) }}">
                             <i class="fa fa-info"></i> <span>课程信息</span></a>
@@ -160,7 +163,9 @@ desired effect
                                 </li>
                             </ul>
                         </li>
-
+                        <li><a href="{{ url_for('main.chat', course_id=course_id) }}">
+                            <i class="fa fa-comments"></i> <span>聊天室</span></a>
+                        </li>
                     {% endif %}
                 </ul>
             </section>
