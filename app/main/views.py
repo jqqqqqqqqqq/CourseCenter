@@ -27,7 +27,8 @@ def index():
         courses = Student.query.filter_by(id=current_user.id).first().courses
         return render_template('student/index.html', courses=courses)
 
-    return render_template('index.html')
+    return redirect(url_for('dean.manage_semester'))
+
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -70,5 +71,5 @@ def post(course_id):
 @main.route('/<int:course_id>/chat', methods=['GET', 'POST'])
 def chat(course_id):
     cm_list = ChatMessage.query.filter_by(course_id=course_id).order_by(ChatMessage.id.desc()).all()[:10][::-1]
-    return render_template('chat.html', course_id=course_id, cm_list=cm_list)
+    return render_template('chat.html', course_id=course_id, cm_list=cm_list, nav='chat')
 
