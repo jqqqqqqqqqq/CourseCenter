@@ -70,7 +70,7 @@ class MoveForm(FlaskForm):
 
 class AttendanceForm(FlaskForm):
     info = StringField("备注")
-    time_delta = IntegerField("反应时长")
+    time_delta = IntegerField("签到开放时长")
 
 
 class PlusForm(FlaskForm):
