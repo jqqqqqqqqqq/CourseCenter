@@ -22,10 +22,10 @@ def before_request():
     pass
 
 
-@student.route('/student')
-@UserAuth.student_course_access
+@student.route('/')
 def index():
-    return render_template('index.html')
+    courses = Student.query.filter_by(id=current_user.id).first().courses
+    return render_template('student/index.html', courses=courses)
 
 
 def download_file(directory, filename):

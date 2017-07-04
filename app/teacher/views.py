@@ -24,6 +24,12 @@ def before_request():
     pass
 
 
+@teacher.route('/')
+def index():
+    courses = Teacher.query.filter_by(id=current_user.id).first().courses
+    return render_template('teacher/index.html', courses=courses)
+
+
 def download_file(directory, filename):
     response = make_response(send_from_directory(directory, filename, as_attachment=True))
     response.headers["Content-Disposition"] = "attachment; filename={}".format(filename.encode().decode('latin-1'))

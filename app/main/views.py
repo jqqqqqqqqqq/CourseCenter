@@ -19,13 +19,11 @@ def index():
 
     #教师特色主页
     if current_user.user_type() == 1:
-        courses = Teacher.query.filter_by(id=current_user.id).first().courses
-        return render_template('teacher/index.html', courses=courses)
+        return redirect(url_for('teacher.index'))
 
     # 学生特色主页
     if current_user.user_type() == 2:
-        courses = Student.query.filter_by(id=current_user.id).first().courses
-        return render_template('student/index.html', courses=courses)
+        return redirect(url_for('student.index'))
 
     return redirect(url_for('dean.manage_semester'))
 
