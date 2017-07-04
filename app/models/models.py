@@ -112,7 +112,7 @@ class Team(db.Model):
 
     @property
     def number_of_members(self):
-        return len(self.members) + 1
+        return len([a for a in self.members if a.status == 1]) + 1
 
     def __repr__(self):
         return '<Team %r>' % self.id
