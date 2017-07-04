@@ -872,6 +872,7 @@ def manage_attendance(course_id):
                            nav='manage_attendance')
 
 
+'''
 @teacher.route('/<course_id>/add_plus', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def add_plus(course_id):
@@ -886,6 +887,7 @@ def add_plus(course_id):
         flash('成功添加加分项')
         return redirect(url_for('teacher.add_plus'), course_id=course_id)
     return render_template('teacher/add_plus.html', course_id=course_id, form=form)
+'''
 
 
 @teacher.route('/<int:course_id>/plus_manage/<int:plus_id>', methods=['GET', 'POST'])
@@ -895,12 +897,16 @@ def plus_manage(course_id, plus_id):
 
     # 获取加分项的信息
     pp = Plus.query.filter_by(id=plus_id).first()
-    if pp:
-        plus_table.append({
-        'plus_id': pp.id,
-        'plus_name': pp.name,
-        'plus_course_id': pp.course_id,
-        'plus_weight': pp.weight})
+    '''
+    if not pp:
+        flash('没有这个加分项', 'danger')
+        return redirect(url_for('teacher.set_course_info', course_id=course_id))
+    '''
+    plus_table.append({
+        'plus_id': pp.id if pp else 0,
+        'plus_name': pp.name if pp else '',
+        'plus_course_id': course_id,
+        'plus_weight': pp.weight if pp else 0})
 
     # 加入学生信息
     team_list = TeamPlus.query.filter_by(course_id=course_id, plus_id=plus_id).all()
@@ -932,11 +938,13 @@ def plus_manage(course_id, plus_id):
             tp.course_id = course_id
             db.session.add(tp)
         db.session.commit()
+
         return redirect(url_for('teacher.plus_manage'), course_id=course_id)
 
     return render_template('teacher/plus_manage.html',
                             plus_table=plus_table,
-                            course_id=course_id)
+                            course_id=course_id,
+                            plus_id=plus_id)
 
 
 # PudgeG负责：签到情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
