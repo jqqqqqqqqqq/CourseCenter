@@ -459,7 +459,7 @@ def homework_detail(course_id, homework_id):
     # student_id_list = [(a.id for a in student_list)]
 
     if not team:
-        if current_user.id != ren.student_id:
+        if not ren or current_user.id != ren.student_id:
             flash('请先加入团队', 'danger')
             return redirect(url_for('student.homework', course_id=course_id))
         else:
@@ -533,6 +533,8 @@ def homework_detail(course_id, homework_id):
     teacher_corrected = False
     corrected_file_dir = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
     corrected_file_path = os.path.join(corrected_file_dir, 'teacher_corrected.zip')
+
+
     if os.path.exists(corrected_file_path):
         teacher_corrected = True
 
