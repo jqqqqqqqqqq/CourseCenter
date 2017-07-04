@@ -13,6 +13,9 @@
         .file-control {
             margin: 10px;
         }
+        td {
+            vertical-align: middle!important;
+        }
     </style>
 {% endblock %}
 
@@ -54,7 +57,7 @@
                         <input type="file" name="file" id="file">
                     </form>
                 </div>
-                <div class="table-responsive file-list">
+
                     <table class="table table-hover table-striped">
                         <thead>
                             <tr>
@@ -106,7 +109,6 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
             </div>
         </div>
         <!-- /.box-primary -->

@@ -314,7 +314,7 @@ def my_team(course_id):
         elif request.form.get('action') == 'submit':
             # 提交团队组建申请
             _course = Course.query.filter_by(id=course_id).first()
-            if team.number_of_members <= _course.teamsize_min:
+            if team.number_of_members + 1 <= _course.teamsize_min:
                 flash('人数不足', 'danger')
             else:
                 team.status = 1  # 1: pending
@@ -354,6 +354,34 @@ def homework(course_id):
     return render_template('student/homework.html', course_id=course_id, homeworks=homework_list, course=course)
 
 
+@student.route('/<int:course_id>/homework/<int:homework_id>/attachment/<int:team_id>/<filename>', methods=['GET', 'POST'])
+@UserAuth.student_course_access
+def download_attachment(course_id, homework_id, team_id, filename):
+    file_dir = os.path.join(current_app.config['UPLOADED_FILES_DEST'],
+                            str(course_id),
+                            str(homework_id),
+                            str(team_id))
+
+    # 取最新的一次上传和上传时的附件
+    print(team_id)
+    print(Team.query.filter_by(id=team_id).all())
+    attachment_previous = Team \
+        .query \
+        .filter_by(id=team_id) \
+        .filter(Team.submissions.any(homework_id=homework_id)) \
+        .first() \
+        .submissions[-1] \
+        .attachment[0]
+    filename_upload = attachment_previous.file_name
+    file_uuid = attachment_previous.guid
+
+    # 寻找保存目录下的uuid文件
+    for i in os.listdir(file_dir):
+        if i.startswith(str(file_uuid)):
+            os.rename(os.path.join(file_dir, i), os.path.join(file_dir, filename_upload))
+    return send_from_directory(directory=file_dir, filename=filename_upload)
+
+
 @student.route('/<int:course_id>/homework/<int:homework_id>', methods=['GET', 'POST'])
 @UserAuth.student_course_access
 def homework_detail(course_id, homework_id):
@@ -362,17 +390,9 @@ def homework_detail(course_id, homework_id):
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
     team = Team.query.filter_by(owner_id=current_user.id, course_id=course_id).first()
-    if not team:
-        flash('没有团队，不能查看详细信息', 'danger')
+    if (not team) or (team.status != 2):
+        flash('没有团队或者团队未通过，不能查看详细信息', 'danger')
         return redirect(url_for('student.homework', course_id=course_id))
-        '''
-        teammember = TeamMember\
-                        .query\
-                        .join(Team, Team.id == TeamMember.team_id)\
-                        .filter(and_(TeamMember.student_id == current_user.id, Team.course_id == course_id))\
-                        .first()
-        team = Team.query.filter_by(id=teammember.team_id, course_id=course_id).first()
-        '''
     attempts = len(Submission.query.filter_by(team_id=team.id, homework_id=homework_id).all())
 
     begin_time = homework.begin_time
@@ -438,6 +458,15 @@ def homework_detail(course_id, homework_id):
             flash('提交成功!', 'success')
         return redirect(url_for('student.homework_detail', course_id=course_id, homework_id=homework_id))
 
+    teacher_corrected = False
+    corrected_file_dir = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
+    corrected_file_path = os.path.join(corrected_file_dir, 'teacher_corrected.zip')
+    if os.path.exists(corrected_file_path):
+        teacher_corrected = True
+
+    if request.args.get('action') == 'download_corrected':
+        return send_from_directory(directory=corrected_file_dir, filename='teacher_corrected.zip', as_attachment=True)
+
     # 查找上一次提交
     submission_previous = Submission\
         .query\
@@ -458,4 +487,5 @@ def homework_detail(course_id, homework_id):
                            attachment_previous=attachment_previous,
                            form=form,
                            team=team,
-                           attempts=attempts)
+                           attempts=attempts,
+                           teacher_corrected=teacher_corrected)

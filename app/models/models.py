@@ -101,13 +101,14 @@ class Team(db.Model):
     __tablename__ = 'teams'
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('students.id'))
-    owner_grade = db.Column(db.Float, default=0)
+    owner_grade = db.Column(db.Float)
     team_name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
     status = db.Column(db.Integer, default=0)  # 0: building 1: pending 2: accepted 3: rejected 4: dismiss
     reject_reason = db.Column(db.Text)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
     members = db.relationship('TeamMember', backref='team')
     owner = db.relationship('Student', uselist=False)
+    submissions = db.relationship('Submission', backref='team')
 
     @property
     def number_of_members(self):
@@ -153,6 +154,7 @@ class Homework(db.Model):
     end_time = db.Column(db.DateTime)
     weight = db.Column(db.Integer)
     max_submit_attempts = db.Column(db.Integer)
+    submissions = db.relationship('Submission', backref='homework')
 
     def __repr__(self):
         return '<Homework %r>' % self.id
@@ -195,6 +197,7 @@ class Attachment(db.Model):                       # 学生提交作业附件信�
     file_name = db.Column(db.String(128))
     upload_time = db.Column(db.DateTime)
     status = db.Column(db.Boolean)
+    submission = db.relationship('Submission', backref='attachment', uselist=False)
 
     def __repr__(self):
         return '<Attachment %r>' % self.id
