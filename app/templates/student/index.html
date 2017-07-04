@@ -40,6 +40,14 @@
                                 <dd>{{ course.place }}</dd>
                                 <dt>开课状态</dt>
                                 <dd>{% if course.status %}开课{% else %}结课{% endif %}</dd>
+                                <dt>教师</dt>
+                                <dd>
+                                    {% for teacher in course.teachers %}
+                                        {{ teacher.name | safe }}
+                                    {% endfor %}
+                                </dd>
+                                <dt>学生人数</dt>
+                                <dd>{{ course.students | length }}</dd>
                             </dl>
                         </div>
                     </div>
