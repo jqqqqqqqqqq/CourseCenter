@@ -249,6 +249,9 @@ def get_teamhomework_all(course_id):
 
     filename = 'all_homework_submit.xlsx'
 
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
+
     workbook.save(os.path.join(basedir, 'homework', filename))
     if os.path.isfile(os.path.join(basedir, 'homework', filename)):
         response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
@@ -314,6 +317,9 @@ def get_score_all(course_id):
     # worksheet_member.append(input_info2)
 
     filename = 'all_score_final.xlsx'
+
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
 
     workbook.save(os.path.join(basedir, 'homework', filename))
     if os.path.isfile(os.path.join(basedir, 'homework', filename)):
@@ -815,6 +821,9 @@ def get_team_report(course_id):
     # worksheet.append(input_info)
 
     filename = 'all_team.xlsx'
+    if not os.path.exists(os.path.join(basedir, 'team_manage')):
+        os.mkdir(os.path.join(basedir, 'team_manage'))
+
     workbook.save(os.path.join(basedir, 'team_manage', filename))
     if os.path.isfile(os.path.join(basedir, 'team_manage', filename)):
         response = make_response(send_file(os.path.join(basedir, 'team_manage', filename)))
@@ -982,6 +991,9 @@ def get_attendence_all(course_id):
         worksheet.cell(row=row_number, column=i).value = get_attendance_score(times, total, course_id)
 
     filename = 'attendance_all.xlsx'
+
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
 
     workbook.save(os.path.join(basedir, 'homework', filename))
     if os.path.isfile(os.path.join(basedir, 'homework', filename)):
