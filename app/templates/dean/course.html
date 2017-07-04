@@ -41,11 +41,11 @@
                     <h3 class="box-title">
                          {{course.name | safe}}
                     </h3>
-                    <div class="box-tools pull-right">
-                    <button {% if not course.status %}disabled{% endif %} type="button" class="btn btn-sm btn-danger" data-toggle="tooltip" title="结束学期"
-                            onclick="location.href='{{url_for("dean.manage_course")}}?action=end&id={{course.id}}'">
-                        <i class="fa fa-square"></i></button>
-                    </div>
+{#                    <div class="box-tools pull-right">#}
+{#                    <button {% if not course.status %}disabled{% endif %} type="button" class="btn btn-sm btn-danger" data-toggle="tooltip" title="结束学期"#}
+{#                            onclick="location.href='{{url_for("dean.manage_course")}}?action=end&id={{course.id}}'">#}
+{#                        <i class="fa fa-square"></i></button>#}
+{#                    </div>#}
                 </div>
                 <!-- /.box-header -->
                 <div class="box-body">

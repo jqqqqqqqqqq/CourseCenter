@@ -59,6 +59,19 @@ def manage_semester():
         db.session.commit()
         flash('添加成功！', 'success')
         return redirect(url_for('dean.manage_semester'))
+    if request.args.get('action'):
+        semester_id = request.args.get('semester_id')
+        courses = Course.query.filter_by(semester_id=int(semester_id)).all()
+        for course in courses:
+            if request.args.get('action') == 'start':
+                course.status = 1
+            else:
+                course.status = 0
+            db.session.add(course)
+        db.session.commit()
+        flash('操作成功！', 'success')
+        return redirect(url_for('dean.manage_semester'))
+
     semester_list = Semester.query.all()
     return render_template('dean/semester.html', form=form, semesters=semester_list)
 
