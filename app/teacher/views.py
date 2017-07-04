@@ -5,16 +5,13 @@ import json
 import uuid
 from flask import flash, redirect, render_template, url_for, request,\
     current_app, send_from_directory, make_response, send_file
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_login import login_required, current_user
 from ..upload_utils import secure_filename
 from . import teacher
-from .. import db
 from ..auths import UserAuth
-from .forms import up_corrected, UploadCorrected,\
-    CourseForm, HomeworkForm, UploadResourceForm, upsr, AcceptTeam, RejectTeam, MoveForm
-from ..models.models import Course, Homework, Team,\
-    TeamMember, Student, Submission, Attachment, Teacher
+from .forms import *
+from ..models.models import *
 from flask_uploads import UploadNotAllowed
 from openpyxl.utils.exceptions import InvalidFileException
 from config import basedir
@@ -418,7 +415,7 @@ def homework_detail(course_id, homework_id):
             return redirect(url_for('teacher.homework_detail', course_id=course_id, homework_id=homework_id))
         # 可能加入全体广播 向全部学生广播教师修改作业已上传
         flash('上传成功', 'success')
-        redirect(url_for('teacher.homework_detail', course_id=course_id, homework_id=homework_id))
+        return redirect(url_for('teacher.homework_detail', course_id=course_id, homework_id=homework_id))
 
     teacher_corrected = False
     corrected_file_dir = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
@@ -675,3 +672,39 @@ def get_team_report(course_id):
     response.headers["Content-Disposition"] = "attachment; filename=" + 'team_table.xlsx' + ";"
     return response
 # PudgeG负责:团队报表输出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+
+@teacher.route('/<course_id>/attendance', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def manage_attendance(course_id):
+    course = Course.query.filter_by(id=course_id).first()
+    attendance_list = Attendance.query.filter_by(course_id=course_id).all()
+    if not attendance_list:
+        attendance_available = True
+    else:
+        attendance_available = attendance_list[-1].time_end < datetime.now()  # 上次签到未过期，不可以发布下一次
+    form = AttendanceForm()
+    if form.validate_on_submit():
+        if not attendance_available:
+            flash("上一次签到未截止", "danger")
+            return redirect(url_for('teacher.manage_attendance', course_id=course_id, attendance_available=attendance_available))
+        new_attendance = Attendance()
+        new_attendance.course_id = course_id
+        new_attendance.info = form.info.data
+        new_attendance.time_begin = datetime.now()
+        new_attendance.time_end = datetime.now() + timedelta(minutes=form.time_delta.data)
+        db.session.add(new_attendance)
+        db.session.commit()
+        flash("发布成功", "success")
+        return redirect(url_for('teacher.manage_attendance',
+                                course_id=course_id,
+                                attendance_available=attendance_available,
+                                attendance_list=attendance_list,
+                                form=form,
+                                course=course))
+    return render_template('teacher/manage_attendance.html',
+                            course_id=course_id,
+                            attendance_available=attendance_available,
+                            attendance_list=attendance_list,
+                            form=form,
+                            course=course)

@@ -64,7 +64,7 @@ def attendance_available(course_id):
         return False  # 没有签到
     last_attendance = attencence_list[-1]
     if last_attendance.time_end > datetime.now():  # 时间没截止可以签到
-        _attendance = AttendanceStats.query.filter_by(course_id=course_id, student_id=current_user.id).first()
+        _attendance = AttendanceStats.query.filter_by(attendance_id=last_attendance.id, student_id=current_user.id).first()
         if not _attendance:
             return True
     return False
@@ -81,29 +81,29 @@ def submit_attendance(course_id):
     if not _attendance_available:
         flash("当前没有签到", "danger")
         return False
-    _attendance = AttendanceStats.query.filter_by(course_id=course_id, student_id=current_user.id).first()
+    _attendance = AttendanceStats.query.filter_by(attendance_id=last_attendance.id, student_id=current_user.id).first()
     if _attendance:
         flash("已经签过到", "info")
         return False
     new_attendance = AttendanceStats()
-    new_attendance.course_id = course_id
     new_attendance.student_id = current_user.id
     new_attendance.time = datetime.now()
-    new_attendance.attendance_id = last_attendance
+    new_attendance.attendance_id = last_attendance.id
     db.session.add(new_attendance)
     db.session.commit()
     flash("签到成功", "success")
     return True
 
 
-@student.route('/<course_id>/course', methods=['GET'])
+@student.route('/<course_id>/course', methods=['GET', 'POST'])
 @UserAuth.student_course_access
 def show_course_info(course_id):
     # 学生查看课程信息
     course = Course.query.filter_by(id=course_id).first()
-    _attendance_available = attendance_available(course_id)
-    if request.form.get('action') == 'signup':
+    if request.form.get('action') == 'sign_up':
         submit_attendance(course_id)
+        print(1)
+    _attendance_available = attendance_available(course_id)
     return render_template('student/course.html',
                            course_id=course_id,
                            course=course,
