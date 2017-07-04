@@ -27,6 +27,12 @@ def index():
     return render_template('index.html')
 
 
+def download_file(directory, filename):
+    response = make_response(send_from_directory(directory, filename, as_attachment=True))
+    response.headers["Content-Disposition"] = "attachment; filename={}".format(filename.encode().decode('latin-1'))
+    return response
+
+
 # 提供打包的功能,需要根据实际情况修改
 # 提供一个filelist，是一个list，包含的是目标多个文件的绝对路径
 # output_filename是目标zip的名字
@@ -134,7 +140,7 @@ def show_resource(course_id):
         filename = request.args.get('filename')
         print(filename)
         if os.path.exists(os.path.join(filedir, filename)):
-            return send_from_directory(filedir, filename)
+            return download_file(filedir, filename)
         else:
             flash('文件不存在！', 'danger')
             return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
@@ -426,7 +432,7 @@ def download_attachment(course_id, homework_id, team_id, filename):
     for i in os.listdir(file_dir):
         if i.startswith(str(file_uuid)):
             os.rename(os.path.join(file_dir, i), os.path.join(file_dir, filename_upload))
-    return send_from_directory(directory=file_dir, filename=filename_upload)
+    return download_file(file_dir, filename_upload)
 
 
 @student.route('/<int:course_id>/homework/<int:homework_id>', methods=['GET', 'POST'])
@@ -512,7 +518,7 @@ def homework_detail(course_id, homework_id):
         teacher_corrected = True
 
     if request.args.get('action') == 'download_corrected':
-        return send_from_directory(directory=corrected_file_dir, filename='teacher_corrected.zip')
+        return download_file(corrected_file_dir, 'teacher_corrected.zip')
 
     # 查找上一次提交
     submission_previous = Submission\

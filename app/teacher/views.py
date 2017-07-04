@@ -25,6 +25,12 @@ def before_request():
     pass
 
 
+def download_file(directory, filename):
+    response = make_response(send_from_directory(directory, filename, as_attachment=True))
+    response.headers["Content-Disposition"] = "attachment; filename={}".format(filename.encode().decode('latin-1'))
+    return response
+
+
 @teacher.route('/<course_id>/course', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def set_course_info(course_id):
@@ -124,7 +130,7 @@ def manage_resource(course_id):
         filename = request.args.get('filename')
         print(filename)
         if os.path.exists(os.path.join(filedir, filename)):
-            return send_from_directory(filedir, filename)
+            return download_file(filedir, filename)
         else:
             flash('文件不存在！', 'danger')
             return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
@@ -350,7 +356,7 @@ def download_attachment(course_id, homework_id, team_id, filename):
         if i.startswith(str(file_uuid)):
             os.rename(os.path.join(file_dir, i), os.path.join(file_dir, filename_upload))
 
-    return send_from_directory(directory=file_dir, filename=filename_upload)
+    return download_file(file_dir, filename_upload)
 
 
 @teacher.route('/<int:course_id>/homework/<int:homework_id>', methods=['GET', 'POST'])
@@ -418,7 +424,7 @@ def homework_detail(course_id, homework_id):
         rename(file_path, rename_list)
         make_zip(file_path, save_path)
         #return send_from_directory(directory='/'.join(save_path.split('/')[:-1]), filename='download.zip', as_attachment=True)
-        return send_from_directory(directory=os.sep.join(save_path.split(os.sep)[:-1]), filename='download.zip')
+        return download_file(os.sep.join(save_path.split(os.sep)[:-1]), 'download.zip')
 
 
     # json {'team_id':{'score': score, 'comments': comments}}
@@ -460,7 +466,7 @@ def homework_detail(course_id, homework_id):
         teacher_corrected = True
 
     if request.args.get('action') == 'download_corrected':
-        return send_from_directory(directory=corrected_file_dir, filename='teacher_corrected.zip')
+        return download_file(corrected_file_dir, 'teacher_corrected.zip')
 
     form.name.data = homework.name
     form.base_requirement.data = homework.base_requirement
@@ -657,7 +663,7 @@ def givegrade_teacher(course_id, homework_id):
             for i in os.listdir(file_dir):
                 if i.startswith(str(file_uuid)):
                     os.rename(i, filename_upload)
-            return send_from_directory(directory=file_dir, filename=filename_upload)
+            return download_file(file_dir, filename_upload)
 
     # 批量下载学生作业
     if request.method == 'POST' and request.form.get('action') == 'multi_download':
@@ -680,7 +686,7 @@ def givegrade_teacher(course_id, homework_id):
         # 重命名文件并提供下载
         rename(file_path, rename_list)
         make_zip(file_path, save_path)
-        return send_from_directory(directory=file_path, filename='download.zip')
+        return download_file(file_path, 'download.zip')
     return render_template('teacher/givegrade_teacher.html', homework_list=homework_list)
 
 
@@ -705,7 +711,7 @@ def see_class_before():
 
         if os.path.exists(file_path):
             make_zip(file_path, save_path)
-            return send_from_directory(directory=file_path, filename='download.zip')
+            return download_file(file_path, 'download.zip')
         else:
             flash('这个课程没有附件作业保存！', 'danger')
             return redirect(url_for('teacher.see_class_before'))
