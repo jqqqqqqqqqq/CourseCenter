@@ -311,8 +311,7 @@ def download_attachment(course_id, homework_id, team_id, filename):
                             str(team_id))
 
     # 取最新的一次上传和上传时的附件
-    print(team_id)
-    print(Team.query.filter_by(id=team_id).all())
+
     attachment_previous = Team \
         .query \
         .filter_by(id=team_id) \
@@ -320,13 +319,21 @@ def download_attachment(course_id, homework_id, team_id, filename):
         .first() \
         .submissions[-1] \
         .attachment[0]
+
     filename_upload = attachment_previous.file_name
     file_uuid = attachment_previous.guid
 
+    name_temp, ext = os.path.splitext(filename)
+
+    if not os.path.exists(os.path.join(file_dir, file_uuid + ext)):
+        return redirect(url_for('teacher.homework_detail',
+                                course_id=course_id,
+                                homework_id=homework_id))
     # 寻找保存目录下的uuid文件
     for i in os.listdir(file_dir):
         if i.startswith(str(file_uuid)):
             os.rename(os.path.join(file_dir, i), os.path.join(file_dir, filename_upload))
+
     return send_from_directory(directory=file_dir, filename=filename_upload)
 
 
@@ -340,6 +347,11 @@ def homework_detail(course_id, homework_id):
 
     # 取每个组最新的提交记录
     teams = Team.query.filter_by(course_id=course_id).all()
+
+    submission_latest = {}
+    for i in teams:
+        submission_latest[i.id] = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id)[-1]
+        # submission_latest.append({str(i.id): Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id)[-1]})
 
     if request.args.get('homework_report'):
         return get_homework_report(homework_id)
@@ -367,6 +379,7 @@ def homework_detail(course_id, homework_id):
     if request.args.get('action') == 'multi_download':
 
         file_path = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
+
         if not os.path.exists(os.path.join(basedir, 'temp')):
             os.mkdir(os.path.join(basedir, 'temp'))
         save_path = os.path.join(basedir, 'temp', 'download.zip')
@@ -381,12 +394,15 @@ def homework_detail(course_id, homework_id):
         rename_list = {}
         for submission_temp in submission_all:
             attachment_temp = Attachment.query.filter_by(submission_id=submission_temp.id).first()
-            rename_list[str(attachment_temp.guid)] = str(attachment_temp.file_name)
+            if attachment_temp:
+                rename_list[str(attachment_temp.guid)] = str(attachment_temp.file_name)
 
         # 重命名文件并提供下载
         rename(file_path, rename_list)
         make_zip(file_path, save_path)
-        return send_from_directory(directory='/'.join(save_path.split('/')[:-1]), filename='download.zip', as_attachment=True)
+        #return send_from_directory(directory='/'.join(save_path.split('/')[:-1]), filename='download.zip', as_attachment=True)
+        return send_from_directory(directory=os.sep.join(save_path.split(os.sep)[:-1]), filename='download.zip', as_attachment=True)
+
 
     # json {'team_id':{'score': score, 'comments': comments}}
     # 提交评价和评论
@@ -429,7 +445,6 @@ def homework_detail(course_id, homework_id):
     if request.args.get('action') == 'download_corrected':
         return send_from_directory(directory=corrected_file_dir, filename='teacher_corrected.zip', as_attachment=True)
 
-
     form.name.data = homework.name
     form.base_requirement.data = homework.base_requirement
     form.time.data = '{} - {}'.format(homework.begin_time.strftime('%m/%d/%Y %H:%M'),
@@ -443,7 +458,8 @@ def homework_detail(course_id, homework_id):
                            form=form,
                            homework=homework,
                            teams=teams,
-                           teacher_corrected=teacher_corrected)
+                           teacher_corrected=teacher_corrected,
+                           submission_latest=submission_latest)
 
 
 # PudgeG负责：得到本次作业报表↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
@@ -527,6 +543,47 @@ def add_member(student_id, team_id):
         db.session.delete(a)
     db.session.commit()
 
+# PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+def get_team_report(course_id):
+    down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
+    Team.team_list(course_id)
+    if down_list is None:
+        flash('没有已接受团队，请等待申请并批准！', 'danger')
+        return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
+    workbook = Workbook()
+    worksheet = workbook.create_chartsheet()
+    worksheet.title = '已接受团队信息'
+    worksheet.append(['队伍名称', '队伍编号', '成员姓名', '成员编号', '成员角色'])
+    # i = 0 表示队伍数量
+    input_info = []
+    for team in down_list:
+        member_list = TeamMember.query.filter_by(team_id=team.id).all()
+        input_record = {'队伍名称': team.team_name,
+                        '队伍编号': team.order,
+                        '成员姓名': Student.query.filter_by(id=team.owner_id).name,
+                        '成员编号': team.owner_id,
+                        '成员角色': '团队负责人'}
+        input_info.append(input_record)
+        # num_of_member = len(member_list)+1 表示每支队伍人员数量
+        # i += 1
+        for member in member_list:
+            input_record = {'队伍名称': team.team_name,
+                            '队伍编号': team.order,
+                            '成员姓名': Student.query.filter_by(id=member.student_id).name,
+                            '成员编号': member.student_id,
+                            '成员角色': '普通成员'}
+            input_info.append(input_record)
+    worksheet.append(input_info)
+    workbook.save('team_table.xlsx')
+    if os.path.isfile(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')):
+        response = make_response(send_file(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')))
+    else:
+        flash('文件创建失败！', 'danger')
+        return redirect(url_for('teacher/teacher_teammanagement'))
+    response.headers["Content-Disposition"] = "attachment; filename=" + 'team_table.xlsx' + ";"
+    return response
+# PudgeG负责:团队报表输出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
 
 # 用于生成zip文件
 def make_zip(source_dir, output_filename):
@@ -548,6 +605,104 @@ def rename(source_dir, rename_dic):
             name, ext = os.path.splitext(filename)
             if name in rename_dic.keys():
                 os.rename(os.path.join(parent, filename), os.path.join(parent, rename_dic[name]))
+
+
+@teacher.route('/teacher/<course_id>/givegrade_teacher/<homework_id>', methods=['GET', 'POST'])
+def givegrade_teacher(course_id, homework_id):
+
+    # 显示学生已提交的作业(显示最新的提交记录)
+    submission = Submission.query.filter_by(homework_id=homework_id).filter_by(submit_status=1).all()
+    team = Team.query.filter_by(course_id=course_id).all()
+
+    #取每个组最新的提交记录
+    submission_list = []
+    for team_temp in team:
+        submission_latest = Submission \
+            .query \
+            .filter_by(team_id=team_temp.id,
+                       homework_id=homework_id) \
+            .order_by(Submission.id.desc()) \
+            .first()
+        submission_list.append(submission_latest)
+
+    homework_list = []
+    for i in submission_list:
+        team = Team.query.filter_by(id=i.team_id).first()
+        homework_list.append({'team_id': i.team_id, 'team_name': team.team_name, 'text_content': i.text_content,
+                              'score': i.score, 'comments': i.comments})
+
+    # json [{'team_id':team_id, 'score': score, 'comments': comments}]
+    # 提交评价和评论
+    if request.method == 'POST' and request.form.get('action') == 'submit':
+        _list = json.loads(request.form.get('data'))
+        for dic in _list:
+            for submission_temp in submission_list:
+                if submission_temp.team_id == dic['team_id']:
+                    submission_temp.score = dic['score']
+                    submission_temp.comments = dic['comments']
+                    db.session.add(submission_temp)
+        db.session.commit()
+        return redirect(url_for('teacher.givegrade_teacher', course_id=course_id, homework_id=homework_id))
+
+    # 单个下载学生作业
+    if request.method == 'POST' and request.form.get('action') == 'download':
+
+        team_id = request.form.get('team_id')
+        file_dir = os.path.join(current_app.config['UPLOADED_FILES_DEST'],
+                                str(course_id),
+                                str(homework_id),
+                                str(team_id))
+
+        # 取最新的一次上传和上传时的附件
+        submission_previous = Submission \
+            .query \
+            .filter_by(team_id=team_id,
+                       homework_id=homework_id) \
+            .order_by(Submission.id.desc()) \
+            .first()
+
+        attachment_previous = None
+        if submission_previous:
+            attachment_previous = Attachment.query.filter_by(submission_id=submission_previous.id).first()
+
+        # 无附件
+        if not attachment_previous:
+            flash('该组没有上传作业附件')
+            return redirect(url_for('teacher.givegrade_teacher', course_id=course_id, homework_id=homework_id))
+        else:
+
+            filename_upload = attachment_previous.file_name
+            file_uuid = attachment_previous.guid
+
+            # 寻找保存目录下的uuid文件
+            for i in os.listdir(file_dir):
+                if i.startswith(str(file_uuid)):
+                    os.rename(i, filename_upload)
+            return send_from_directory(directory=file_dir, filename=filename_upload, as_attachment=True)
+
+    # 批量下载学生作业
+    if request.method == 'POST' and request.form.get('action') == 'multi_download':
+
+        file_path = os.path.join(basedir, 'uploads', str(course_id), str(homework_id))
+        save_path = os.path.join(basedir, 'temp', 'download.zip')
+
+        submission_all = Submission \
+            .query \
+            .filter_by(homework_id=homework_id) \
+            .order_by(Submission.id.desc()) \
+            .all()
+
+        # 建立 uuid与 上传时file_name的 键值对关系{uuid: file_name}
+        rename_list = {}
+        for submission_temp in submission_all:
+            attachment_temp = Attachment.query.filter_by(submission_id=submission_temp.id).first()
+            rename_list[str(attachment_temp.guid)] = str(attachment_temp.file_name)
+
+        # 重命名文件并提供下载
+        rename(file_path, rename_list)
+        make_zip(file_path, save_path)
+        return send_from_directory(directory=file_path, filename='download.zip', as_attachment=True)
+    return render_template('teacher/givegrade_teacher.html', homework_list=homework_list)
 
 
 # 教师查看往期课程和往期课程作业
