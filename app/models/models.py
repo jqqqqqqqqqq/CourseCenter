@@ -347,8 +347,8 @@ class Plus(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
     name = db.Column(db.String(256))
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
     weight = db.Column(db.Integer)
+    teams = db.relationship('TeamPlus', backref='plus')
 
 
 class TeamPlus(db.Model):
@@ -356,7 +356,7 @@ class TeamPlus(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     plus_id = db.Column(db.Integer, db.ForeignKey('plus.id'))
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
     score = db.Column(db.Integer)
+    team = db.relationship('Team', backref='teamplus', uselist=False)
 
 
