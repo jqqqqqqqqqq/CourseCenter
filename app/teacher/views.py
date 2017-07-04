@@ -35,6 +35,13 @@ def set_course_info(course_id):
         course.outline = form.outline.data
         course.teamsize_min = form.teamsize_min.data
         course.teamsize_max = form.teamsize_max.data
+        course.no_miss = form.no_miss.data
+        print(form.no_miss.data)
+        course.miss_1 = form.miss_1.data
+        course.miss_2 = form.miss_2.data
+        course.miss_3 = form.miss_3.data
+        course.miss_4 = form.miss_4.data
+        course.miss_5 = form.miss_5.data
         db.session.add(course)
         db.session.commit()
         flash('修改成功！', 'success')
@@ -42,6 +49,12 @@ def set_course_info(course_id):
     form.outline.data = course.outline
     form.teamsize_min.data = course.teamsize_min
     form.teamsize_max.data = course.teamsize_max
+    form.no_miss.data = course.no_miss
+    form.miss_1.data = course.miss_1
+    form.miss_2.data = course.miss_2
+    form.miss_3.data = course.miss_3
+    form.miss_4.data = course.miss_4
+    form.miss_5.data = course.miss_5
     return render_template('teacher/course.html', course_id=course_id, form=form, course=course)
 
 
@@ -226,13 +239,15 @@ def get_teamhomework_all(course_id):
             else:
                 worksheet.cell(row=row_number, column=i).value = '0'
 
-    workbook.save(os.path.join(basedir, 'homework', 'team_homework_all.xlsx'))
-    if os.path.isfile(os.path.join(basedir, 'homework', 'team_homework_all.xlsx')):
-        response = make_response(send_file(os.path.join(basedir, 'homework', 'team_homework_all.xlsx')))
+    filename = 'all_homework_submit.xlsx'
+
+    workbook.save(os.path.join(basedir, 'homework', filename))
+    if os.path.isfile(os.path.join(basedir, 'homework', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
     else:
         flash('文件创建失败！', 'danger')
         return redirect(url_for('teacher.homework', course_id=course_id))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'team_homework_all.xlsx' + ";"
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
     return response
 # PudgeG负责：提交情况表导出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -286,18 +301,19 @@ def get_score_all(course_id):
 
         for every_member in member_list:
             # _every_member = Student.query.filter_by(id=every_member.student_id).first()
-
             worksheet_member.append([team.team_name, team.order + 1, every_member.student.name, every_member.student.id, score * every_member.grade])
             # input_info2.append(submission_record)
     # worksheet_member.append(input_info2)
 
-    workbook.save(os.path.join(basedir, 'homework', 'score_all.xlsx'))
-    if os.path.isfile(os.path.join(basedir, 'homework', 'score_all.xlsx')):
-        response = make_response(send_file(os.path.join(basedir, 'homework', 'score_all.xlsx')))
+    filename = 'all_score_final.xlsx'
+
+    workbook.save(os.path.join(basedir, 'homework', filename))
+    if os.path.isfile(os.path.join(basedir, 'homework', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
     else:
         flash('文件创建失败！', 'danger')
         return redirect(url_for('teacher.homework', course_id=course_id))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'score_all.xlsx' + ";"
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
     return response
 # PudgeG负责：总成绩表导出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -500,13 +516,15 @@ def get_homework_report(homework_id):
         #     return switcher.get(status, '其他')
 
     # worksheet.append(input_info)
-    workbook.save(os.path.join(basedir, 'homework', 'homework_report.xlsx'))
-    if os.path.isfile(os.path.join(basedir, 'homework', 'homework_report.xlsx')):
-        response = make_response(send_file(os.path.join(basedir, 'homework', 'homework_report.xlsx')))
+
+    filename = 'this_homework.xlsx'
+    workbook.save(os.path.join(basedir, 'homework', filename))
+    if os.path.isfile(os.path.join(basedir, 'homework', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
     else:
         flash('文件创建失败！', 'danger')
         return redirect(url_for('teacher/teacher_teammanagement'))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'homework_report.xlsx' + ";"
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
     return response
 # PudgeG负责：得到本次作业报表↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -544,47 +562,6 @@ def add_member(student_id, team_id):
     for a in delete_list:
         db.session.delete(a)
     db.session.commit()
-
-# PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-def get_team_report(course_id):
-    down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
-    Team.team_list(course_id)
-    if down_list is None:
-        flash('没有已接受团队，请等待申请并批准！', 'danger')
-        return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-    workbook = Workbook()
-    worksheet = workbook.create_chartsheet()
-    worksheet.title = '已接受团队信息'
-    worksheet.append(['队伍名称', '队伍编号', '成员姓名', '成员编号', '成员角色'])
-    # i = 0 表示队伍数量
-    input_info = []
-    for team in down_list:
-        member_list = TeamMember.query.filter_by(team_id=team.id).all()
-        input_record = {'队伍名称': team.team_name,
-                        '队伍编号': team.order,
-                        '成员姓名': Student.query.filter_by(id=team.owner_id).name,
-                        '成员编号': team.owner_id,
-                        '成员角色': '团队负责人'}
-        input_info.append(input_record)
-        # num_of_member = len(member_list)+1 表示每支队伍人员数量
-        # i += 1
-        for member in member_list:
-            input_record = {'队伍名称': team.team_name,
-                            '队伍编号': team.order,
-                            '成员姓名': Student.query.filter_by(id=member.student_id).name,
-                            '成员编号': member.student_id,
-                            '成员角色': '普通成员'}
-            input_info.append(input_record)
-    worksheet.append(input_info)
-    workbook.save('team_table.xlsx')
-    if os.path.isfile(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')):
-        response = make_response(send_file(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')))
-    else:
-        flash('文件创建失败！', 'danger')
-        return redirect(url_for('teacher/teacher_teammanagement'))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'team_table.xlsx' + ";"
-    return response
-# PudgeG负责:团队报表输出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 
 # 用于生成zip文件
@@ -823,13 +800,15 @@ def get_team_report(course_id):
             # input_info.append(input_record)
 
     # worksheet.append(input_info)
-    workbook.save(os.path.join(basedir, 'team_manage', 'team_table.xlsx'))
-    if os.path.isfile(os.path.join(basedir, 'team_manage', 'team_table.xlsx')):
-        response = make_response(send_file(os.path.join(basedir, 'team_manage', 'team_table.xlsx')))
+
+    filename = 'all_team.xlsx'
+    workbook.save(os.path.join(basedir, 'team_manage', filename))
+    if os.path.isfile(os.path.join(basedir, 'team_manage', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'team_manage', filename)))
     else:
         flash('文件创建失败！', 'danger')
         return redirect(url_for('teacher/teacher_teammanagement'))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'team_table.xlsx' + ";"
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
     return response
 # PudgeG负责:团队报表输出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
