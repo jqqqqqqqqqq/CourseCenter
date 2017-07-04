@@ -54,7 +54,7 @@
                                     <span class="direct-chat-name pull-right">
                                         {% if message.student_id %}{{ message.student.name }}
                                         {%- elif message.teacher_id %}{{ message.teacher.name }}{% endif %}
-                                    </span>{% if message.teacher_id %}<span class="bandge bg-green">教师</span>{% endif %}
+                                    </span>{% if message.teacher_id %}<span class="badge bg-green">教师</span>{% endif %}
                                         <span class="direct-chat-timestamp pull-left">{{ moment(message.time, local=True).format('YYYY-MM-DD HH:mm:ss') }}</span>
                                 </div>
                                 <div class="direct-chat-text">
@@ -67,7 +67,7 @@
                                     <span class="direct-chat-name pull-left">
                                         {% if message.student_id %}{{ message.student.name }}
                                         {%- elif message.teacher_id %}{{ message.teacher.name }}{% endif %}
-                                    </span>'{% if message.teacher_id %}<span class="bandge bg-green">教师</span>{% endif %}
+                                    </span>'{% if message.teacher_id %}<span class="badge bg-green">教师</span>{% endif %}
                                     <span class="direct-chat-timestamp pull-right">{{ moment(message.time, local=True).format('YYYY-MM-DD HH:mm:ss') }}</span>
                                 </div>
                                 <div class="direct-chat-text">
@@ -121,7 +121,7 @@
         if(data.user_id === {{ current_user.id }}){
             $('#message-show').append('<div class="direct-chat-msg right">' +
                 '<div class="direct-chat-info clearfix">' +
-                '<span class="direct-chat-name pull-right">' + data.user_name + '</span>' + ((data.identity===1)?'<span class="bandge bg-green">教师</span>':'') +
+                '<span class="direct-chat-name pull-right">' + data.user_name + '</span>' + ((data.identity===1)?'<span class="badge bg-green">教师</span>':'') +
                 '<span class="direct-chat-timestamp pull-left">' + data.time + '</span>' +
                 '</div>' +
                 '<div class="direct-chat-text">' +
@@ -131,7 +131,7 @@
         } else {
             $('#message-show').append('<div class="direct-chat-msg">' +
                 '<div class="direct-chat-info clearfix">' +
-                '<span class="direct-chat-name pull-left">' + data.user_name + '</span>' + ((data.identity===1)?'<span class="bandge bg-green">教师</span>':'') +
+                '<span class="direct-chat-name pull-left">' + data.user_name + '</span>' + ((data.identity===1)?'<span class="badge bg-green">教师</span>':'') +
                 '<span class="direct-chat-timestamp pull-right">' + data.time + '</span>' +
                 '</div>' +
                 '<div class="direct-chat-text">' +

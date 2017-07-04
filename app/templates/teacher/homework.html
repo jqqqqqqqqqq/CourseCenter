@@ -26,12 +26,16 @@
 {% endblock %}
 
 {% block content_main %}
-    <article>
         <div class="box box-primary" data-href="#">
             <div class="box-header with-border">
                 <h3 class="box-title">
                     作业列表
                 </h3>
+                <div class="box-tools pull-right">
+                    <a href="{{ url_for('teacher.get_teamhomework_all',
+                            course_id=course_id) }}"
+                       class="btn btn-dropbox btn-sm"><i class="fa fa-dropbox"></i>下载完整提交状态</a>
+                </div>
             </div>
             <div class="box-body no-padding">
                 <table class="table table-hover table-stripped">

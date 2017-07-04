@@ -4,7 +4,11 @@
 {% block title %}{{ super() }} - 课程管理{% endblock %}
 
 {% block content_header %}
-    <h1>{{ course.name }}：签到信息</h1>
+    <h1>{{ course.name }}：签到信息
+        <a href="{{ url_for('teacher.get_attendence_all',
+            course_id=course_id) }}"
+            class="btn btn-success btn-sm">下载签到报表</a>
+    </h1>
 {% endblock %}
 
 {% block body_attribs %} class="hold-transition skin-black sidebar-mini" {% if form.errors %}onload="edit_state()"{% endif %}{% endblock %}
@@ -84,7 +88,7 @@
                     {{ wtf.form_errors(form) }}
 
                     {{ wtf.form_field(form.info) }}
-                    {{ wtf.form_field(form.time_delta) }}
+                    {{ wtf.form_field(form.time_delta, placeholder="单位：分钟 e.g. 5") }}
 
                     <button type="submit" class="btn btn-primary btn-block btn-flat">提交</button>
                 </form>

@@ -12,12 +12,12 @@ class CourseForm(FlaskForm):
     outline = TextAreaField('课程大纲', validators=[InputRequired()])
     teamsize_max = IntegerField('课程人数上限', validators=[DataRequired(), NumberRange(min=1, message='至少需要一个人')])
     teamsize_min = IntegerField('课程人数下限', validators=[DataRequired(), NumberRange(min=1, message='至少需要一个人')])
-    no_miss = IntegerField('全勤分数', validators=[DataRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
-    miss_1 = IntegerField('一次缺勤', validators=[DataRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
-    miss_2 = IntegerField('两次缺勤', validators=[DataRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
-    miss_3 = IntegerField('三次缺勤', validators=[DataRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
-    miss_4 = IntegerField('四次缺勤', validators=[DataRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
-    miss_5 = IntegerField('五次及以上缺勤', validators=[DataRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
+    no_miss = IntegerField('全勤分数', validators=[InputRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
+    miss_1 = IntegerField('一次缺勤', validators=[InputRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
+    miss_2 = IntegerField('两次缺勤', validators=[InputRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
+    miss_3 = IntegerField('三次缺勤', validators=[InputRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
+    miss_4 = IntegerField('四次缺勤', validators=[InputRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
+    miss_5 = IntegerField('五次及以上缺勤', validators=[InputRequired(), NumberRange(min=0, max=100, message='分数在0-100')])
 
     def validate(self):
         if not super(CourseForm, self).validate():
@@ -70,7 +70,7 @@ class MoveForm(FlaskForm):
 
 class AttendanceForm(FlaskForm):
     info = StringField("备注")
-    time_delta = IntegerField("反应时长")
+    time_delta = IntegerField("签到开放时长")
 
 
 class PlusForm(FlaskForm):
