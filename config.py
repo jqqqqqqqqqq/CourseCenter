@@ -8,7 +8,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_RECORD_QUERIES = True
     UPLOADED_FILES_DEST = os.path.join(basedir, 'uploads')  # 创建文件上传目录
-    REDIS_URL = "redis://localhost"
+    REDIS_URL = "redis://127.0.0.1"
 
     @staticmethod
     def init_app(app):
