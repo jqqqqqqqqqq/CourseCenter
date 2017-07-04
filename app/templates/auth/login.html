@@ -5,6 +5,11 @@
 {% block styles %}
 {{super()}}
     <link rel="stylesheet" href="{{url_for('static', filename='guest_index.css')}}">
+    <style>
+        body {
+            background-image: url('{{ url_for('static', filename='bg.png') }}')!important;
+        }
+    </style>
 {% endblock %}
 
 {% block body_attribs %} class="hold-transition login-page"{% endblock %}
