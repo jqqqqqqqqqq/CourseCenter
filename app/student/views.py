@@ -446,9 +446,25 @@ def homework_detail(course_id, homework_id):
     course = Course.query.filter_by(id=course_id).first()
     homework = Homework.query.filter_by(id=homework_id).first()
     team = Team.query.filter_by(owner_id=current_user.id, course_id=course_id).first()
-    if (not team) or (team.status != 2):
-        flash('没有团队或者团队未通过，不能查看详细信息', 'danger')
-        return redirect(url_for('student.homework', course_id=course_id))
+
+    # team_list = Team.query.filter_by(course_id=course_id).all()
+    # team_id_list = [(a.id for a in team_list)]
+
+    ren = TeamMember.query.filter_by(student_id=current_user.id).\
+        filter(TeamMember.team.has(course_id=course_id)).first()
+
+    # student_list_query = TeamMember.query.filter(TeamMember.id.in_(team_id_list))
+    # print(student_list_query)
+    # student_list = student_list_query.all()
+    # student_id_list = [(a.id for a in student_list)]
+
+    if not team:
+        if current_user.id != ren.student_id:
+            flash('请先加入团队', 'danger')
+            return redirect(url_for('student.homework', course_id=course_id))
+        else:
+            team = ren.team
+
     attempts = len(Submission.query.filter_by(team_id=team.id, homework_id=homework_id).all())
 
     # begin_time = homework.begin_time
@@ -464,8 +480,8 @@ def homework_detail(course_id, homework_id):
     if form.validate_on_submit():
         # 无法提交情况
         if current_user.id != team.owner_id:
-            flash('权限不足，只有组长可以管理作业', 'danger')
-            return redirect(url_for('student.homework_detail', course_id=course_id, homework_id=homework_id))
+            flash('只有队长可以管理作业！', 'danger')
+            return redirect(url_for('student.homework', course_id=course_id))
 
         if attempts >= homework.max_submit_attempts:
             flash('提交已达最大次数，无法提交', 'danger')

@@ -123,6 +123,9 @@ def manage_course():
         course.status = True
 
         try:
+
+            if not os.path.exists(os.path.join(basedir, 'uploads')):
+                os.mkdir(os.path.join(basedir, 'uploads'))
             # 上传文件处理
             print(os.getcwd() + '/uploads')
             filename = ups.save(form.stuff_info.data, name=str(uuid.uuid4())+".xlsx")
