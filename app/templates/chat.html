@@ -97,7 +97,7 @@
 <script>
     $('#form').submit(function(ev){
         ev.preventDefault();
-        if(!$('#message').val()) return;
+        if(!$.trim($('#message').val())) return;
         $.ajax({
             url: 'post',
             method: 'POST',
