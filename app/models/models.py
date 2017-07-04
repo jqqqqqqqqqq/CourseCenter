@@ -292,6 +292,8 @@ class ChatMessage(db.Model):
     time = db.Column(db.DateTime)
     content = db.Column(db.String(256))  # 暂定256字
     markdown = db.Column(db.Boolean)
+    student = db.relationship('Student', uselist=False)
+    teacher = db.relationship('Teacher', uselist=False)
 
     def __repr__(self):
         return '<ChatMessage %r>' % self.id
