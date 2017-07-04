@@ -316,6 +316,10 @@ class Attendance(db.Model):
     def __repr__(self):
         return '<Attendance %r>' % self.id
 
+    @property
+    def order(self):
+        return Attendance.query.filter_by(course_id=self.course_id).all().index(self)
+
 
 class AttendanceStats(db.Model):
     __tablename__ = 'attendance_stats'
