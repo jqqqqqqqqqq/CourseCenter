@@ -968,16 +968,18 @@ def get_attendence_all(course_id):
         worksheet.cell(row=row_number, column=2).value = every_student.id
         i = 2
         times = 0
+        total = 0
         for every_attendance in attendance_list:
             i += 1
+            total += 1
             attendance_record = AttendanceStats.query.filter_by(attendance_id=every_attendance.id).filter_by(student_id=every_student.id).first()
             if attendance_record:
-                times += 1
                 worksheet.cell(row=row_number, column=i).value = 'Yes'
             else:
+                times += 1
                 worksheet.cell(row=row_number, column=i).value = 'No'
         i += 1
-        worksheet.cell(row=row_number, column=i).value = get_attendance_score(times, course_id)
+        worksheet.cell(row=row_number, column=i).value = get_attendance_score(times, total, course_id)
 
     filename = 'attendance_all.xlsx'
 
@@ -991,8 +993,10 @@ def get_attendence_all(course_id):
     return response
 
 
-def get_attendance_score(times, course_id):
+def get_attendance_score(times, total, course_id):
     course = Course.query.filter_by(id=course_id).first()
+    if total == 0:
+        return 0
     if times == 0:
         return course.no_miss
     elif times == 1:
