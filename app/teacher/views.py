@@ -249,6 +249,9 @@ def get_teamhomework_all(course_id):
 
     filename = 'all_homework_submit.xlsx'
 
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
+
     workbook.save(os.path.join(basedir, 'homework', filename))
     if os.path.isfile(os.path.join(basedir, 'homework', filename)):
         response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
@@ -314,6 +317,9 @@ def get_score_all(course_id):
     # worksheet_member.append(input_info2)
 
     filename = 'all_score_final.xlsx'
+
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
 
     workbook.save(os.path.join(basedir, 'homework', filename))
     if os.path.isfile(os.path.join(basedir, 'homework', filename)):
@@ -815,6 +821,9 @@ def get_team_report(course_id):
     # worksheet.append(input_info)
 
     filename = 'all_team.xlsx'
+    if not os.path.exists(os.path.join(basedir, 'team_manage')):
+        os.mkdir(os.path.join(basedir, 'team_manage'))
+
     workbook.save(os.path.join(basedir, 'team_manage', filename))
     if os.path.isfile(os.path.join(basedir, 'team_manage', filename)):
         response = make_response(send_file(os.path.join(basedir, 'team_manage', filename)))
@@ -863,6 +872,7 @@ def manage_attendance(course_id):
                            nav='manage_attendance')
 
 
+'''
 @teacher.route('/<course_id>/add_plus', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def add_plus(course_id):
@@ -877,6 +887,7 @@ def add_plus(course_id):
         flash('成功添加加分项')
         return redirect(url_for('teacher.add_plus'), course_id=course_id)
     return render_template('teacher/add_plus.html', course_id=course_id, form=form)
+'''
 
 
 @teacher.route('/<int:course_id>/plus_manage/<int:plus_id>', methods=['GET', 'POST'])
@@ -886,12 +897,16 @@ def plus_manage(course_id, plus_id):
 
     # 获取加分项的信息
     pp = Plus.query.filter_by(id=plus_id).first()
-    if pp:
-        plus_table.append({
-        'plus_id': pp.id,
-        'plus_name': pp.name,
-        'plus_course_id': pp.course_id,
-        'plus_weight': pp.weight})
+    '''
+    if not pp:
+        flash('没有这个加分项', 'danger')
+        return redirect(url_for('teacher.set_course_info', course_id=course_id))
+    '''
+    plus_table.append({
+        'plus_id': pp.id if pp else 0,
+        'plus_name': pp.name if pp else '',
+        'plus_course_id': course_id,
+        'plus_weight': pp.weight if pp else 0})
 
     # 加入学生信息
     team_list = TeamPlus.query.filter_by(course_id=course_id, plus_id=plus_id).all()
@@ -923,11 +938,13 @@ def plus_manage(course_id, plus_id):
             tp.course_id = course_id
             db.session.add(tp)
         db.session.commit()
+
         return redirect(url_for('teacher.plus_manage'), course_id=course_id)
 
     return render_template('teacher/plus_manage.html',
                             plus_table=plus_table,
-                            course_id=course_id)
+                            course_id=course_id,
+                            plus_id=plus_id)
 
 
 # PudgeG负责：签到情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
@@ -968,18 +985,23 @@ def get_attendence_all(course_id):
         worksheet.cell(row=row_number, column=2).value = every_student.id
         i = 2
         times = 0
+        total = 0
         for every_attendance in attendance_list:
             i += 1
+            total += 1
             attendance_record = AttendanceStats.query.filter_by(attendance_id=every_attendance.id).filter_by(student_id=every_student.id).first()
             if attendance_record:
-                times += 1
                 worksheet.cell(row=row_number, column=i).value = 'Yes'
             else:
+                times += 1
                 worksheet.cell(row=row_number, column=i).value = 'No'
         i += 1
-        worksheet.cell(row=row_number, column=i).value = get_attendance_score(times, course_id)
+        worksheet.cell(row=row_number, column=i).value = get_attendance_score(times, total, course_id)
 
     filename = 'attendance_all.xlsx'
+
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
 
     workbook.save(os.path.join(basedir, 'homework', filename))
     if os.path.isfile(os.path.join(basedir, 'homework', filename)):
@@ -991,8 +1013,10 @@ def get_attendence_all(course_id):
     return response
 
 
-def get_attendance_score(times, course_id):
+def get_attendance_score(times, total, course_id):
     course = Course.query.filter_by(id=course_id).first()
+    if total == 0:
+        return 0
     if times == 0:
         return course.no_miss
     elif times == 1:
