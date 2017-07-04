@@ -7,7 +7,8 @@
     <h1>{{ course.name }}：课程信息</h1>
 {% endblock %}
 
-{% block body_attribs %} class="hold-transition skin-black sidebar-mini" {% if form.errors %}onload="edit_state()"{% endif %}{% endblock %}
+{% block body_attribs %} class="hold-transition skin-black sidebar-mini" {% if form.errors %}onload="edit_state()"
+{% endif %}{% endblock %}
 
 {% block breadcrumb %}
     <li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
@@ -19,7 +20,8 @@
         <div class="box box-{% if course.status %}primary{% else %}default{% endif %} course-box" data-href="#">
             <div class="box-header with-border">
                 <h3 class="box-title">
-                    {{ course.name }}<small>{{ semester(course.semester_id) }}</small>
+                    {{ course.name }}
+                    <small>{{ semester(course.semester_id) }}</small>
                 </h3>
                 <div class="box-tools pull-right">
                     <button type="button" class="btn btn-sm btn-primary" data-toggle="tooltip"
@@ -32,6 +34,7 @@
                 <form action="" method="post">
                     {{ form.hidden_tag() }}
                     {{ wtf.form_field(form.outline) }}
+                    <p class="form-data">{{ form.outline.data }}</p>
                     <div class="form-group">
                         <div class="row">
                             <div class="col-xs-6">
@@ -41,6 +44,34 @@
                             <div class="col-xs-6">
                                 {{ wtf.form_field(form.teamsize_max, placeholder="上限") }}
                                 <p class="form-data">{{ form.teamsize_max.data }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-2">
+                                {{ wtf.form_field(form.no_miss, placeholder="0") }}
+                                <p class="form-data">
+                                    {{ form.no_miss.data }}
+                                </p>
+                            </div>
+                            <div class="col-xs-2">
+                                {{ wtf.form_field(form.miss_1, placeholder="0") }}
+                                <p class="form-data">{{ form.miss_1.data }}</p>
+                            </div>
+                            <div class="col-xs-2">
+                                {{ wtf.form_field(form.miss_2, placeholder="0") }}
+                                <p class="form-data">{{ form.miss_2.data }}</p>
+                            </div>
+                            <div class="col-xs-2">
+                                {{ wtf.form_field(form.miss_3, placeholder="0") }}
+                                <p class="form-data">{{ form.miss_3.data }}</p>
+                            </div>
+                            <div class="col-xs-2">
+                                {{ wtf.form_field(form.miss_4, placeholder="0") }}
+                                <p class="form-data">{{ form.miss_4.data }}</p>
+                            </div>
+                            <div class="col-xs-2">
+                                {{ wtf.form_field(form.miss_5, placeholder="0") }}
+                                <p class="form-data">{{ form.miss_5.data }}</p>
                             </div>
                         </div>
                     </div>
@@ -53,24 +84,24 @@
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
-<script>
-    $('.form-control').hide();
-    function edit_state() {
-        if($(this).hasClass('btn-danger')) {
-            $(this).removeClass('btn-danger');
-            $(this).addClass('btn-primary');
-            $('.form-control').hide();
-            $('.form-data').show();
-        } else {
-            $(this).removeClass('btn-primary');
-            $(this).addClass('btn-danger');
-            $('.form-control').show();
-            $('.form-data').hide();
+    {{ super() }}
+    <script>
+        $('.form-control').hide();
+        function edit_state() {
+            if ($(this).hasClass('btn-danger')) {
+                $(this).removeClass('btn-danger');
+                $(this).addClass('btn-primary');
+                $('.form-control').hide();
+                $('.form-data').show();
+            } else {
+                $(this).removeClass('btn-primary');
+                $(this).addClass('btn-danger');
+                $('.form-control').show();
+                $('.form-data').hide();
+            }
         }
-    }
-    $('#toggleEdit').click(edit_state);
-    $('#teamsize_min').attr('type', 'number');
-    $('#teamsize_max').attr('type', 'number');
-</script>
+        $('#toggleEdit').click(edit_state);
+        $('#teamsize_min').attr('type', 'number');
+        $('#teamsize_max').attr('type', 'number');
+    </script>
 {% endblock %}

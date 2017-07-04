@@ -59,8 +59,21 @@ def manage_semester():
         db.session.commit()
         flash('添加成功！', 'success')
         return redirect(url_for('dean.manage_semester'))
+    if request.args.get('action'):
+        semester_id = request.args.get('semester_id')
+        courses = Course.query.filter_by(semester_id=int(semester_id)).all()
+        for course in courses:
+            if request.args.get('action') == 'start':
+                course.status = 1
+            else:
+                course.status = 0
+            db.session.add(course)
+        db.session.commit()
+        flash('操作成功！', 'success')
+        return redirect(url_for('dean.manage_semester'))
+
     semester_list = Semester.query.all()
-    return render_template('dean/semester.html', form=form, semesters=semester_list)
+    return render_template('dean/semester.html', form=form, semesters=semester_list, nav='manage_semester')
 
 
 @dean.route('/course', methods=['GET', 'POST'])
@@ -101,9 +114,18 @@ def manage_course():
         course.outline = '无'
         course.teamsize_min = 1
         course.teamsize_max = 5
+        course.no_miss = 0
+        course.miss_1 = 0
+        course.miss_2 = 0
+        course.miss_3 = 0
+        course.miss_4 = 0
+        course.miss_5 = 0
         course.status = True
 
         try:
+
+            if not os.path.exists(os.path.join(basedir, 'uploads')):
+                os.mkdir(os.path.join(basedir, 'uploads'))
             # 上传文件处理
             print(os.getcwd() + '/uploads')
             filename = ups.save(form.stuff_info.data, name=str(uuid.uuid4())+".xlsx")
@@ -167,4 +189,5 @@ def manage_course():
                            form=form,
                            courses=course_list,
                            semesters=semester_list,
-                           stuff=stuff_list)
+                           stuff=stuff_list,
+                           nav='manage_course')

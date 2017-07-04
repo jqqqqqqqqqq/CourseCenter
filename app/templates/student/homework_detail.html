@@ -63,11 +63,6 @@
                         <i class="fa fa-file"></i> {{ attachment_previous.file_name }}
                     </a>
                 {% endif %}
-                {% if teacher_corrected %}
-                    <a href="?action=download_corrected" class="badge bg-blue">
-                        <i class="fa fa-file"></i> 批改详情.zip
-                    </a>
-                {% endif %}
             </h3>
             <div class="box-body">
                 {% if submission_previous %}
@@ -78,15 +73,28 @@
                             <dt>分数</dt>
                             <dd>{{ submission_previous.score }}</dd>
                             <dt>教师评论</dt>
-                            <dd>{{ submission_previous.comments }}</dd>
+                            <dd>{{ submission_previous.comments | safe }}</dd>
+                            {% if teacher_corrected %}
+                                <dt>批改详情</dt>
+                                <dd>
+                                    <a href="?action=download_corrected" class="badge bg-blue">
+                                        <i class="fa fa-file"></i> 批改详情.zip
+                                    </a>
+                                </dd>
+                            {% endif %}
                         </dl>
                     {% endif %}
                     </div>
+                {% elif current_time < begin_time %}
+                    还未到提交时间
+                {% elif current_time > end_time %}
+                    提交时间已过，不能再次提交
                 {% else %}
                     尚未提交
                 {% endif %}
             </div>
-            {% if team.owner_id == current_user.id and not submission_previous.score %}
+            {% if team.owner_id == current_user.id and not submission_previous.score
+                    and begin_time < current_time < end_time %}
                 <div class="box-footer">
                     <form method="post" enctype="multipart/form-data">
                         {{ form.hidden_tag() }}

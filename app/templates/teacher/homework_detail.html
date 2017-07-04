@@ -11,7 +11,8 @@
 {% block styles %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='components/datepicker/css/datepicker.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='components/bootstrap-daterangepicker/daterangepicker.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='components/bootstrap-daterangepicker/daterangepicker.css') }}">
 {% endblock %}
 
 {% block breadcrumb %}
@@ -59,26 +60,28 @@
             </div>
         </div>
         <!-- /.box-primary -->
-        {% if teams %}
+        {% if teams and submission_latest %}
             <div class="box box-solid">
                 <div class="box-header with-border">
                     <h3 class="box-title">学生作业</h3>
                 </div>
                 <div class="box-body">
-                    {% for team in teams if submission_latest[team.id] %}
+                    {% for team in teams %}
                         <div class="post">
                             <h4>
                                 <i class="fa fa-group"></i>
                                 {{ team.team_name }}
-                                <a href="{{ url_for('teacher.download_attachment',
+                                {% if submission_latest[team.id].attachment %}
+                                    <a href="{{ url_for('teacher.download_attachment',
                                                     course_id=course_id,
                                                     homework_id=homework.id,
                                                     team_id=team.id,
                                                     filename=submission_latest[team.id].attachment[0].file_name) }}"
-                                   class="badge bg-green">
-                                    <i class="fa fa-file"></i>
-                                    {{ submission_latest[team.id].attachment[0].file_name }}
-                                </a>
+                                       class="badge bg-green">
+                                        <i class="fa fa-file"></i>
+                                        {{ submission_latest[team.id].attachment[0].file_name }}
+                                    </a>
+                                {% endif %}
                             </h4>
                             {% set sub = submission_latest[team.id] %}
                             <div class="well">
@@ -102,7 +105,8 @@
                                                 type="text"
                                                 data-team-id="{{ team.id }}"
                                                 data-for="comments"
-                                                placeholder="评语">{% if sub.comments %}{{ sub.comments }}{% endif %}</textarea>
+                                                placeholder="评语">{% if sub.comments -%}
+                                            {{ sub.comments }}{%- endif %}</textarea>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -121,16 +125,22 @@
                         </div>
                     {% endfor %}
                     <hr>
-                    <button class="btn btn-primary" onclick="submitAll()">全部提交</button>
-                    <a href="?action=multi_download" class="btn btn-success">下载全部附件</a>
-                    <button class="btn btn-info" onclick="$('#file').click()">上传批改后的作业</button>
-                    {% if teacher_corrected %}
-                        <a href="?action=download_corrected" class="badge bg-blue">
-                            <i class="fa fa-file">
-                                批改详情.zip
-                            </i>
-                        </a>
-                    {% endif %}
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="submitAll()">全部提交</button>
+                        <a href="?action=multi_download" class="btn btn-default">下载全部附件</a>
+                        <a href="{{ url_for('teacher.get_homework_report',
+                                course_id=course_id,
+                                homework_id=homework.id) }}"
+                                class="btn btn-default">下载当前作业的报表</a>
+                        <button class="btn btn-default" onclick="$('#file').click()">上传批改后的作业</button>
+                    </div>
+                        {% if teacher_corrected %}
+                            <a href="?action=download_corrected" class="badge bg-blue">
+                                <i class="fa fa-file">
+                                    批改详情.zip
+                                </i>
+                            </a>
+                        {% endif %}
                     <form id="fileForm" method="post" enctype="multipart/form-data" style="display: none">
                         <input type="text" name="action" value="multi_upload">
                         <input type="file" name="file" id="file">
@@ -167,7 +177,7 @@
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
+    {{ super() }}
     <!-- bootstrap datepicker -->
     <script src="{{ url_for('static', filename='components/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
     <script>
@@ -180,15 +190,15 @@
             }
         });
         function submitAll() {
-            if(confirm('确定要全部提交吗？')){
+            if (confirm('确定要全部提交吗？')) {
                 var res = {};
                 var inputs = $('[data-team-id]');
-                for(var i=0; i<inputs.length; i++){
+                for (var i = 0; i < inputs.length; i++) {
                     var input = $(inputs[i]);
-                    if(!res[input.data('team-id')])
+                    if (!res[input.data('team-id')])
                         res[input.data('team-id')] = {};
                     res[input.data('team-id')][input.data('for')] = input.val()
-                    if(!input.val()){
+                    if (!input.val()) {
                         alert('请不要留空！')
                         return;
                     }

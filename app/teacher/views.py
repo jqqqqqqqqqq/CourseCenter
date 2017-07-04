@@ -25,6 +25,12 @@ def before_request():
     pass
 
 
+def download_file(directory, filename):
+    response = make_response(send_from_directory(directory, filename, as_attachment=True))
+    response.headers["Content-Disposition"] = "attachment; filename={}".format(filename.encode().decode('latin-1'))
+    return response
+
+
 @teacher.route('/<course_id>/course', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def set_course_info(course_id):
@@ -35,6 +41,13 @@ def set_course_info(course_id):
         course.outline = form.outline.data
         course.teamsize_min = form.teamsize_min.data
         course.teamsize_max = form.teamsize_max.data
+        course.no_miss = form.no_miss.data
+        print(form.no_miss.data)
+        course.miss_1 = form.miss_1.data
+        course.miss_2 = form.miss_2.data
+        course.miss_3 = form.miss_3.data
+        course.miss_4 = form.miss_4.data
+        course.miss_5 = form.miss_5.data
         db.session.add(course)
         db.session.commit()
         flash('修改成功！', 'success')
@@ -42,7 +55,13 @@ def set_course_info(course_id):
     form.outline.data = course.outline
     form.teamsize_min.data = course.teamsize_min
     form.teamsize_max.data = course.teamsize_max
-    return render_template('teacher/course.html', course_id=course_id, form=form, course=course)
+    form.no_miss.data = course.no_miss
+    form.miss_1.data = course.miss_1
+    form.miss_2.data = course.miss_2
+    form.miss_3.data = course.miss_3
+    form.miss_4.data = course.miss_4
+    form.miss_5.data = course.miss_5
+    return render_template('teacher/course.html', course_id=course_id, form=form, course=course, nav='set_course_info')
 
 
 @teacher.route('/<course_id>/resource', methods=['GET', 'POST'])
@@ -111,7 +130,7 @@ def manage_resource(course_id):
         filename = request.args.get('filename')
         print(filename)
         if os.path.exists(os.path.join(filedir, filename)):
-            return send_from_directory(filedir, filename, as_attachment=True)
+            return download_file(filedir, filename)
         else:
             flash('文件不存在！', 'danger')
             return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
@@ -142,7 +161,7 @@ def manage_resource(course_id):
     for file in os.scandir(expand_path):
         time = datetime.fromtimestamp(file.stat().st_mtime)
         files.append(file_attributes(file.name, sizeof_fmt(file.stat().st_size), time, file.is_dir(), file.is_file()))
-    return render_template('teacher/resource.html', course_id=course_id, files=files, path=path)
+    return render_template('teacher/resource.html', course_id=course_id, files=files, path=path, nav='manage_resource')
 
 
 @teacher.route('/<course_id>/homework', methods=['GET', 'POST'])
@@ -181,10 +200,12 @@ def homework(course_id):
     course = Course.query.filter_by(id=course_id).first()
 
     homework_list = Homework.query.filter_by(course_id=course_id).all()
-    return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form, course=course)
+    return render_template('teacher/homework.html', course_id=course_id, homeworks=homework_list, form=form, course=course, nav='homework')
 
 
 # PudgeG负责：提交情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+@teacher.route('/<course_id>/homework/download', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
 def get_teamhomework_all(course_id):
     # 得到所有小队历次作业提交信息
     workbook = Workbook()
@@ -226,13 +247,18 @@ def get_teamhomework_all(course_id):
             else:
                 worksheet.cell(row=row_number, column=i).value = '0'
 
-    workbook.save(os.path.join(basedir, 'homework', 'team_homework_all.xlsx'))
-    if os.path.isfile(os.path.join(basedir, 'homework', 'team_homework_all.xlsx')):
-        response = make_response(send_file(os.path.join(basedir, 'homework', 'team_homework_all.xlsx')))
+    filename = 'all_homework_submit.xlsx'
+
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
+
+    workbook.save(os.path.join(basedir, 'homework', filename))
+    if os.path.isfile(os.path.join(basedir, 'homework', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
     else:
         flash('文件创建失败！', 'danger')
         return redirect(url_for('teacher.homework', course_id=course_id))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'team_homework_all.xlsx' + ";"
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
     return response
 # PudgeG负责：提交情况表导出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -286,18 +312,22 @@ def get_score_all(course_id):
 
         for every_member in member_list:
             # _every_member = Student.query.filter_by(id=every_member.student_id).first()
-
             worksheet_member.append([team.team_name, team.order + 1, every_member.student.name, every_member.student.id, score * every_member.grade])
             # input_info2.append(submission_record)
     # worksheet_member.append(input_info2)
 
-    workbook.save(os.path.join(basedir, 'homework', 'score_all.xlsx'))
-    if os.path.isfile(os.path.join(basedir, 'homework', 'score_all.xlsx')):
-        response = make_response(send_file(os.path.join(basedir, 'homework', 'score_all.xlsx')))
+    filename = 'all_score_final.xlsx'
+
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
+
+    workbook.save(os.path.join(basedir, 'homework', filename))
+    if os.path.isfile(os.path.join(basedir, 'homework', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
     else:
         flash('文件创建失败！', 'danger')
         return redirect(url_for('teacher.homework', course_id=course_id))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'score_all.xlsx' + ";"
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
     return response
 # PudgeG负责：总成绩表导出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -334,7 +364,7 @@ def download_attachment(course_id, homework_id, team_id, filename):
         if i.startswith(str(file_uuid)):
             os.rename(os.path.join(file_dir, i), os.path.join(file_dir, filename_upload))
 
-    return send_from_directory(directory=file_dir, filename=filename_upload)
+    return download_file(file_dir, filename_upload)
 
 
 @teacher.route('/<int:course_id>/homework/<int:homework_id>', methods=['GET', 'POST'])
@@ -349,12 +379,10 @@ def homework_detail(course_id, homework_id):
     teams = Team.query.filter_by(course_id=course_id).all()
 
     submission_latest = {}
-    for i in teams:
-        submission_latest[i.id] = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id)[-1]
-        # submission_latest.append({str(i.id): Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id)[-1]})
 
-    if request.args.get('homework_report'):
-        return get_homework_report(homework_id)
+    for i in teams:
+        if Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id).all():
+            submission_latest[i.id] = Submission.query.filter_by(homework_id=homework_id).filter_by(team_id=i.id)[-1]
 
     if form.validate_on_submit():
         # 修改作业
@@ -401,7 +429,7 @@ def homework_detail(course_id, homework_id):
         rename(file_path, rename_list)
         make_zip(file_path, save_path)
         #return send_from_directory(directory='/'.join(save_path.split('/')[:-1]), filename='download.zip', as_attachment=True)
-        return send_from_directory(directory=os.sep.join(save_path.split(os.sep)[:-1]), filename='download.zip', as_attachment=True)
+        return download_file(os.sep.join(save_path.split(os.sep)[:-1]), 'download.zip')
 
 
     # json {'team_id':{'score': score, 'comments': comments}}
@@ -409,7 +437,7 @@ def homework_detail(course_id, homework_id):
     if request.form.get('action') == 'submit':
         _list = json.loads(request.form.get('data'))
         for team_id in _list:
-            submission_temp = Team.query.filter_by(id=team_id).first().submissions[-1]
+            submission_temp = Submission.query.filter_by(homework_id=homework_id, team_id=team_id).order_by(Submission.id.desc()).first()
             submission_temp.score = _list[team_id]['score']
             submission_temp.comments = _list[team_id]['comments']
             db.session.add(submission_temp)
@@ -443,7 +471,7 @@ def homework_detail(course_id, homework_id):
         teacher_corrected = True
 
     if request.args.get('action') == 'download_corrected':
-        return send_from_directory(directory=corrected_file_dir, filename='teacher_corrected.zip', as_attachment=True)
+        return download_file(corrected_file_dir, 'teacher_corrected.zip')
 
     form.name.data = homework.name
     form.base_requirement.data = homework.base_requirement
@@ -459,11 +487,14 @@ def homework_detail(course_id, homework_id):
                            homework=homework,
                            teams=teams,
                            teacher_corrected=teacher_corrected,
-                           submission_latest=submission_latest)
+                           submission_latest=submission_latest,
+                           nav='homework')
 
 
 # PudgeG负责：得到本次作业报表↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-def get_homework_report(homework_id):
+@teacher.route('/<int:course_id>/homework/<int:homework_id>/download', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def get_homework_report(course_id, homework_id):
     # 得到本次作业报表
 
     this_homework = Homework.query.filter_by(id=homework_id).first()
@@ -499,13 +530,17 @@ def get_homework_report(homework_id):
         #     return switcher.get(status, '其他')
 
     # worksheet.append(input_info)
-    workbook.save(os.path.join(basedir, 'homework', 'homework_report.xlsx'))
-    if os.path.isfile(os.path.join(basedir, 'homework', 'homework_report.xlsx')):
-        response = make_response(send_file(os.path.join(basedir, 'homework', 'homework_report.xlsx')))
+
+    filename = 'this_homework.xlsx'
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
+    workbook.save(os.path.join(basedir, 'homework', filename))
+    if os.path.isfile(os.path.join(basedir, 'homework', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
     else:
         flash('文件创建失败！', 'danger')
         return redirect(url_for('teacher/teacher_teammanagement'))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'homework_report.xlsx' + ";"
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
     return response
 # PudgeG负责：得到本次作业报表↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -543,47 +578,6 @@ def add_member(student_id, team_id):
     for a in delete_list:
         db.session.delete(a)
     db.session.commit()
-
-# PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-def get_team_report(course_id):
-    down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
-    Team.team_list(course_id)
-    if down_list is None:
-        flash('没有已接受团队，请等待申请并批准！', 'danger')
-        return redirect(request.args.get('next') or url_for('main.teacher_teammanagement'))
-    workbook = Workbook()
-    worksheet = workbook.create_chartsheet()
-    worksheet.title = '已接受团队信息'
-    worksheet.append(['队伍名称', '队伍编号', '成员姓名', '成员编号', '成员角色'])
-    # i = 0 表示队伍数量
-    input_info = []
-    for team in down_list:
-        member_list = TeamMember.query.filter_by(team_id=team.id).all()
-        input_record = {'队伍名称': team.team_name,
-                        '队伍编号': team.order,
-                        '成员姓名': Student.query.filter_by(id=team.owner_id).name,
-                        '成员编号': team.owner_id,
-                        '成员角色': '团队负责人'}
-        input_info.append(input_record)
-        # num_of_member = len(member_list)+1 表示每支队伍人员数量
-        # i += 1
-        for member in member_list:
-            input_record = {'队伍名称': team.team_name,
-                            '队伍编号': team.order,
-                            '成员姓名': Student.query.filter_by(id=member.student_id).name,
-                            '成员编号': member.student_id,
-                            '成员角色': '普通成员'}
-            input_info.append(input_record)
-    worksheet.append(input_info)
-    workbook.save('team_table.xlsx')
-    if os.path.isfile(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')):
-        response = make_response(send_file(os.path.join(os.getcwd(), 'team_manage', 'team_table.xlsx')))
-    else:
-        flash('文件创建失败！', 'danger')
-        return redirect(url_for('teacher/teacher_teammanagement'))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'team_table.xlsx' + ";"
-    return response
-# PudgeG负责:团队报表输出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 
 # 用于生成zip文件
@@ -679,7 +673,7 @@ def givegrade_teacher(course_id, homework_id):
             for i in os.listdir(file_dir):
                 if i.startswith(str(file_uuid)):
                     os.rename(i, filename_upload)
-            return send_from_directory(directory=file_dir, filename=filename_upload, as_attachment=True)
+            return download_file(file_dir, filename_upload)
 
     # 批量下载学生作业
     if request.method == 'POST' and request.form.get('action') == 'multi_download':
@@ -702,7 +696,7 @@ def givegrade_teacher(course_id, homework_id):
         # 重命名文件并提供下载
         rename(file_path, rename_list)
         make_zip(file_path, save_path)
-        return send_from_directory(directory=file_path, filename='download.zip', as_attachment=True)
+        return download_file(file_path, 'download.zip')
     return render_template('teacher/givegrade_teacher.html', homework_list=homework_list)
 
 
@@ -727,7 +721,7 @@ def see_class_before():
 
         if os.path.exists(file_path):
             make_zip(file_path, save_path)
-            return send_from_directory(directory=file_path, filename='download.zip', as_attachement=True)
+            return download_file(file_path, 'download.zip')
         else:
             flash('这个课程没有附件作业保存！', 'danger')
             return redirect(url_for('teacher.see_class_before'))
@@ -795,10 +789,13 @@ def team_manage(course_id):
                            course=course,
                            teams=teams,
                            unteamed_group=unteamed_group,
-                           form=form)
+                           form=form,
+                           nav='team_manage')
 
 
 # PudgeG负责:团队报表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+@teacher.route('/<course_id>/team/download', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
 def get_team_report(course_id):
     down_list = Team.query.filter_by(course_id=course_id).filter_by(status=2).all()
     # Team.team_list(course_id)
@@ -822,13 +819,18 @@ def get_team_report(course_id):
             # input_info.append(input_record)
 
     # worksheet.append(input_info)
-    workbook.save(os.path.join(basedir, 'team_manage', 'team_table.xlsx'))
-    if os.path.isfile(os.path.join(basedir, 'team_manage', 'team_table.xlsx')):
-        response = make_response(send_file(os.path.join(basedir, 'team_manage', 'team_table.xlsx')))
+
+    filename = 'all_team.xlsx'
+    if not os.path.exists(os.path.join(basedir, 'team_manage')):
+        os.mkdir(os.path.join(basedir, 'team_manage'))
+
+    workbook.save(os.path.join(basedir, 'team_manage', filename))
+    if os.path.isfile(os.path.join(basedir, 'team_manage', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'team_manage', filename)))
     else:
         flash('文件创建失败！', 'danger')
         return redirect(url_for('teacher/teacher_teammanagement'))
-    response.headers["Content-Disposition"] = "attachment; filename=" + 'team_table.xlsx' + ";"
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
     return response
 # PudgeG负责:团队报表输出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -862,8 +864,170 @@ def manage_attendance(course_id):
                                 form=form,
                                 course=course))
     return render_template('teacher/manage_attendance.html',
+                           course_id=course_id,
+                           attendance_available=attendance_available,
+                           attendance_list=attendance_list,
+                           form=form,
+                           course=course,
+                           nav='manage_attendance')
+
+
+'''
+@teacher.route('/<course_id>/add_plus', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def add_plus(course_id):
+    form = PlusForm()
+    if form.validate_on_submit():
+        plus = Plus()
+        plus.course_id = course_id
+        plus.name = form.name.data
+        plus.weight = form.weight.data
+        db.session.add(plus)
+        db.session.commit()
+        flash('成功添加加分项')
+        return redirect(url_for('teacher.add_plus'), course_id=course_id)
+    return render_template('teacher/add_plus.html', course_id=course_id, form=form)
+'''
+
+
+@teacher.route('/<int:course_id>/plus_manage/<int:plus_id>', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def plus_manage(course_id, plus_id):
+    plus_table = []
+
+    # 获取加分项的信息
+    pp = Plus.query.filter_by(id=plus_id).first()
+    '''
+    if not pp:
+        flash('没有这个加分项', 'danger')
+        return redirect(url_for('teacher.set_course_info', course_id=course_id))
+    '''
+    plus_table.append({
+        'plus_id': pp.id if pp else 0,
+        'plus_name': pp.name if pp else '',
+        'plus_course_id': course_id,
+        'plus_weight': pp.weight if pp else 0})
+
+    # 加入学生信息
+    team_list = TeamPlus.query.filter_by(course_id=course_id, plus_id=plus_id).all()
+    for i in team_list:
+        plus_table.append({
+            'plus_id': i.plus_id,
+            'course_id': i.course_id,
+            'team_id': i.team_id,
+            'team_score': i.score})
+
+    if request.method == 'POST' and request.form.get('action') == 'submit':
+        _list = json.loads(request.form.get('data'))
+        plus_dic = _list[0]
+        _list = _list[1:]
+
+        plus = Plus()
+        plus.course_id = course_id
+        plus.name = plus_dic['plus_name']
+        plus.weight = plus_dic['plus_weight']
+        db.session.add(plus)
+        db.session.commit()
+
+        for dic in _list:
+            # team plus
+            tp = TeamPlus()
+            tp.plus_id = plus.id
+            tp.team_id = disc['team_id']
+            tp.score = disc['team_score']
+            tp.course_id = course_id
+            db.session.add(tp)
+        db.session.commit()
+
+        return redirect(url_for('teacher.plus_manage'), course_id=course_id)
+
+    return render_template('teacher/plus_manage.html',
+                            plus_table=plus_table,
                             course_id=course_id,
-                            attendance_available=attendance_available,
-                            attendance_list=attendance_list,
-                            form=form,
-                            course=course)
+                            plus_id=plus_id)
+
+
+# PudgeG负责：签到情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+@teacher.route('/<course_id>/attendance/download', methods=['GET', 'POST'])
+@UserAuth.teacher_course_access
+def get_attendence_all(course_id):
+    # 得到所有小队历次作业提交信息
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = '签到整体情况表'
+
+    # student_list = SCRelationship.query.filter_by(course_id=course_id).join(Student, SCRelationship.student_id == Student.id).all()
+    course = Course.query.filter_by(id=course_id).first()
+    student_list = course.students
+    attendance_list = Attendance.query.filter_by(course_id=course_id).all()
+
+    # 总列数
+    column_number = 2
+    # 总行数
+    row_number = 1
+
+    # 第一行输入的内容
+
+    worksheet.cell(row=1, column=1).value = '学生姓名'
+    worksheet.cell(row=1, column=2).value = '学生编号'
+
+    for every_attendance in attendance_list:
+        column_number += 1
+        t = every_attendance.order + 1
+        worksheet.cell(row=1, column=column_number).value = '第' + str(t) + '次签到'
+    column_number += 1
+    worksheet.cell(row=1, column=column_number).value = '签到成绩'
+
+    # 后续内容循环输入
+    for every_student in student_list:
+        row_number += 1
+        worksheet.cell(row=row_number, column=1).value = every_student.name
+        worksheet.cell(row=row_number, column=2).value = every_student.id
+        i = 2
+        times = 0
+        total = 0
+        for every_attendance in attendance_list:
+            i += 1
+            total += 1
+            attendance_record = AttendanceStats.query.filter_by(attendance_id=every_attendance.id).filter_by(student_id=every_student.id).first()
+            if attendance_record:
+                worksheet.cell(row=row_number, column=i).value = 'Yes'
+            else:
+                times += 1
+                worksheet.cell(row=row_number, column=i).value = 'No'
+        i += 1
+        worksheet.cell(row=row_number, column=i).value = get_attendance_score(times, total, course_id)
+
+    filename = 'attendance_all.xlsx'
+
+    if not os.path.exists(os.path.join(basedir, 'homework')):
+        os.mkdir(os.path.join(basedir, 'homework'))
+
+    workbook.save(os.path.join(basedir, 'homework', filename))
+    if os.path.isfile(os.path.join(basedir, 'homework', filename)):
+        response = make_response(send_file(os.path.join(basedir, 'homework', filename)))
+    else:
+        flash('文件创建失败！', 'danger')
+        return redirect(url_for('teacher.homework', course_id=course_id))
+    response.headers["Content-Disposition"] = "attachment; filename=" + filename + ";"
+    return response
+
+
+def get_attendance_score(times, total, course_id):
+    course = Course.query.filter_by(id=course_id).first()
+    if total == 0:
+        return 0
+    if times == 0:
+        return course.no_miss
+    elif times == 1:
+        return course.miss_1
+    elif times == 2:
+        return course.miss_2
+    elif times == 3:
+        return course.miss_3
+    elif times == 4:
+        return course.miss_4
+    else:
+        return course.miss_5
+
+# PudgeG负责：签到情况表导出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
