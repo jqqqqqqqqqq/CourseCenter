@@ -148,7 +148,7 @@ class Homework(db.Model):
     __tablename__ = 'homework'
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
-    name = db.Column(db.String)
+    name = db.Column(db.VARCHAR(length=50, convert_unicode=True))
     base_requirement = db.Column(db.Text)
     begin_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
