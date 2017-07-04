@@ -442,15 +442,15 @@ def homework_detail(course_id, homework_id):
         return redirect(url_for('student.homework', course_id=course_id))
     attempts = len(Submission.query.filter_by(team_id=team.id, homework_id=homework_id).all())
 
-    begin_time = homework.begin_time
-    end_time = homework.end_time
-
-    if begin_time > datetime.now():
-        flash('还没到作业的开始时间!', 'danger')
-        return redirect(url_for('student.homework', course_id=course_id))
-    if end_time < datetime.now():
-        flash('作业结束时间已过!', 'danger')
-        return redirect(url_for('student.homework', course_id=course_id))
+    # begin_time = homework.begin_time
+    # end_time = homework.end_time
+    #
+    # if begin_time > datetime.now():
+    #     flash('还没到作业的开始时间!', 'danger')
+    #     return redirect(url_for('student.homework', course_id=course_id))
+    # if end_time < datetime.now():
+    #     flash('作业结束时间已过!', 'danger')
+    #     return redirect(url_for('student.homework', course_id=course_id))
 
     if form.validate_on_submit():
         # 无法提交情况
