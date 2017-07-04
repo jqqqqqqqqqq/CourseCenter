@@ -134,7 +134,7 @@ def show_resource(course_id):
         filename = request.args.get('filename')
         print(filename)
         if os.path.exists(os.path.join(filedir, filename)):
-            return send_from_directory(filedir, filename, as_attachment=True)
+            return send_from_directory(filedir, filename)
         else:
             flash('文件不存在！', 'danger')
             return redirect(url_for('teacher.manage_resource', course_id=course_id, path=path))
@@ -512,7 +512,7 @@ def homework_detail(course_id, homework_id):
         teacher_corrected = True
 
     if request.args.get('action') == 'download_corrected':
-        return send_from_directory(directory=corrected_file_dir, filename='teacher_corrected.zip', as_attachment=True)
+        return send_from_directory(directory=corrected_file_dir, filename='teacher_corrected.zip')
 
     # 查找上一次提交
     submission_previous = Submission\
