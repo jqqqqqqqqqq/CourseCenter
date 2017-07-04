@@ -923,7 +923,7 @@ def add_plus(course_id):
         db.session.add(plus)
         db.session.commit()
         flash('成功添加加分项', 'success')
-        return redirect(url_for('teacher.aiddd_plus', course_id=course_id))
+        return redirect(url_for('teacher.add_plus', course_id=course_id))
     course = Course.query.filter_by(id=course_id).first()
     return render_template('teacher/plus.html', course_id=course_id, course=course, form=form, pluses=pluses, nav='add_plus')
 
