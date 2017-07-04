@@ -346,9 +346,9 @@ def my_team(course_id):
     if team:
         teammate_list = team.members
         for member in teammate_list:
-            if member.status == 2:  # 被拒的都滚粗
-                teammate_list.remove(member)
-                continue
+            # if member.status == 2:  # 被拒的都滚粗
+            #     teammate_list.remove(member)
+            #     continue
             member.real_name = member.student.name  # 通过member里的status在前端做通过/拒绝
 
     if team and request.form.get('action'):

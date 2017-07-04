@@ -290,6 +290,13 @@ def get_score_all(course_id):
             if _this_submission is not None:
                 this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).all()[-1]
                 score += this_submission.score * every_homework.weight / 100
+
+        plus_list = Plus.query.filter_by(course_id=course_id).all()
+        for every_plus in plus_list:
+            _this_plus = TeamPlus.query.filter_by(plus_id=every_plus.id).filter_by(team_id=team.id).first()
+            if not _this_plus:
+                score += _this_plus.score
+
         worksheet_team.append([team.team_name, team.order + 1, score])
         # input_info.append(submission_record)
     # worksheet_team.append(input_info)
@@ -302,17 +309,48 @@ def get_score_all(course_id):
         # 团队负责人第一行
         # owner = Student.query.filter_by(id=team.owner_id).first()
         score = 0
+        # 作业分数
         for every_homework in homework_list:
             _this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).first()
             if _this_submission is not None:
                 this_submission = Submission.query.filter_by(team_id=team.id).filter_by(homework_id=every_homework.id).all()[-1]
                 score += this_submission.score * every_homework.weight / 100
-            worksheet_member.append([team.team_name, team.order + 1, team.owner.name, team.owner.id, score * team.owner_grade])
+
+        # 加分项分数
+        plus_list = Plus.query.filter_by(course_id=course_id).all()
+        for every_plus in plus_list:
+            _this_plus = TeamPlus.query.filter_by(plus_id=every_plus.id).filter_by(team_id=team.id).first()
+            if not _this_plus:
+                score += _this_plus.score
+
+        # 签到分数
+        attendance_list = Attendance.query.filter_by(course_id=course_id).all()
+        times = 0
+        total = 0
+        for every_attendance in attendance_list:
+            total += 1
+            attendance_record = AttendanceStats.query.filter_by(attendance_id=every_attendance.id).filter_by(student_id=team.owner_id).first()
+            if not attendance_record:
+                times += 1
+        score_attendance = get_attendance_score(times, total, course_id)
+
+        worksheet_member.append([team.team_name, team.order + 1, team.owner.name, team.owner.id, score * team.owner_grade + score_attendance])
         # input_info2.append(submission_record)
 
         for every_member in member_list:
             # _every_member = Student.query.filter_by(id=every_member.student_id).first()
-            worksheet_member.append([team.team_name, team.order + 1, every_member.student.name, every_member.student.id, score * every_member.grade])
+            # 签到分数
+            attendance_list = Attendance.query.filter_by(course_id=course_id).all()
+            times = 0
+            total = 0
+            for every_attendance in attendance_list:
+                total += 1
+                attendance_record = AttendanceStats.query.filter_by(attendance_id=every_attendance.id).filter_by(student_id=every_member.student_id).first()
+                if not attendance_record:
+                    times += 1
+            score_attendance = get_attendance_score(times, total, course_id)
+
+            worksheet_member.append([team.team_name, team.order + 1, every_member.student.name, every_member.student.id, score * every_member.grade + score_attendance])
             # input_info2.append(submission_record)
     # worksheet_member.append(input_info2)
 
