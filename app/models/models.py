@@ -318,3 +318,11 @@ class AttendanceStats(db.Model):
 
     def __repr__(self):
         return '<AttendanceStats %r>' % self.id
+
+# 加分项
+class Plus(db.modbl):
+    __tablename__ = 'plus'
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
+    name = db.Column(db.String(256))
+    weight = db.Column(db.Integer)
