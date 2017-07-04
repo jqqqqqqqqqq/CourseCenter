@@ -701,8 +701,6 @@ def team_manage(course_id):
         flash('移动成功！', 'success')
         return redirect(url_for('teacher.team_manage', course_id=course_id))
 
-
-
     return render_template('teacher/team.html',
                            course_id=course_id,
                            course=course,
