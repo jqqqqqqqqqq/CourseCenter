@@ -320,6 +320,15 @@ class Attendance(db.Model):
     def order(self):
         return Attendance.query.filter_by(course_id=self.course_id).all().index(self)
 
+    @staticmethod
+    def attendance_list(course_id):
+        attendances = Attendance.query.filter_by(course_id=course_id).all()
+        order = 1
+        for attendance in attendances:
+            attendance.order = order  #为返回的 homework 增加 order (顺序) 属性
+            order += 1
+        return attendances
+
 
 class AttendanceStats(db.Model):
     __tablename__ = 'attendance_stats'
