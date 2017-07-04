@@ -855,7 +855,6 @@ def manage_attendance(course_id):
                             course=course)
 
 
-<<<<<<< HEAD
 @teacher.route('/<course_id>/add_plus', methods=['GET', 'POST'])
 @UserAuth.teacher_course_access
 def add_plus(course_id):
@@ -921,7 +920,6 @@ def plus_manage(course_id, plus_id):
     return render_template('teacher/plus_manage.html',
                             plus_table=plus_table,
                             course_id=course_id)
-=======
 # PudgeG负责：签到情况表导出↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 def get_attendence_all(course_id):
     # 得到所有小队历次作业提交信息
@@ -996,4 +994,3 @@ def get_attendance_score(times, course_id):
         return course.miss_5
 
 # PudgeG负责：签到情况表导出↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
->>>>>>> 9e9cda026c500264689921149aa5841b783b2e2f
