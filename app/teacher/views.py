@@ -85,6 +85,8 @@ def set_course_info(course_id):
     form.miss_5.data = course.miss_5
     outlet_attachment = None
     filedir = os.path.join(basedir, 'uploads', str(course_id))
+    if not os.path.exists(filedir):
+        os.mkdir(filedir)
     for file in os.listdir(filedir):
         try:
             name, _ = file.split('.')

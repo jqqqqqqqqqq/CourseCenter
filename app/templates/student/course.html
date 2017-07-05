@@ -23,7 +23,15 @@
             <div class="box-body">
                 <dl class="dl-horizontal">
                     <dt>课程大纲</dt>
-                    <dd>{{ course.outline }}</dd>
+                    <dd>
+                        {{ course.outline }}
+                        {% if outlet_attachment %}
+                            <a class="badge bg-green" href="?action=download">
+                                <i class="fa fa-file"></i>
+                                {{ '大纲附件' + '.' + outlet_attachment.split('.')[-1] }}
+                            </a>
+                        {% endif %}
+                    </dd>
                     <dt>上课地点</dt>
                     <dd>{{ course.place }}</dd>
                     <dt>开课状态</dt>

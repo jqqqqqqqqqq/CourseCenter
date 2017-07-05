@@ -107,6 +107,22 @@ def submit_attendance(course_id):
 def show_course_info(course_id):
     # 学生查看课程信息
     course = Course.query.filter_by(id=course_id).first()
+
+    outlet_attachment = None
+    filedir = os.path.join(basedir, 'uploads', str(course_id))
+    if not os.path.exists(filedir):
+        os.mkdir(filedir)
+    for file in os.listdir(filedir):
+        try:
+            name, _ = file.split('.')
+            if name == 'outlet':
+                outlet_attachment = file
+                break
+        except ValueError:
+            pass
+    if request.args.get('action') == 'download':
+        return send_from_directory(filedir, outlet_attachment, as_attachment=True)
+
     if request.form.get('action') == 'sign_up':
         submit_attendance(course_id)
     _attendance_available = attendance_available(course_id)
@@ -114,7 +130,8 @@ def show_course_info(course_id):
                            course_id=course_id,
                            course=course,
                            attendance_available=_attendance_available,
-                           nav='show_course_info')
+                           nav='show_course_info',
+                           outlet_attachment=outlet_attachment)
 
 
 @student.route('/<course_id>/resource', methods=['GET'])
